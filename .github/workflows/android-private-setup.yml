@@ -2,6 +2,11 @@ name: Private Android Firebase setup check
 
 on:
   workflow_dispatch:
+    inputs:
+      signing_only:
+        description: Check only the two signing secrets (no Firebase secret needed yet)
+        type: boolean
+        default: true
 
 permissions:
   contents: read
@@ -21,14 +26,23 @@ jobs:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           FIREBASE_ANDROID_CONFIG_BASE64: ${{ secrets.FIREBASE_ANDROID_CONFIG_BASE64 }}
+          SIGNING_ONLY: ${{ inputs.signing_only }}
         run: |
-          python3 tools/check-private-android-setup.py --output "$RUNNER_TEMP/anime-private-setup"
+          args=(--output "$RUNNER_TEMP/anime-private-setup")
+          if [ "$SIGNING_ONLY" = 'true' ]; then args+=(--signing-only); fi
+          python3 tools/check-private-android-setup.py "${args[@]}"
       - name: Public result summary
+        env:
+          SIGNING_ONLY: ${{ inputs.signing_only }}
         run: |
           {
             echo '## Private Android setup validated'
             echo 'Private keystore opens with the supplied password and matches the pinned certificate.'
-            echo 'Firebase project/package, Android OAuth certificate and web OAuth client are present.'
+            if [ "$SIGNING_ONLY" = 'true' ]; then
+              echo 'Signing-only mode: Firebase config was NOT checked.'
+            else
+              echo 'Firebase project/package, Android OAuth certificate and web OAuth client are present.'
+            fi
             echo 'This is a configuration check only, not a login test or an APK build.'
             cat docs/react-native-blueprint/android-test-certificate.json
           } >> "$GITHUB_STEP_SUMMARY"
