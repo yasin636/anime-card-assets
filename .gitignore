@@ -24,3 +24,6 @@ FIREBASE_ANDROID_CONFIG_BASE64.txt
 private-key*.pem
 
 __pycache__/
+
+# Private user deliverables: never commit/push.
+/private-downloads/

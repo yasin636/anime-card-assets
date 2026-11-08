@@ -66,3 +66,12 @@ Native Android Firebase configuration received and validated: project `anime-met
 - Added manual fail-closed private signing/Firebase OAuth preflight workflow. It checks three secrets, pinned certificate, project/package, Android OAuth SHA-1 and web OAuth client, then deletes runner temp material. It does not build an APK or perform login.
 - Local checks: actual PKCS12 export/fingerprint match, backup ZIP integrity; positive validator using explicitly synthetic OAuth metadata; negative original-config and missing-secret checks; Python syntax. Java keytool/CI checks are pending secret setup. No authenticated APK produced and no live Firebase changes.
 - First new private-key APK requires uninstalling old sample-only v0.1.0 due to certificate change. Future private-key APKs must preserve this identity and increment versionCode.
+
+Updated Android configuration `google-services (3).json` received: project/package match; pinned SHA-1 Android OAuth client and web OAuth client are present. Local ignored config replaced. This validates configuration only, not a successful Google login. User requests mobile-friendly guidance for manually adding two signing secrets; values must never be posted in chat.
+
+
+### Secret setup verification follow-up
+
+User reports both signing secrets added. Actual signing-only CI run42517783944 failed: decoded ANDROID_KEYSTORE_BASE64 does not match the original backup keystore SHA256. Password correctness remains unverified (check intentionally stops at data mismatch). No auth APK produced. Mobile copy whitespace handling was added; missing/invalid/mismatching data still fails closed. User should edit the existing first secret with the exact Base64 helper, not regenerate the key. An owner-only standalone helper was uploaded to the user's Drive; secret values are not logged or committed.
+
+Updated real Firebase JSON was validated locally with the original backup (OpenSSL, no Java/live login). FIREBASE_ANDROID_CONFIG_BASE64 helper was prepared and uploaded owner-only to Drive; user has not yet reported adding the third secret. Native Java/keytool and complete CI config checks remain pending first-secret repair and third-secret setup. No Firebase Rules/data/provider mutations.

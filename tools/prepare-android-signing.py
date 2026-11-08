@@ -6,6 +6,7 @@ The backup ZIP is private: never commit/upload it to a public repository/artifac
 import argparse
 import base64
 import json
+import hashlib
 import os
 from pathlib import Path
 import secrets
@@ -60,6 +61,7 @@ public = {
     'applicationId': 'com.yasin636.animemetahub',
     'firebaseProject': 'anime-meta-hub',
     'alias': alias,
+    'keystoreSha256': hashlib.sha256(keystore.read_bytes()).hexdigest(),
     **fingerprints,
 }
 manifest.parent.mkdir(parents=True, exist_ok=True)
