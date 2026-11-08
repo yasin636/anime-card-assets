@@ -1,6 +1,11 @@
 name: Private Android Firebase setup check
 
 on:
+  push:
+    branches: [arena/cd835a4c-anime-card-assets]
+    paths:
+      - .github/workflows/android-private-setup.yml
+      - tools/check-private-android-setup.py
   workflow_dispatch:
     inputs:
       signing_only:
@@ -26,14 +31,14 @@ jobs:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           FIREBASE_ANDROID_CONFIG_BASE64: ${{ secrets.FIREBASE_ANDROID_CONFIG_BASE64 }}
-          SIGNING_ONLY: ${{ inputs.signing_only }}
+          SIGNING_ONLY: ${{ github.event_name == 'push' || inputs.signing_only }}
         run: |
           args=(--output "$RUNNER_TEMP/anime-private-setup")
           if [ "$SIGNING_ONLY" = 'true' ]; then args+=(--signing-only); fi
           python3 tools/check-private-android-setup.py "${args[@]}"
       - name: Public result summary
         env:
-          SIGNING_ONLY: ${{ inputs.signing_only }}
+          SIGNING_ONLY: ${{ github.event_name == 'push' || inputs.signing_only }}
         run: |
           {
             echo '## Private Android setup validated'
