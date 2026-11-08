@@ -81,3 +81,26 @@ Signing-only CI recheck after user updated first secret: **SUCCESS**, run4251811
 
 
 Full private setup CI after user added third secret: **SUCCESS**, run42518442960 (https://github.com/yasin636/anime-card-assets/actions/runs/42518442960), signing_only=false. All three actual repository secrets passed: pinned keystore bytes/certificate, Java keytool password/alias, Firebase project/package, matching Android OAuth SHA-1 and web OAuth client present. Temporary material cleaned by workflow. This is configuration validation only: no live Email/Google login, Firestore Rules/data mutation, iOS test or new authenticated APK. Step02 native auth/profile implementation remains next.
+
+### Step02 implementation — v0.2.0 Auth/Profile (build in progress)
+
+- Added native Firebase app/auth/firestore/storage23.5.0 and Google Sign-In16.0.0; SDK54-compatible picker/manipulator/SVG modules. Google web client config generated from the real verified Android JSON, not committed.
+- Email signup/login, Google account selection/cancel/signin, explicit current-account Google link and credential-conflict password verification. No custom cross-UID merge.
+- SDK-persisted session, UID-keyed main navigation, listener cleanup and profile owner guards. Metadata-aware profile subscription supports confirmed-missing initialization; create transaction never resets an existing document.
+- Live own profile/currencies/XP rank/gem badge/story power/featured slots; username/Bio edit/save/cancel, preset avatars, resized gallery upload via Storage with failure cleanup, sign out.
+- Auth/Profile is live; all gameplay/community/economy commands remain disabled previews. Storage permissions/billing and live Firebase Rules are not bypassed or changed.
+- Build pipeline now validates all three secrets and signs the release-mode APK with the pinned private certificate (no public debug fallback); apksigner result must match pinned SHA256. Key/password never written into Gradle source, only environment references; always cleanup after build.
+- Local checks passed: TypeScript, Expo Android prebuild (Google services plugin applied), Android Hermes export, native dependency/autolinking checks, 23 profile/domain/legacy-preservation fixtures and 61 blueprint baseline fixtures.
+- PostCSS/grpc-js transitive advisories patched; audit remains13 issues (1high Metro image-size build tool,11moderate,1low). Not production-security-cleared. No live login, device test, iOS signed build or production Rules/data mutation from sandbox.
+- First attempt42519135169 had a workflow context-expression issue (not an app compile failure); corrected runtime signing path. Superseded42519213101 was cancelled by the dependency-patch build. Current build42519312318 targets commit732b906.
+- User must uninstall old sample-only v0.1.0 before first private-key APK; no direct update across different certificates. Later private-key updates keep this identity and increment versionCode.
+- Await actual build result and user phone tests before marking Step02 accepted or starting Step03.
+
+### Step02 APK delivered for phone QA — build SUCCESS
+
+- Actual native release compile succeeded on run42519312318 and42520354349; publication was correctly blocked by an overly specific certificate-output parser. Safe annotation isolated the parser issue. Updated parser accepts Build Tools signer label variations while requiring ALL reported certificate SHA256 digests to equal the pinned private certificate; no verification bypass.
+- Final run **42521169233 SUCCESS**, source **64c2071e7196fef18f2ac18175f4e27ec8cb1497**: secret validation, npmci/typecheck, foundation/profile fixtures, Android prebuild, private release signing/compile, apksigner verification + exact pinned certificate, metadata/embedded JS checks, artifact upload and always-secret-cleanup ALL successful.
+- Run: https://github.com/yasin636/anime-card-assets/actions/runs/42521169233
+- APK artifact ZIP: https://github.com/yasin636/anime-card-assets/actions/runs/42521169233/artifacts/13633274850
+- Name `AnimeMetaHub-v0.2.0-auth-profile-test`; archive27,370,513bytes; expires2026-11-22T20:48:39Z. GitHub archive digest `sha256:61a659a9a2e05184a2cbc332696d0f93a56346b76734e08664dac10eeef1b269` (archive digest, NOT APK checksum). ZIP includes APK, APK SHA256SUMS.txt and README.txt.
+- CI verification is real; device email/Google login, profile write, Storage permissions and offline/relaunch/account-switch QA are NOT yet completed. No production/iOS readiness claim. Step02 remains awaiting user's phone test/acceptance. Do not start Step03 yet.
