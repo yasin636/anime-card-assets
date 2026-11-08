@@ -53,6 +53,8 @@ jobs:
       - name: Allow slow first-time Gradle downloads
         run: |
           sed -i 's/networkTimeout=10000/networkTimeout=120000/' android/gradle/wrapper/gradle-wrapper.properties
+          # Avoid the services.gradle.org -> GitHub release redirect (504 on first run).
+          sed -i 's/services.gradle.org/downloads.gradle.org/' android/gradle/wrapper/gradle-wrapper.properties
       - name: Compile standalone release-mode test APK
         working-directory: apps/mobile/android
         run: |
