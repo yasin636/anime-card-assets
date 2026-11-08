@@ -1,0 +1,1624 @@
+{
+  "sourceFiles": [
+    {
+      "name": "index.html",
+      "bytes": 1004,
+      "sha256": "37fefe016962718268e5ea4e2c935b6f4cdaa0cde20ba96e45c8c8ad7147fd8b",
+      "lines": 28
+    },
+    {
+      "name": "style.css",
+      "bytes": 192856,
+      "sha256": "b2cb4195ab3f0598a6134821583dc020da090e1697c60a6f07be90212e3ea30c",
+      "lines": 3428
+    },
+    {
+      "name": "script.js",
+      "bytes": 282717,
+      "sha256": "ef388afdba9b37ec6197f92a7aa914c1aea90ae8c3424f8cd10204c3c6ccd58e",
+      "lines": 4776
+    }
+  ],
+  "functions": [
+    {
+      "name": "getCardStats",
+      "line": 93
+    },
+    {
+      "name": "getChapterRank",
+      "line": 180
+    },
+    {
+      "name": "preloadAriseAudio",
+      "line": 184
+    },
+    {
+      "name": "playAriseAudio",
+      "line": 191
+    },
+    {
+      "name": "getShadowArmy",
+      "line": 202
+    },
+    {
+      "name": "addShadow",
+      "line": 205
+    },
+    {
+      "name": "isFirstClearEnemy",
+      "line": 214
+    },
+    {
+      "name": "markEnemyCleared",
+      "line": 217
+    },
+    {
+      "name": "resolveCharacterImage",
+      "line": 222
+    },
+    {
+      "name": "renderAdminBadge",
+      "line": 238
+    },
+    {
+      "name": "xpForLevel",
+      "line": 246
+    },
+    {
+      "name": "rankTitle",
+      "line": 247
+    },
+    {
+      "name": "rankClass",
+      "line": 248
+    },
+    {
+      "name": "getLevelInfo",
+      "line": 249
+    },
+    {
+      "name": "normalizeCard",
+      "line": 257
+    },
+    {
+      "name": "normalizeInventory",
+      "line": 258
+    },
+    {
+      "name": "normalizeSlots",
+      "line": 259
+    },
+    {
+      "name": "showNeonModal",
+      "line": 377
+    },
+    {
+      "name": "bgMusicPlay",
+      "line": 428
+    },
+    {
+      "name": "bgMusicPause",
+      "line": 444
+    },
+    {
+      "name": "bgMusicToggle",
+      "line": 445
+    },
+    {
+      "name": "bgMusicSetVolume",
+      "line": 450
+    },
+    {
+      "name": "bgMusicSetTrack",
+      "line": 454
+    },
+    {
+      "name": "bgMusicSetMode",
+      "line": 460
+    },
+    {
+      "name": "getSfxCtx",
+      "line": 471
+    },
+    {
+      "name": "playSfxTone",
+      "line": 475
+    },
+    {
+      "name": "sfxClick",
+      "line": 487
+    },
+    {
+      "name": "sfxBoxOpen",
+      "line": 488
+    },
+    {
+      "name": "sfxXpClaim",
+      "line": 493
+    },
+    {
+      "name": "sfxWheelStart",
+      "line": 498
+    },
+    {
+      "name": "tick",
+      "line": 501
+    },
+    {
+      "name": "sfxWheelEnd",
+      "line": 508
+    },
+    {
+      "name": "renderMusicPanel",
+      "line": 515
+    },
+    {
+      "name": "loadMissionsFromData",
+      "line": 571
+    },
+    {
+      "name": "incrementMissionProgress",
+      "line": 576
+    },
+    {
+      "name": "claimMissionReward",
+      "line": 588
+    },
+    {
+      "name": "buyTheme",
+      "line": 609
+    },
+    {
+      "name": "equipTheme",
+      "line": 639
+    },
+    {
+      "name": "ensureUserDocs",
+      "line": 653
+    },
+    {
+      "name": "clearLive",
+      "line": 690
+    },
+    {
+      "name": "setupLive",
+      "line": 696
+    },
+    {
+      "name": "patchImages",
+      "line": 803
+    },
+    {
+      "name": "startPresence",
+      "line": 807
+    },
+    {
+      "name": "stopPresence",
+      "line": 808
+    },
+    {
+      "name": "pickCardWithPity",
+      "line": 823
+    },
+    {
+      "name": "playBoxShakeAnimation",
+      "line": 854
+    },
+    {
+      "name": "buyMysteryBox",
+      "line": 865
+    },
+    {
+      "name": "openEquipModal",
+      "line": 909
+    },
+    {
+      "name": "closeEquipModal",
+      "line": 910
+    },
+    {
+      "name": "equipCardToSlot",
+      "line": 911
+    },
+    {
+      "name": "unequipSlot",
+      "line": 924
+    },
+    {
+      "name": "recycleCard",
+      "line": 931
+    },
+    {
+      "name": "lighten",
+      "line": 996
+    },
+    {
+      "name": "darken",
+      "line": 997
+    },
+    {
+      "name": "drawWheel",
+      "line": 998
+    },
+    {
+      "name": "initWheel",
+      "line": 1020
+    },
+    {
+      "name": "runSpin",
+      "line": 1022
+    },
+    {
+      "name": "frame",
+      "line": 1043
+    },
+    {
+      "name": "resolveSpin",
+      "line": 1059
+    },
+    {
+      "name": "spinArenaWheel",
+      "line": 1070
+    },
+    {
+      "name": "fetchAnimeNews",
+      "line": 1101
+    },
+    {
+      "name": "openNewsModal",
+      "line": 1111
+    },
+    {
+      "name": "closeNewsModal",
+      "line": 1112
+    },
+    {
+      "name": "startNewsReadTimer",
+      "line": 1113
+    },
+    {
+      "name": "claimNewsXp",
+      "line": 1128
+    },
+    {
+      "name": "askSensei",
+      "line": 1152
+    },
+    {
+      "name": "startQuizFromRules",
+      "line": 1169
+    },
+    {
+      "name": "closeQuiz",
+      "line": 1170
+    },
+    {
+      "name": "fetchQuizQuestions",
+      "line": 1171
+    },
+    {
+      "name": "judgeAnswer",
+      "line": 1182
+    },
+    {
+      "name": "handleGemsUpdate",
+      "line": 1188
+    },
+    {
+      "name": "handleXPUpdate",
+      "line": 1189
+    },
+    {
+      "name": "showFlash",
+      "line": 1190
+    },
+    {
+      "name": "playPopSound",
+      "line": 1197
+    },
+    {
+      "name": "showLevelUpModal",
+      "line": 1207
+    },
+    {
+      "name": "checkAndShowLevelUp",
+      "line": 1234
+    },
+    {
+      "name": "submitQuizAnswer",
+      "line": 1242
+    },
+    {
+      "name": "skipQuizQuestion",
+      "line": 1255
+    },
+    {
+      "name": "nextQuizQuestion",
+      "line": 1264
+    },
+    {
+      "name": "readFileAsDataUrl",
+      "line": 1297
+    },
+    {
+      "name": "createPost",
+      "line": 1300
+    },
+    {
+      "name": "likePost",
+      "line": 1367
+    },
+    {
+      "name": "commentPost",
+      "line": 1415
+    },
+    {
+      "name": "deletePost",
+      "line": 1448
+    },
+    {
+      "name": "sharePost",
+      "line": 1484
+    },
+    {
+      "name": "deleteComment",
+      "line": 1518
+    },
+    {
+      "name": "editComment",
+      "line": 1544
+    },
+    {
+      "name": "editPost",
+      "line": 1556
+    },
+    {
+      "name": "reactToPost",
+      "line": 1565
+    },
+    {
+      "name": "filterActivePosts",
+      "line": 1581
+    },
+    {
+      "name": "importAnime",
+      "line": 1591
+    },
+    {
+      "name": "incEpisode",
+      "line": 1601
+    },
+    {
+      "name": "removeAnime",
+      "line": 1602
+    },
+    {
+      "name": "saveBio",
+      "line": 1605
+    },
+    {
+      "name": "saveUsername",
+      "line": 1606
+    },
+    {
+      "name": "setAvatar",
+      "line": 1607
+    },
+    {
+      "name": "handleProfilePicUpload",
+      "line": 1610
+    },
+    {
+      "name": "claimDailyActual",
+      "line": 1624
+    },
+    {
+      "name": "claimDaily",
+      "line": 1638
+    },
+    {
+      "name": "renderChatSearchHTML",
+      "line": 1649
+    },
+    {
+      "name": "renderRecentChatsHTML",
+      "line": 1659
+    },
+    {
+      "name": "bindDynamicChat",
+      "line": 1670
+    },
+    {
+      "name": "updateChatSearchResults",
+      "line": 1675
+    },
+    {
+      "name": "updateRecentList",
+      "line": 1676
+    },
+    {
+      "name": "openChatWithUser",
+      "line": 1677
+    },
+    {
+      "name": "closeChatWindow",
+      "line": 1694
+    },
+    {
+      "name": "sendChatMessage",
+      "line": 1695
+    },
+    {
+      "name": "removeRecentChat",
+      "line": 1716
+    },
+    {
+      "name": "openGlobalChat",
+      "line": 1719
+    },
+    {
+      "name": "closeGlobalChat",
+      "line": 1726
+    },
+    {
+      "name": "sendGlobalMessage",
+      "line": 1727
+    },
+    {
+      "name": "toggleReaction",
+      "line": 1739
+    },
+    {
+      "name": "handleReactionPickerToggle",
+      "line": 1762
+    },
+    {
+      "name": "renderCardVisual",
+      "line": 1774
+    },
+    {
+      "name": "renderSlot",
+      "line": 1784
+    },
+    {
+      "name": "renderSlots",
+      "line": 1790
+    },
+    {
+      "name": "missionResetCountdown",
+      "line": 1801
+    },
+    {
+      "name": "viewDailyMissionsInner",
+      "line": 1802
+    },
+    {
+      "name": "viewThemeStore",
+      "line": 1832
+    },
+    {
+      "name": "viewQuizRulesModal",
+      "line": 1892
+    },
+    {
+      "name": "viewQuizModal",
+      "line": 1909
+    },
+    {
+      "name": "viewAuth",
+      "line": 1938
+    },
+    {
+      "name": "viewProfile",
+      "line": 1952
+    },
+    {
+      "name": "relativeTime",
+      "line": 1995
+    },
+    {
+      "name": "viewFeed",
+      "line": 2007
+    },
+    {
+      "name": "viewTracker",
+      "line": 2181
+    },
+    {
+      "name": "viewChatList",
+      "line": 2194
+    },
+    {
+      "name": "viewChatWindow",
+      "line": 2250
+    },
+    {
+      "name": "renderReactionsBar",
+      "line": 2290
+    },
+    {
+      "name": "renderReactionPicker",
+      "line": 2302
+    },
+    {
+      "name": "viewGlobalChatWindow",
+      "line": 2308
+    },
+    {
+      "name": "makeBattleCard",
+      "line": 2368
+    },
+    {
+      "name": "generateAIDeck",
+      "line": 2384
+    },
+    {
+      "name": "calcTotals",
+      "line": 2399
+    },
+    {
+      "name": "applyDamage",
+      "line": 2406
+    },
+    {
+      "name": "startBattle",
+      "line": 2421
+    },
+    {
+      "name": "playerAttack",
+      "line": 2482
+    },
+    {
+      "name": "aiTakeTurn",
+      "line": 2523
+    },
+    {
+      "name": "endBattle",
+      "line": 2559
+    },
+    {
+      "name": "claimBattleReward",
+      "line": 2572
+    },
+    {
+      "name": "toggleBattleCard",
+      "line": 2599
+    },
+    {
+      "name": "deleteDmMessage",
+      "line": 2608
+    },
+    {
+      "name": "deleteGlobalMessage",
+      "line": 2622
+    },
+    {
+      "name": "getWeekKey",
+      "line": 2632
+    },
+    {
+      "name": "claimWeeklyReward",
+      "line": 2637
+    },
+    {
+      "name": "renderLeaderboard",
+      "line": 2659
+    },
+    {
+      "name": "viewBattleScreen",
+      "line": 2689
+    },
+    {
+      "name": "viewArena",
+      "line": 2916
+    },
+    {
+      "name": "viewCardPreviewModal",
+      "line": 2954
+    },
+    {
+      "name": "cardGrid",
+      "line": 2959
+    },
+    {
+      "name": "viewShop",
+      "line": 2994
+    },
+    {
+      "name": "viewCardDetailModal",
+      "line": 3096
+    },
+    {
+      "name": "viewInventory",
+      "line": 3130
+    },
+    {
+      "name": "viewImportModal",
+      "line": 3181
+    },
+    {
+      "name": "viewEquipModal",
+      "line": 3185
+    },
+    {
+      "name": "viewInspectProfile",
+      "line": 3190
+    },
+    {
+      "name": "viewNewsModal",
+      "line": 3213
+    },
+    {
+      "name": "getJinwooImage",
+      "line": 3259
+    },
+    {
+      "name": "getEnemyDialogue",
+      "line": 3356
+    },
+    {
+      "name": "calcPlayerCombinedStats",
+      "line": 3366
+    },
+    {
+      "name": "sfxSwordSlash",
+      "line": 3389
+    },
+    {
+      "name": "sfxElectricZing",
+      "line": 3403
+    },
+    {
+      "name": "sfxDigitalPulse",
+      "line": 3418
+    },
+    {
+      "name": "sfxHit",
+      "line": 3422
+    },
+    {
+      "name": "openStoryMode",
+      "line": 3428
+    },
+    {
+      "name": "showStoryRulesModal",
+      "line": 3454
+    },
+    {
+      "name": "startStoryFight",
+      "line": 3491
+    },
+    {
+      "name": "storyApplyDamage",
+      "line": 3546
+    },
+    {
+      "name": "storyPlayerAttack",
+      "line": 3563
+    },
+    {
+      "name": "storyEnemyAttack",
+      "line": 3670
+    },
+    {
+      "name": "storyEndBattle",
+      "line": 3715
+    },
+    {
+      "name": "openAriseModal",
+      "line": 3737
+    },
+    {
+      "name": "closeAriseModal",
+      "line": 3744
+    },
+    {
+      "name": "toggleAriseShadow",
+      "line": 3745
+    },
+    {
+      "name": "confirmArise",
+      "line": 3751
+    },
+    {
+      "name": "triggerAriseBurst",
+      "line": 3782
+    },
+    {
+      "name": "viewAriseModal",
+      "line": 3872
+    },
+    {
+      "name": "advanceStoryDialogue",
+      "line": 3903
+    },
+    {
+      "name": "claimStoryReward",
+      "line": 3919
+    },
+    {
+      "name": "exitStoryMode",
+      "line": 3989
+    },
+    {
+      "name": "viewStoryMode",
+      "line": 4011
+    },
+    {
+      "name": "viewStoryCoinToss",
+      "line": 4022
+    },
+    {
+      "name": "viewStoryMap",
+      "line": 4038
+    },
+    {
+      "name": "fmtNum",
+      "line": 4109
+    },
+    {
+      "name": "viewStoryDialogue",
+      "line": 4116
+    },
+    {
+      "name": "viewStoryFight",
+      "line": 4138
+    },
+    {
+      "name": "viewStoryVictory",
+      "line": 4230
+    },
+    {
+      "name": "viewStoryDefeat",
+      "line": 4256
+    },
+    {
+      "name": "viewApp",
+      "line": 4264
+    },
+    {
+      "name": "render",
+      "line": 4308
+    },
+    {
+      "name": "bindAuth",
+      "line": 4320
+    },
+    {
+      "name": "bindApp",
+      "line": 4346
+    },
+    {
+      "name": "boot",
+      "line": 4742
+    }
+  ],
+  "arrowDeclarations": [
+    {
+      "name": "base",
+      "line": 95
+    },
+    {
+      "name": "getUserBadgeInfo",
+      "line": 141
+    },
+    {
+      "name": "getUserGlowClass",
+      "line": 142
+    },
+    {
+      "name": "renderBadgeLabel",
+      "line": 143
+    },
+    {
+      "name": "getNextBadge",
+      "line": 144
+    },
+    {
+      "name": "escapeHtml",
+      "line": 170
+    },
+    {
+      "name": "cssBgUrl",
+      "line": 171
+    },
+    {
+      "name": "fallbackAvatar",
+      "line": 172
+    },
+    {
+      "name": "todayKey",
+      "line": 173
+    },
+    {
+      "name": "emptyProgress",
+      "line": 174
+    },
+    {
+      "name": "emptyClaimed",
+      "line": 175
+    },
+    {
+      "name": "getMissionGoal",
+      "line": 176
+    },
+    {
+      "name": "card",
+      "line": 223
+    },
+    {
+      "name": "getMetaRef",
+      "line": 229
+    },
+    {
+      "name": "getActivityRef",
+      "line": 230
+    },
+    {
+      "name": "getPostRef",
+      "line": 231
+    },
+    {
+      "name": "getChatId",
+      "line": 232
+    },
+    {
+      "name": "getChatMsgCol",
+      "line": 233
+    },
+    {
+      "name": "getChatRef",
+      "line": 234
+    },
+    {
+      "name": "lvFromXp",
+      "line": 254
+    },
+    {
+      "name": "f",
+      "line": 257
+    },
+    {
+      "name": "o",
+      "line": 259
+    },
+    {
+      "name": "getThemeById",
+      "line": 262
+    },
+    {
+      "name": "ownsTheme",
+      "line": 263
+    },
+    {
+      "name": "getEquippedTheme",
+      "line": 264
+    },
+    {
+      "name": "getThemeCssClass",
+      "line": 265
+    },
+    {
+      "name": "showToast",
+      "line": 372
+    },
+    {
+      "name": "close",
+      "line": 400
+    },
+    {
+      "name": "isMissionComplete",
+      "line": 585
+    },
+    {
+      "name": "isMissionClaimed",
+      "line": 586
+    },
+    {
+      "name": "mission",
+      "line": 590
+    },
+    {
+      "name": "unMeta",
+      "line": 718
+    },
+    {
+      "name": "unUsers",
+      "line": 757
+    },
+    {
+      "name": "l",
+      "line": 763
+    },
+    {
+      "name": "unPosts",
+      "line": 767
+    },
+    {
+      "name": "otherId",
+      "line": 780
+    },
+    {
+      "name": "totalUnread",
+      "line": 795
+    },
+    {
+      "name": "setPresence",
+      "line": 806
+    },
+    {
+      "name": "onVis",
+      "line": 809
+    },
+    {
+      "name": "onUnload",
+      "line": 810
+    },
+    {
+      "name": "isOnline",
+      "line": 811
+    },
+    {
+      "name": "getUserById",
+      "line": 812
+    },
+    {
+      "name": "updateLeaderboard",
+      "line": 813
+    },
+    {
+      "name": "pool",
+      "line": 838
+    },
+    {
+      "name": "card",
+      "line": 917
+    },
+    {
+      "name": "card",
+      "line": 933
+    },
+    {
+      "name": "isDuplicate",
+      "line": 940
+    },
+    {
+      "name": "cardBase",
+      "line": 941
+    },
+    {
+      "name": "inv",
+      "line": 958
+    },
+    {
+      "name": "ease",
+      "line": 1042
+    },
+    {
+      "name": "res",
+      "line": 1081
+    },
+    {
+      "name": "openQuizRules",
+      "line": 1167
+    },
+    {
+      "name": "closeQuizRules",
+      "line": 1168
+    },
+    {
+      "name": "el",
+      "line": 1190
+    },
+    {
+      "name": "showXpFlash",
+      "line": 1191
+    },
+    {
+      "name": "showGemsFlash",
+      "line": 1192
+    },
+    {
+      "name": "showGoldFlash",
+      "line": 1193
+    },
+    {
+      "name": "correct",
+      "line": 1267
+    },
+    {
+      "name": "r",
+      "line": 1297
+    },
+    {
+      "name": "postBefore",
+      "line": 1370
+    },
+    {
+      "name": "creatorUid",
+      "line": 1420
+    },
+    {
+      "name": "post",
+      "line": 1491
+    },
+    {
+      "name": "comments",
+      "line": 1530
+    },
+    {
+      "name": "comments",
+      "line": 1549
+    },
+    {
+      "name": "prev",
+      "line": 1572
+    },
+    {
+      "name": "tracker",
+      "line": 1601
+    },
+    {
+      "name": "tracker",
+      "line": 1602
+    },
+    {
+      "name": "res",
+      "line": 1651
+    },
+    {
+      "name": "users",
+      "line": 1660
+    },
+    {
+      "name": "next",
+      "line": 1716
+    },
+    {
+      "name": "label",
+      "line": 1785
+    },
+    {
+      "name": "medalForRank",
+      "line": 1796
+    },
+    {
+      "name": "cards",
+      "line": 1803
+    },
+    {
+      "name": "themeCards",
+      "line": 1837
+    },
+    {
+      "name": "dots",
+      "line": 1912
+    },
+    {
+      "name": "cor",
+      "line": 1913
+    },
+    {
+      "name": "feedItems",
+      "line": 2075
+    },
+    {
+      "name": "myReaction",
+      "line": 2077
+    },
+    {
+      "name": "rxnSummary",
+      "line": 2087
+    },
+    {
+      "name": "commentHtml",
+      "line": 2093
+    },
+    {
+      "name": "online",
+      "line": 2195
+    },
+    {
+      "name": "msgHtml",
+      "line": 2255
+    },
+    {
+      "name": "counts",
+      "line": 2292
+    },
+    {
+      "name": "msgHtml",
+      "line": 2311
+    },
+    {
+      "name": "viewChat",
+      "line": 2361
+    },
+    {
+      "name": "base",
+      "line": 2369
+    },
+    {
+      "name": "pool",
+      "line": 2387
+    },
+    {
+      "name": "hp",
+      "line": 2400
+    },
+    {
+      "name": "def",
+      "line": 2401
+    },
+    {
+      "name": "selected",
+      "line": 2446
+    },
+    {
+      "name": "idx",
+      "line": 2485
+    },
+    {
+      "name": "selCards",
+      "line": 2713
+    },
+    {
+      "name": "totalHP",
+      "line": 2714
+    },
+    {
+      "name": "totalDEF",
+      "line": 2715
+    },
+    {
+      "name": "selCards",
+      "line": 2752
+    },
+    {
+      "name": "previewHP",
+      "line": 2753
+    },
+    {
+      "name": "previewDEF",
+      "line": 2754
+    },
+    {
+      "name": "base",
+      "line": 2779
+    },
+    {
+      "name": "ownedIds",
+      "line": 2957
+    },
+    {
+      "name": "byRarity",
+      "line": 2958
+    },
+    {
+      "name": "mUnclaimed",
+      "line": 2998
+    },
+    {
+      "name": "mTotalDone",
+      "line": 2999
+    },
+    {
+      "name": "equippedIds",
+      "line": 3103
+    },
+    {
+      "name": "equippedIds",
+      "line": 3132
+    },
+    {
+      "name": "card",
+      "line": 3187
+    },
+    {
+      "name": "base",
+      "line": 3198
+    },
+    {
+      "name": "anyRunning",
+      "line": 3216
+    },
+    {
+      "name": "base",
+      "line": 3371
+    },
+    {
+      "name": "ch",
+      "line": 3492
+    },
+    {
+      "name": "chosen",
+      "line": 3754
+    },
+    {
+      "name": "ch",
+      "line": 4043
+    },
+    {
+      "name": "chapterTabs",
+      "line": 4046
+    },
+    {
+      "name": "enemyCards",
+      "line": 4051
+    },
+    {
+      "name": "mapErr",
+      "line": 4321
+    },
+    {
+      "name": "submit",
+      "line": 4322
+    },
+    {
+      "name": "post",
+      "line": 4421
+    },
+    {
+      "name": "post",
+      "line": 4443
+    },
+    {
+      "name": "myRxn",
+      "line": 4445
+    },
+    {
+      "name": "csi",
+      "line": 4502
+    },
+    {
+      "name": "cmi",
+      "line": 4506
+    },
+    {
+      "name": "gci",
+      "line": 4512
+    },
+    {
+      "name": "card",
+      "line": 4627
+    },
+    {
+      "name": "qai",
+      "line": 4650
+    },
+    {
+      "name": "qans",
+      "line": 4652
+    }
+  ],
+  "domIds": [
+    "app",
+    "neon-modal-overlay",
+    "neon-modal-ok",
+    "neon-modal-cancel",
+    "music-panel-wrap",
+    "music-toggle",
+    "sfx-toggle",
+    "music-vol",
+    "music-repeat",
+    "music-continue",
+    "neon-wheel-canvas",
+    "sensei-input",
+    "levelup-overlay",
+    "levelup-close-btn",
+    "post-caption",
+    "import-input",
+    "bio-input",
+    "username-input",
+    "chat-search-results",
+    "chat-search-label",
+    "chat-recent-list",
+    "chat-message-input",
+    "global-chat-input",
+    "sl-rules-ok",
+    "arise-mist-overlay",
+    "arise-burst-overlay",
+    "arise-confirm-btn",
+    "chat-search-input",
+    "auth-email",
+    "auth-pass",
+    "auth-username",
+    "auth-submit-btn",
+    "switch-auth",
+    "logout-btn",
+    "save-bio-btn",
+    "edit-username-btn",
+    "cancel-username-btn",
+    "save-username-btn",
+    "daily-btn",
+    "main-avatar-btn",
+    "global-avatar-upload",
+    "post-btn",
+    "sf-media-upload",
+    "sf-remove-media",
+    "sf-link-btn",
+    "sf-link-clear",
+    "sf-link-input",
+    "sf-cancel-edit-cmt",
+    "open-news-hub",
+    "close-news-modal",
+    "open-import",
+    "close-import",
+    "import-add",
+    "sensei-ask-btn",
+    "chat-back-btn",
+    "chat-send-btn",
+    "chat-body-scroll",
+    "join-global-chat",
+    "global-chat-back-btn",
+    "global-chat-send-btn",
+    "global-chat-body-scroll",
+    "spin-wheel-btn",
+    "music-panel-btn",
+    "battle-open-select",
+    "battle-open-rules",
+    "battle-close-rules",
+    "battle-enter-btn",
+    "battle-cancel-enter",
+    "battle-confirm-enter",
+    "battle-claim-reward",
+    "battle-exit-btn",
+    "buy-box-btn",
+    "open-card-preview",
+    "close-card-preview",
+    "toggle-missions-accordion",
+    "toggle-theme-store",
+    "close-card-detail",
+    "card-detail-overlay",
+    "close-equip-modal",
+    "close-inspect-btn",
+    "open-quiz-rules",
+    "quiz-cancel-btn",
+    "quiz-start-btn",
+    "quiz-anime-input",
+    "quiz-anime-go-btn",
+    "quiz-answer-input",
+    "quiz-submit-btn",
+    "quiz-skip-btn",
+    "quiz-next-btn",
+    "quiz-close-btn",
+    "sl-exit",
+    "sl-exit-after",
+    "sl-rules-btn",
+    "sl-refresh-btn",
+    "sl-attack-btn",
+    "sl-claim-reward",
+    "sl-dialogue-box",
+    "sl-arise-btn",
+    "arise-close-btn",
+    "nav-more-btn",
+    "nav-more-overlay",
+    "avatar-file-input"
+  ],
+  "dataAttributes": [
+    "data-action",
+    "data-avatar",
+    "data-battle-attack",
+    "data-battle-select",
+    "data-buy-theme",
+    "data-chapter-id",
+    "data-claim-mission",
+    "data-comment",
+    "data-comment-focus",
+    "data-del-comment",
+    "data-delete",
+    "data-dm-delete",
+    "data-edit-comment",
+    "data-edit-post",
+    "data-equip-slot",
+    "data-equip-theme",
+    "data-feed-rxn",
+    "data-feed-rxn-post",
+    "data-fight-enemy",
+    "data-gc-delete",
+    "data-like-open",
+    "data-msg",
+    "data-open-chat",
+    "data-open-equip",
+    "data-open-public-profile",
+    "data-open-rxn",
+    "data-plus",
+    "data-post-menu",
+    "data-preview-card",
+    "data-read-news",
+    "data-recycle",
+    "data-remove",
+    "data-remove-chat",
+    "data-rxn",
+    "data-save-comment",
+    "data-select-chapter",
+    "data-share",
+    "data-shop-tab",
+    "data-start-chat",
+    "data-tab",
+    "data-toggle-shadow",
+    "data-track",
+    "data-unequip-slot",
+    "data-unequip-theme",
+    "data-weekly-rank"
+  ],
+  "cssVariables": {
+    "--bg": "#030014",
+    "--bg-soft": "#0b0820",
+    "--panel": "#14112f",
+    "--panel-2": "#1c1740",
+    "--line": "rgba(167,139,250,0.28)",
+    "--text": "#f3edff",
+    "--muted": "#bca8ef",
+    "--brand": "#8b5cf6",
+    "--brand-2": "#c026d3",
+    "--liked": "#fb7185",
+    "--danger": "#f87171",
+    "--online": "#22c55e",
+    "--card-image": "none"
+  },
+  "keyframes": [
+    "goldChipPulse",
+    "glowCopper",
+    "glowSilver",
+    "glowGold",
+    "glowDiamond",
+    "mythicBadgeShift",
+    "glowMythic",
+    "missionWrapGlow",
+    "claimBtnPulse",
+    "rarePulse",
+    "holoSpin",
+    "grandmasterGlow",
+    "demonKingLightning",
+    "neonRingSpin",
+    "neonBtnShift",
+    "globalChatGlow",
+    "onlinePulse",
+    "newsHubGlow",
+    "quizCardGlow",
+    "quizDotPulse",
+    "quizIconSpin",
+    "quizFeedbackPop",
+    "quizFeedbackShake",
+    "quizXpFlash",
+    "dbAuraFlicker",
+    "dbGlowPulse",
+    "dbAuraPulse",
+    "opWave",
+    "opGlowPulse",
+    "opWaveSweep",
+    "narutoChakra",
+    "narutoGlowPulse",
+    "narutoChakraInner",
+    "bleachSmoke",
+    "bleachGlowPulse",
+    "bleachSmokeInner",
+    "aotSteam",
+    "aotShake",
+    "opmImpact",
+    "opmGlowPulse",
+    "opmSparkle",
+    "vinlandSnow",
+    "vinlandGlowPulse",
+    "vinlandDrift",
+    "previewEmojiBob",
+    "equippedPulse",
+    "levelUpCardPop",
+    "levelUpRingSpin",
+    "levelUpIconBounce",
+    "levelUpNumberGlow",
+    "levelUpBtnShift",
+    "legendaryFramePulse",
+    "rareFramePulse",
+    "pityWarnPulse",
+    "gachaResultSlideIn",
+    "neonBoxGlow",
+    "boxShake",
+    "boxPanelShake",
+    "boxBeamScale",
+    "beamSpin",
+    "beamFade",
+    "gachaRevealPop",
+    "badgePop",
+    "fadeInOverlay",
+    "cardDetailPop",
+    "battleCardGlow",
+    "coinSpin",
+    "shieldBreakFlash",
+    "damageFloat",
+    "thinkPulse",
+    "duelStageIn",
+    "attackPulse",
+    "vsFlash",
+    "thinkDot",
+    "shieldFlashAnim",
+    "neonModalPop",
+    "emojiPopIn",
+    "musicPanelSlide",
+    "slTitlePulse",
+    "bossNodePulse",
+    "slShakeAnim",
+    "slShakeAnimEnemy",
+    "slHitFlash",
+    "slDmgFloat",
+    "slBtnShift",
+    "slSystemAppear",
+    "slSystemGlitchBorder",
+    "slGlitchText",
+    "defeatPulse",
+    "crownBob",
+    "resultGlow",
+    "loadBar",
+    "critPop",
+    "enrageFlicker",
+    "enrageShake",
+    "guardPulse",
+    "drawerUp",
+    "mistSwirl",
+    "mistFade",
+    "screenShake",
+    "ariseGradient",
+    "arisePulse",
+    "shadowAuraPulse",
+    "shadowMonarchPulse",
+    "adminBadgeShift",
+    "ariseBurstVibrate",
+    "rxnPopIn"
+  ],
+  "mediaQueries": [
+    "(max-width:480px)",
+    "(max-width:390px)",
+    "(max-width:420px)",
+    "(max-width: 380px)"
+  ],
+  "urls": [
+    "https://api.dicebear.com/7.x/adventurer/svg?seed=Gojo",
+    "https://api.dicebear.com/7.x/adventurer/svg?seed=Levi",
+    "https://api.dicebear.com/7.x/adventurer/svg?seed=Luffy",
+    "https://api.dicebear.com/7.x/adventurer/svg?seed=Naruto",
+    "https://api.dicebear.com/7.x/adventurer/svg?seed=Sukuna",
+    "https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(name||",
+    "https://api.groq.com/openai/v1/chat/completions",
+    "https://api.jikan.moe/v4/anime?order_by=start_date&sort=desc&limit=15&sfw=true&status=airing",
+    "https://files.catbox.moe/6rbexc.mp3",
+    "https://files.catbox.moe/hbnkwu.mp3",
+    "https://files.catbox.moe/oogzjb.mp3",
+    "https://files.catbox.moe/viowx8.mp3",
+    "https://raw.githubusercontent.com/yasin636/anime-card-assets/main/pop.mp3",
+    "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/1774203030221_with_bgc.png",
+    "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/1774203370787_with_bgc.png",
+    "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/1774203535944_with_bgc.png",
+    "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/1774203741448_with_bgc.png",
+    "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/1774204509259_with_bgc.png",
+    "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/1774204785975_with_bgc.png",
+    "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/1774205057103_with_bgc.png",
+    "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/1774205542394_with_bgc.png",
+    "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/1774206242811_with_bgc.png",
+    "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/1774207302454_with_bgc.png",
+    "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/1774207386177_with_bgc.png",
+    "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/1774207401932_with_bgc.png",
+    "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/IMG_20260325_164742.jpg",
+    "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/IMG_20260325_165012.jpg",
+    "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/IMG_20260325_165130.jpg",
+    "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/IMG_20260325_165212.jpg",
+    "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/IMG_20260325_202505.jpg",
+    "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/IMG_20260326_202550.jpg",
+    "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/IMG_20260326_202630.jpg",
+    "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/IMG_20260326_202705.jpg",
+    "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/IMG_20260326_202749.jpg",
+    "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/IMG_20260326_202818.jpg",
+    "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/IMG_20260326_202940.jpg",
+    "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/IMG_20260326_205131.jpg",
+    "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/IMG_20260326_205510.jpg",
+    "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/IMG_20260326_211233.jpg",
+    "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/gpt-image-1.5-high-fidelity_a_Good_good_very_good__1_with_bgc.png",
+    "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/gpt-image-1.5-high-fidelity_a_Good_good_very_good__with_bgc%20(1).png",
+    "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/gpt-image-1.5-high-fidelity_a_Good_good_very_good__with_bgc.png",
+    "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/gpt-image-1.5-high-fidelity_a______with_bgc.png",
+    "https://www.gstatic.com/firebasejs/10.14.1/firebase-analytics.js",
+    "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js",
+    "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js",
+    "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js"
+  ]
+}

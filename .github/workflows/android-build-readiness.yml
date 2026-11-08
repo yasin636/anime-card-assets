@@ -1,0 +1,112 @@
+name: Android build readiness
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - arena/cd835a4c-anime-card-assets
+    paths:
+      - .github/workflows/android-build-readiness.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-readiness-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check-environment:
+    name: Check Android build tools and downloads
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Inspect tools and Android SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p readiness
+          {
+            echo 'Android build readiness — tools'
+            date -u
+            node --version
+            npm --version
+            java -version 2>&1
+            javac -version
+            echo "Android SDK: ${ANDROID_HOME:-${ANDROID_SDK_ROOT:-not configured}}"
+            SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+            test -n "$SDK"
+            test -d "$SDK"
+            test -x "$SDK/platform-tools/adb"
+            "$SDK/platform-tools/adb" version
+            test -d "$SDK/platforms"
+            test -d "$SDK/build-tools"
+            echo 'Installed Android platforms:'
+            ls "$SDK/platforms"
+            echo 'Installed Android build-tools:'
+            ls "$SDK/build-tools"
+            echo 'Available disk:'
+            df -h .
+          } | tee readiness/tools.txt
+
+      - name: Check dependency download endpoints
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            npm ping --fetch-retries=1 --fetch-timeout=30000
+            for url in \
+              'https://registry.npmjs.org/expo/latest' \
+              'https://services.gradle.org/versions/current' \
+              'https://dl.google.com/android/repository/repository2-1.xml' \
+              'https://dl.google.com/dl/android/maven2/com/android/tools/build/gradle/maven-metadata.xml' \
+              'https://repo.maven.apache.org/maven2/com/facebook/react/react-android/maven-metadata.xml'; do
+              echo "Checking $url"
+              curl --fail --silent --show-error --location \
+                --retry 2 --connect-timeout 20 --max-time 90 \
+                --output /dev/null "$url"
+              echo 'PASS'
+            done
+          } 2>&1 | tee readiness/downloads.txt
+
+      - name: Publish check summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo '## Android build readiness'
+            echo ''
+            echo 'Job result before reporting: ${{ job.status }}'
+            echo ''
+            echo 'This checks tools and download endpoints only. It does not compile an app, produce an APK, or verify signing.'
+            echo 'The Android compile SDK/build-tools version will be pinned after selecting compatible Expo/React Native versions.'
+            echo ''
+            echo '### Tool results'
+            echo '```text'
+            cat readiness/tools.txt 2>/dev/null || true
+            echo '```'
+            echo '### Download results'
+            echo '```text'
+            cat readiness/downloads.txt 2>/dev/null || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Save diagnostic report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-build-readiness-${{ github.run_number }}
+          path: readiness/
+          if-no-files-found: warn
+          retention-days: 7
