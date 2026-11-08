@@ -50,9 +50,27 @@ jobs:
           echo '221e0a3106aa4c3ccc154e0a418b55020b3f9ea6e84f92e8749cd9e2f39f5e58  android/app/debug.keystore' | sha256sum --check
           # This is Expo's public development certificate, NOT a production key.
           grep -q 'signingConfig signingConfigs.debug' android/app/build.gradle
+      - name: Allow slow first-time Gradle downloads
+        run: |
+          sed -i 's/networkTimeout=10000/networkTimeout=120000/' android/gradle/wrapper/gradle-wrapper.properties
       - name: Compile standalone release-mode test APK
         working-directory: apps/mobile/android
-        run: ./gradlew :app:assembleRelease --no-daemon --stacktrace -PreactNativeArchitectures=arm64-v8a,armeabi-v7a -Dorg.gradle.jvmargs="-Xmx4g -XX:MaxMetaspaceSize=1g"
+        run: |
+          set -euo pipefail
+          ./gradlew :app:assembleRelease --no-daemon --stacktrace -PreactNativeArchitectures=arm64-v8a,armeabi-v7a -Dorg.gradle.jvmargs="-Xmx4g -XX:MaxMetaspaceSize=1g" 2>&1 | tee ../gradle-build.log
+      - name: Report compilation failure
+        if: failure()
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('gradle-build.log')
+          if p.exists():
+              text = p.read_text(errors='replace')
+              lines = text.splitlines()
+              selected = [x for x in lines if any(k in x for k in ['What went wrong', 'Exception', 'Caused by:', 'Could not', 'error:', 'FAILURE:', 'Execution failed'])]
+              message = '\n'.join(selected[-30:] or lines[-40:])[:8000]
+              print('::error title=Gradle compilation details::' + message.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
+          PY
       - name: Verify APK signature, metadata, and embedded JavaScript
         run: |
           set -euo pipefail

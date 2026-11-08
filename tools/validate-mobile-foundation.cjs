@@ -1,0 +1,40 @@
+// Structural scope checks, not a substitute for device interaction tests.
+const fs = require('node:fs');
+const path = require('node:path');
+const assert = require('node:assert/strict');
+const crypto = require('node:crypto');
+const ts = require('../apps/mobile/node_modules/typescript');
+const root = path.join(__dirname, '..');
+const mobile = path.join(root, 'apps/mobile');
+const app = JSON.parse(fs.readFileSync(path.join(mobile, 'app.json'))).expo;
+const pkg = JSON.parse(fs.readFileSync(path.join(mobile, 'package.json')));
+const code = fs.readFileSync(path.join(mobile, 'App.tsx'), 'utf8');
+const source = ts.createSourceFile('App.tsx', code, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+let pages;
+function visit(node) {
+  if (ts.isVariableDeclaration(node) && node.name.getText(source) === 'pages') pages = node.initializer;
+  ts.forEachChild(node, visit);
+}
+visit(source);
+assert(pages && ts.isObjectLiteralExpression(pages));
+assert.deepEqual(pages.properties.map(p => p.name.getText(source)), ['Profile', 'Arena', 'Feed', 'Shop', 'Cards', 'Tracker', 'Chat', 'Adventure']);
+assert.equal(app.version, '0.1.0');
+assert.equal(app.android.versionCode, 1);
+assert.equal(app.android.package, 'com.yasin636.animemetahub');
+assert.equal(app.ios.bundleIdentifier, app.android.package);
+assert.equal(app.updates.enabled, false);
+assert.equal(pkg.dependencies.expo, '54.0.38');
+assert.equal(pkg.dependencies['react-native'], '0.81.5');
+assert(code.includes('NAVIGATION TEST'));
+assert(code.includes('onRequestClose'));
+assert(code.includes('Sample profile'));
+assert(!/\bgsk_[a-zA-Z0-9]+/.test(code));
+assert(!/from ['"](?:firebase|@react-native-firebase)/.test(code));
+const hash = p => crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');
+for (const [name, original] of Object.entries({
+  gojo: '1774203370787_with_bgc.png',
+  sukuna: '1774203030221_with_bgc.png',
+  deku: '1774206242811_with_bgc.png',
+  yuji: 'gpt-image-1.5-high-fidelity_a_Good_good_very_good__1_with_bgc.png',
+})) assert.equal(hash(path.join(mobile, 'assets/cards', name + '.png')), hash(path.join(root, original)));
+console.log('PASS: 8 native destinations, test-only app configuration, local artwork integrity and scope checks. Device tests still required.');
