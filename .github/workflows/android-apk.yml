@@ -1,0 +1,87 @@
+name: Android test APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [arena/cd835a4c-anime-card-assets]
+    paths:
+      - apps/mobile/**
+      - .github/workflows/android-apk.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: apps/mobile
+    env:
+      CI: '1'
+      EXPO_NO_TELEMETRY: '1'
+      NODE_ENV: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: apps/mobile/package-lock.json
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Install locked dependencies
+        run: npm ci --include=dev --no-audit --no-fund
+      - name: TypeScript validation
+        run: npm run typecheck
+      - name: Generate Android project
+        run: npx expo prebuild --platform android --no-install
+      - name: Verify fixed test signing identity
+        run: |
+          set -euo pipefail
+          echo '221e0a3106aa4c3ccc154e0a418b55020b3f9ea6e84f92e8749cd9e2f39f5e58  android/app/debug.keystore' | sha256sum --check
+          # This is Expo's public development certificate, NOT a production key.
+          grep -q 'signingConfig signingConfigs.debug' android/app/build.gradle
+      - name: Compile standalone release-mode test APK
+        working-directory: apps/mobile/android
+        run: ./gradlew :app:assembleRelease --no-daemon --stacktrace -PreactNativeArchitectures=arm64-v8a,armeabi-v7a -Dorg.gradle.jvmargs="-Xmx4g -XX:MaxMetaspaceSize=1g"
+      - name: Verify APK signature, metadata, and embedded JavaScript
+        run: |
+          set -euo pipefail
+          SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          TOOLS="$(find "$SDK/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
+          APK=android/app/build/outputs/apk/release/app-release.apk
+          test -s "$APK"
+          "$TOOLS/apksigner" verify --verbose --print-certs "$APK"
+          "$TOOLS/aapt" dump badging "$APK" > apk-metadata.txt
+          sed -n '1,40p' apk-metadata.txt
+          unzip -l "$APK" | grep 'assets/index.android.bundle'
+          mkdir -p apk-output
+          cp "$APK" apk-output/AnimeMetaHub-v0.1.0-navigation-test.apk
+          cd apk-output
+          sha256sum *.apk > SHA256SUMS.txt
+          printf '%s\n' 'Android navigation test v0.1.0. Offline sample data only. Not a production release. Install APK directly; no Expo Go or Metro server required. Test-signing certificate only.' > README.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AnimeMetaHub-v0.1.0-navigation-test
+          path: apps/mobile/apk-output/
+          retention-days: 14
+          if-no-files-found: error
+      - name: Build summary
+        run: |
+          {
+            echo '## Navigation Test APK v0.1.0'
+            echo 'Standalone Android APK, ARM64 + ARMv7. Android 7.0+ (API 24+) expected; see APK metadata for the actual minimum.'
+            echo 'Offline sample data only. No login, purchases, rewards, chat, or combat backend.'
+            echo 'Signed with the pinned public Expo development key. Not for production or real accounts.'
+            echo 'Download the artifact ZIP and extract the APK to install on Android.'
+            cat apk-output/SHA256SUMS.txt
+          } >> "$GITHUB_STEP_SUMMARY"

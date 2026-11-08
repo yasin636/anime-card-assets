@@ -1,0 +1,21 @@
+{
+  "expo": {
+    "name": "Anime Meta Hub Test",
+    "slug": "anime-meta-hub",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "android": {
+      "package": "com.yasin636.animemetahub",
+      "versionCode": 1,
+      "adaptiveIcon": {"backgroundColor": "#030014"},
+      "permissions": [],
+      "blockedPermissions": ["android.permission.RECORD_AUDIO", "android.permission.SYSTEM_ALERT_WINDOW"],
+      "edgeToEdgeEnabled": true
+    },
+    "ios": {"bundleIdentifier": "com.yasin636.animemetahub", "supportsTablet": true},
+    "assetBundlePatterns": ["**/*"],
+    "updates": {"enabled": false}
+  }
+}
