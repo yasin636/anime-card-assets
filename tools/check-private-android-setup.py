@@ -3,6 +3,7 @@
 import argparse
 import base64
 import json
+import hashlib
 import os
 from pathlib import Path
 import subprocess
@@ -41,6 +42,8 @@ try:
 except Exception:
     fail('A supplied base64 secret or Firebase JSON is invalid; values were not logged.')
 norm = lambda x: x.replace(':', '').upper()
+if manifest.get('keystoreSha256') and hashlib.sha256(key_bytes).hexdigest() != manifest['keystoreSha256']:
+    fail('ANDROID_KEYSTORE_BASE64 does not decode to the supplied backup keystore. Re-copy the complete BASE64 text file, not the P12 filename or contents from another file.')
 if not args.signing_only:
     if 'private_key' in config or config.get('type') == 'service_account':
         fail('Use Android google-services.json, NEVER a service-account key.')
@@ -66,10 +69,16 @@ if config is not None:
 # Password uses environment, not command-line arguments. Capture errors to avoid
 # accidental secret/config content in a raw tool traceback.
 try:
-    if args.skip_java_check:
+    # Separate data/password validation from Java compatibility failures.
+    try:
         pem = subprocess.check_output(['openssl', 'pkcs12', '-in', str(keystore), '-passin', 'env:ANDROID_KEYSTORE_PASSWORD', '-clcerts', '-nokeys'], stderr=subprocess.PIPE)
-    else:
-        pem = subprocess.check_output(['keytool', '-exportcert', '-rfc', '-keystore', str(keystore), '-storetype', 'PKCS12', '-storepass:env', 'ANDROID_KEYSTORE_PASSWORD', '-alias', manifest['alias']], stderr=subprocess.PIPE)
+    except subprocess.CalledProcessError:
+        fail('Keystore bytes match the backup, but the password cannot open it. Re-copy only ANDROID_KEYSTORE_PASSWORD.txt into the matching Actions secret (not a filename or account password).')
+    if not args.skip_java_check:
+        try:
+            pem = subprocess.check_output(['keytool', '-exportcert', '-rfc', '-keystore', str(keystore), '-storetype', 'PKCS12', '-storepass:env', 'ANDROID_KEYSTORE_PASSWORD', '-alias', manifest['alias']], stderr=subprocess.PIPE)
+        except subprocess.CalledProcessError:
+            fail('OpenSSL accepted the private key/password, but Java keytool could not export the alias. This is a Java compatibility/alias issue, not proof that the pasted password is wrong.')
     cert.write_bytes(pem)
     for algorithm in ['sha1', 'sha256']:
         actual = subprocess.check_output(['openssl', 'x509', '-in', str(cert), '-noout', '-fingerprint', '-' + algorithm], stderr=subprocess.PIPE, text=True).strip().split('=', 1)[1]
