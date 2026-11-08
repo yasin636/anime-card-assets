@@ -87,18 +87,30 @@ jobs:
       - name: Verify APK signature, metadata, and embedded JavaScript
         run: |
           set -euo pipefail
+          trap 'echo "::error::APK verification failed at shell line $LINENO: $BASH_COMMAND"' ERR
           SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
           TOOLS="$(find "$SDK/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
           APK=android/app/build/outputs/apk/release/app-release.apk
           test -s "$APK"
-          "$TOOLS/apksigner" verify --verbose --print-certs "$APK" > apk-signature.txt
+          if ! "$TOOLS/apksigner" verify --verbose --print-certs "$APK" > apk-signature.txt 2>&1; then
+            cat apk-signature.txt
+            echo "::error::apksigner rejected the built APK: $(tail -c 2000 apk-signature.txt | tr '\n' ' ')"
+            exit 1
+          fi
           cat apk-signature.txt
           python3 - <<'PY'
           import json,re
           from pathlib import Path
           expected=json.loads(Path('../../docs/react-native-blueprint/android-test-certificate.json').read_text())['sha256'].replace(':','').lower()
-          actual=re.search(r'Signer #1 certificate SHA-256 digest: ([a-fA-F0-9]+)',Path('apk-signature.txt').read_text()).group(1).lower()
-          assert actual == expected, 'APK did not use the pinned PRIVATE certificate'
+          match=re.search(r'Signer #1 certificate SHA-256 digest: ([a-fA-F0-9]+)',Path('apk-signature.txt').read_text())
+          if not match:
+              print('::error::apksigner did not report expected certificate digest format')
+              raise SystemExit(1)
+          actual=match.group(1).lower()
+          if actual != expected:
+              print(f'::error::APK certificate mismatch: got {actual}, expected {expected}')
+              raise SystemExit(1)
+          print('APK private certificate matches pinned manifest.')
           PY
           "$TOOLS/aapt" dump badging "$APK" > apk-metadata.txt
           sed -n '1,40p' apk-metadata.txt
