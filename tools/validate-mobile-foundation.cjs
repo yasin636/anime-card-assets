@@ -37,4 +37,13 @@ for (const [name, original] of Object.entries({
   deku: '1774206242811_with_bgc.png',
   yuji: 'gpt-image-1.5-high-fidelity_a_Good_good_very_good__1_with_bgc.png',
 })) assert.equal(hash(path.join(mobile, 'assets/cards', name + '.png')), hash(path.join(root, original)));
-console.log('PASS: 8 native destinations, test-only app configuration, local artwork integrity and scope checks. Device tests still required.');
+const { execFileSync } = require('node:child_process');
+const autolinker = path.join(mobile, 'node_modules/expo-modules-autolinking/bin/expo-modules-autolinking.js');
+const nativeModules = JSON.parse(execFileSync(process.execPath, [autolinker, 'resolve', '--platform', 'android', '--json'], { cwd: mobile, encoding: 'utf8' }));
+for (const module of nativeModules.modules) {
+  for (const project of module.projects || []) {
+    if (project.publication) assert(project.publication.version, `${module.packageName} missing Android publication version`);
+  }
+}
+assert(nativeModules.modules.find(m => m.packageName === 'expo-font').packageVersion.startsWith('14.'));
+console.log('PASS: 8 native destinations, test-only app configuration, artwork integrity, scope and Android autolinking checks. Device tests still required.');

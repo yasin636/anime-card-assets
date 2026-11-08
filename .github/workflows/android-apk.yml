@@ -42,6 +42,8 @@ jobs:
         run: npm ci --include=dev --no-audit --no-fund
       - name: TypeScript validation
         run: npm run typecheck
+      - name: Validate navigation scope and Android autolinking
+        run: node ../../tools/validate-mobile-foundation.cjs
       - name: Generate Android project
         run: npx expo prebuild --platform android --no-install
       - name: Verify fixed test signing identity
