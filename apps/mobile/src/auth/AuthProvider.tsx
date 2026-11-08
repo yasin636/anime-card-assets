@@ -24,8 +24,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const lock = useRef(false), pending = useRef<Pending | null>(null), signupName = useRef('');
   const activeUid = useRef<string | null>(null);
   useEffect(() => onAuthStateChanged(auth, next => {
-    activeUid.current = next?.uid || null;
-    setUser(next); setProfile(null); setProfileError(''); setReady(true);
+    const nextUid = next?.uid || null;
+    if (activeUid.current !== nextUid) { setProfile(null); setProfileError(''); }
+    activeUid.current = nextUid;
+    setUser(next); setReady(true);
   }), []);
 
   useEffect(() => {
