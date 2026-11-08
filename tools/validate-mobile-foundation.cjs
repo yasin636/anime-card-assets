@@ -18,16 +18,20 @@ function visit(node) {
 visit(source);
 assert(pages && ts.isObjectLiteralExpression(pages));
 assert.deepEqual(pages.properties.map(p => p.name.getText(source)), ['Profile', 'Arena', 'Feed', 'Shop', 'Cards', 'Tracker', 'Chat', 'Adventure']);
-assert.equal(app.version, '0.1.0');
-assert.equal(app.android.versionCode, 1);
+assert.equal(app.version, '0.2.0');
+assert.equal(app.android.versionCode, 2);
 assert.equal(app.android.package, 'com.yasin636.animemetahub');
 assert.equal(app.ios.bundleIdentifier, app.android.package);
 assert.equal(app.updates.enabled, false);
 assert.equal(pkg.dependencies.expo, '54.0.38');
 assert.equal(pkg.dependencies['react-native'], '0.81.5');
-assert(code.includes('NAVIGATION TEST'));
+assert(code.includes('AUTH / PROFILE TEST'));
+assert(code.includes('<AuthProvider>'));
+assert(code.includes('auth.pendingEmail'));
+assert(pkg.dependencies['@react-native-firebase/auth']);
+assert(pkg.dependencies['@react-native-google-signin/google-signin']);
 assert(code.includes('onRequestClose'));
-assert(code.includes('Sample profile'));
+assert(code.includes('session.profile?.xp'));
 assert(!/\bgsk_[a-zA-Z0-9]+/.test(code));
 assert(!/from ['"](?:firebase|@react-native-firebase)/.test(code));
 const hash = p => crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');
@@ -46,4 +50,4 @@ for (const module of nativeModules.modules) {
   }
 }
 assert(nativeModules.modules.find(m => m.packageName === 'expo-font').packageVersion.startsWith('14.'));
-console.log('PASS: 8 native destinations, test-only app configuration, artwork integrity, scope and Android autolinking checks. Device tests still required.');
+console.log('PASS: 8 native destinations, Auth/Profile test app configuration, artwork integrity, scope and Android autolinking checks. Device tests still required.');

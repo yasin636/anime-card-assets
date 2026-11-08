@@ -1,0 +1,146 @@
+[
+  {
+    "id": "gojo",
+    "name": "Gojo Satoru",
+    "rarity": "legendary",
+    "hp": 850,
+    "atk": 5500,
+    "def": 950,
+    "image": "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/1774203370787_with_bgc.png"
+  },
+  {
+    "id": "sukuna",
+    "name": "Sukuna",
+    "rarity": "legendary",
+    "hp": 770,
+    "atk": 6000,
+    "def": 1100,
+    "image": "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/1774203030221_with_bgc.png"
+  },
+  {
+    "id": "itachi",
+    "name": "Itachi Uchiha",
+    "rarity": "legendary",
+    "hp": 800,
+    "atk": 5800,
+    "def": 1000,
+    "image": "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/1774203741448_with_bgc.png"
+  },
+  {
+    "id": "tanjiro",
+    "name": "Tanjiro Kamado",
+    "rarity": "legendary",
+    "hp": 650,
+    "atk": 5100,
+    "def": 790,
+    "image": "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/1774204509259_with_bgc.png"
+  },
+  {
+    "id": "jinwoo",
+    "name": "Sung Jinwoo",
+    "rarity": "legendary",
+    "hp": 900,
+    "atk": 5800,
+    "def": 1050,
+    "image": "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/gpt-image-1.5-high-fidelity_a_Good_good_very_good__with_bgc.png"
+  },
+  {
+    "id": "deku",
+    "name": "Izuku Midoriya",
+    "rarity": "rare",
+    "hp": 980,
+    "atk": 2150,
+    "def": 1095,
+    "image": "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/1774206242811_with_bgc.png"
+  },
+  {
+    "id": "kaiju8",
+    "name": "Kaiju No.8",
+    "rarity": "rare",
+    "hp": 920,
+    "atk": 2200,
+    "def": 1000,
+    "image": "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/1774205057103_with_bgc.png"
+  },
+  {
+    "id": "denji",
+    "name": "Denji",
+    "rarity": "rare",
+    "hp": 600,
+    "atk": 1540,
+    "def": 875,
+    "image": "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/1774203535944_with_bgc.png"
+  },
+  {
+    "id": "subaru",
+    "name": "Subaru Natsuki",
+    "rarity": "rare",
+    "hp": 850,
+    "atk": 1800,
+    "def": 900,
+    "image": "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/1774204785975_with_bgc.png"
+  },
+  {
+    "id": "okarun",
+    "name": "Okarun",
+    "rarity": "rare",
+    "hp": 750,
+    "atk": 1900,
+    "def": 850,
+    "image": "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/1774205542394_with_bgc.png"
+  },
+  {
+    "id": "yojinhoo",
+    "name": "Yo Jin Hoo",
+    "rarity": "common",
+    "hp": 800,
+    "atk": 202,
+    "def": 100,
+    "image": "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/gpt-image-1.5-high-fidelity_a______with_bgc.png"
+  },
+  {
+    "id": "kanao",
+    "name": "Kanao Tsuyuri",
+    "rarity": "common",
+    "hp": 750,
+    "atk": 190,
+    "def": 95,
+    "image": "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/gpt-image-1.5-high-fidelity_a_Good_good_very_good__with_bgc%20(1).png"
+  },
+  {
+    "id": "yuji",
+    "name": "Yuji Itadori",
+    "rarity": "common",
+    "hp": 820,
+    "atk": 210,
+    "def": 90,
+    "image": "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/gpt-image-1.5-high-fidelity_a_Good_good_very_good__1_with_bgc.png"
+  },
+  {
+    "id": "hinata",
+    "name": "Hinata Hyuga",
+    "rarity": "common",
+    "hp": 700,
+    "atk": 180,
+    "def": 110,
+    "image": "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/1774207401932_with_bgc.png"
+  },
+  {
+    "id": "ochako",
+    "name": "Ochako Uraraka",
+    "rarity": "common",
+    "hp": 720,
+    "atk": 185,
+    "def": 105,
+    "image": "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/1774207386177_with_bgc.png"
+  },
+  {
+    "id": "kiba",
+    "name": "Kiba Inuzuka",
+    "rarity": "common",
+    "hp": 780,
+    "atk": 195,
+    "def": 95,
+    "image": "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/1774207302454_with_bgc.png"
+  }
+]

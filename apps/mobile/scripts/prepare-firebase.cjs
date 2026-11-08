@@ -1,0 +1,15 @@
+const fs=require('fs'),path=require('path');
+const root=path.join(__dirname,'..');
+const file=path.join(root,'google-services.json');
+if(!fs.existsSync(file)) throw Error('Provide Android google-services.json through the verified CI config secret.');
+const config=JSON.parse(fs.readFileSync(file));
+if(config.private_key||config.type==='service_account') throw Error('Never use a service account in mobile.');
+if(config.project_info?.project_id!=='anime-meta-hub')throw Error('Wrong Firebase project');
+const client=config.client?.find(c=>c.client_info?.android_client_info?.package_name==='com.yasin636.animemetahub');
+if(!client)throw Error('Wrong Android package');
+const oauth=[...(client.oauth_client||[]),...(client.services?.appinvite_service?.other_platform_oauth_client||[])];
+const web=oauth.find(c=>c.client_type===3)?.client_id;
+if(!web)throw Error('Google Sign-In requires a web OAuth client in the Android config.');
+fs.mkdirSync(path.join(root,'src/generated'),{recursive:true});
+fs.writeFileSync(path.join(root,'src/generated/firebase-client.ts'),`// Generated client configuration, not an admin credential.\nexport const googleWebClientId = ${JSON.stringify(web)};\n`);
+console.log('Android Firebase project/package and Google client configured; no secret values printed.');

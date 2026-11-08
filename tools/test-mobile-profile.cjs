@@ -1,0 +1,18 @@
+const fs=require('fs'),path=require('path'),assert=require('node:assert/strict'),Module=require('module');
+const ts=require('../apps/mobile/node_modules/typescript');
+const file=path.join(__dirname,'../apps/mobile/src/domain/profile.ts');
+const js=ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020,esModuleInterop:true,resolveJsonModule:true}}).outputText;
+const compiled=new Module(file,module);compiled.filename=file;compiled.paths=Module._nodeModulePaths(path.dirname(file));compiled._compile(js,file);
+const {levelInfo,normalizeProfile,storyPower,badge,errorMessage}=compiled.exports;
+let tests=0;const eq=(a,b)=>{assert.deepEqual(a,b);tests++};
+for(const [xp,level] of [[0,1],[49,1],[50,2],[500,11],[1300,21],[2840,26],[43799,99],[43800,100],[1e8,100]])eq(levelInfo(xp).level,level);
+eq(levelInfo(2840).into,40);eq(levelInfo(43800).next,0);
+const raw={username:'Old account',Bio:'Preserve me',xp:2840,gold:9922,gems:601,inventoryCards:[{id:'gojo'},{id:'denji'},{id:'yuji'}],equippedSlots:{'legendary-1':{id:'gojo'}},permBonusAtk:5,flatBonusAtk:100,unknownLegacyField:true};
+const before=JSON.stringify(raw);const p=normalizeProfile('existing-uid',raw);
+eq(p.gold,9922);eq(p.gems,601);eq(p.username,'Old account');eq(p.Bio,'Preserve me');eq(JSON.stringify(raw),before);
+eq(storyPower(p),{hp:2270,atk:7713,def:1915});
+eq(storyPower(normalizeProfile('new',{})),{hp:1,atk:1,def:1});
+eq(badge(99),'');assert(badge(100).includes('Copper'));tests++;assert(badge(2000).includes('Mythic'));tests++;
+assert(errorMessage({code:'firestore/permission-denied'}).includes('Rules'));tests++;
+assert(errorMessage({code:'auth/invalid-credential',message:'SECRET-MUST-NOT-LEAK'}).includes('সঠিক নয়'));tests++;
+console.log(`PASS: ${tests} profile/progression/legacy-preservation/error checks. Auth/device flows still require testing.`);

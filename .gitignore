@@ -27,3 +27,7 @@ __pycache__/
 
 # Private user deliverables: never commit/push.
 /private-downloads/
+
+/apps/mobile/src/generated/firebase-client.ts
+/apps/mobile/gradle-build.log
+/apps/mobile/apk-output/
