@@ -52,3 +52,13 @@
 - প্রথম ধাপে Firebase/Groq login/config প্রয়োজন নেই: offline navigation/sample balances স্পষ্টভাবে labelled। দ্বিতীয় ধাপে authorized native Firebase platform registration/config/Rules; AI integration-এর আগে exposed Groq key revoke/rotate ও backend secret setup।
 
 **ফল:** source/UI development শুরু করার tools আছে। এই sandbox-এ এখন সরাসরি APK build-ready environment নেই। GitHub Actions সবচেয়ে যুক্তিযুক্ত প্রার্থী, কিন্তু বর্তমান permissions এবং প্রথম successful build দিয়ে delivery pathway নিশ্চিত করা বাকি।
+
+## Follow-up: GitHub runner check succeeded
+
+- Branch `arena/cd835a4c-anime-card-assets` pushed successfully, commit `f838e8e`.
+- Workflow dispatch accepted using the current GitHub integration; the earlier settings/secrets-list403 does **not** prevent this workflow execution.
+- Successful run: https://github.com/yasin636/anime-card-assets/actions/runs/42472463706
+- API-confirmed successful steps: Node setup, Java setup, Android SDK/tools inspection, dependency endpoint checks, summary and diagnostic artifact upload.
+- The earlier push-triggered run42472457909 was cancelled by the newer manually dispatched run due to the workflow concurrency setting; this was not an Android tool failure.
+- Full log download from the Actions results host was blocked by sandbox network access (EOF). Run/job/step conclusions were independently read from the GitHub API; exact installed SDK versions are not asserted here.
+- Result: runner access and readiness checks verified. An actual React Native compilation, stable test-signing setup, APK artifact creation and device installation are still unverified and are the next gates. No APK was produced by this workflow.
