@@ -27,3 +27,9 @@ node tools/test-blueprint-reference.cjs
 ```
 
 The generator redacts both the AI secret and Firebase web API key, records original source SHA-256 hashes, and extracts literal catalogs without executing the application. Inspect generated diffs before saving. Reference tests verify baseline rules/catalogs only; a React Native app and device/E2E validation are still to be implemented.
+
+## Native app — Step 01 test
+
+Source: [`apps/mobile`](apps/mobile). Status/test evidence: [implementation progress](docs/react-native-blueprint/PROGRESS.bn.md).
+
+[Download Navigation Test v0.1.0 (GitHub artifact ZIP)](https://github.com/yasin636/anime-card-assets/actions/runs/42473341865/artifacts/13614353281) — extract APK and install on Android; artifact expires November22,2026. GitHub login may be required. This is an offline, test-signed navigation preview, not a production app or a real account/reward system. Waiting for phone testing/approval before Step02.
