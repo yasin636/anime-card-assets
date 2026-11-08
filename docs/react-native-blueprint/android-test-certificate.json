@@ -1,0 +1,8 @@
+{
+  "purpose": "Private Android test signing only; not production release identity",
+  "applicationId": "com.yasin636.animemetahub",
+  "firebaseProject": "anime-meta-hub",
+  "alias": "anime-meta-hub-test",
+  "sha1": "01:3A:A8:E1:1F:0C:39:C3:D5:7F:CF:61:EF:B8:BC:0E:EE:7D:80:41",
+  "sha256": "3E:71:F6:CE:4D:07:90:91:FD:88:AB:54:BA:3A:D6:2A:B9:BB:BC:E9:D2:E5:5C:96:74:4F:64:AC:08:AA:F9:CD"
+}

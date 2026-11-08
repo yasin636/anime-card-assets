@@ -7,7 +7,11 @@
 - No real account/currency/gameplay claims for sample-only screens.
 - Main contract: BLUEPRINT.bn.md + PARITY-AND-QA.bn.md + complete reference.
 
-## Step 01 — Navigation foundation (APK ready; awaiting user device testing/approval)
+## Step 01 — Navigation foundation (user phone test successful)
+
+User acceptance recorded 2026-11-08: “ফোনে পরীক্ষা সফল”. Five supplied phone screenshots show Profile, Arena, Feed, Shop and the More sheet rendered on an actual phone. This is user-reported success for the navigation test, not proof of every checklist item or any backend feature. Phone model/Android version and iOS testing remain unspecified. Screenshot filenames: Screenshot_20261108_170537.jpg, Screenshot_20261108_170539.jpg, Screenshot_20261108_170542.jpg, Screenshot_20261108_170531.jpg, Screenshot_20261108_170535.jpg. Uploaded screenshots are not copied into Git.
+
+Next: Step02 Auth/Profile persistence preparation. Native Firebase configuration and a nonpublic test-signing plan must be resolved before real account use; no backend changes made as part of recording acceptance.
 
 Implemented in `apps/mobile`:
 - Expo54.0.38 / RN0.81.5 / React19.1 / strict TypeScript.
@@ -46,6 +50,19 @@ Build attempts:
 
 **Phone feedback required before Step02:** model/Android version, install/launch result, all eight destinations, More dismiss/native Back, scrolling/safe areas/Bengali text, local artwork, airplane-mode relaunch, chapter preview tabs, about/coming-next messages. Report screenshots/crashes. No login or real rewards should be expected in this APK.
 
-## Next step (locked until user approves Step 01)
+## Step 02 — Firebase/Auth preparation (in progress)
 
 Firebase/Auth/Profile persistence, secure schema/defaults and account lifecycle. Do not implement actual economy before server-side reward rules and idempotency are in place. Obtain authorized native Firebase app configuration without putting service-account/AI secrets into mobile source.
+
+
+Native Android Firebase configuration received and validated: project `anime-meta-hub`, Android package `com.yasin636.animemetahub`. Saved locally as `apps/mobile/google-services.json` and excluded from Git. No service-account private key present. Android registration does not configure iOS; iOS plist remains outstanding. No live Firebase request, database write, Rules deployment or provider-state verification performed. Email/Password enabled status and secure CI configuration/private test signing still need verification before authenticated APK testing.
+
+### Step02 signing / Google Login prerequisite work
+
+- User confirmed Email/Password and Google providers enabled; requests both in Step02.
+- Created new private Android internal-test signing identity; public fingerprints in `android-test-certificate.json` and setup guide in `PRIVATE-SIGNING-SETUP.bn.md`.
+- Private backup delivered separately outside the repository. Private key/password/base64 never committed or printed. User must keep the backup and add its two values directly to Actions secrets; current integration cannot access repository secret public-key endpoint (403).
+- Supplied Android Firebase config has zero OAuth client entries. User must register new SHA-1 and SHA-256, then supply freshly downloaded config. No config was fabricated for use in the app.
+- Added manual fail-closed private signing/Firebase OAuth preflight workflow. It checks three secrets, pinned certificate, project/package, Android OAuth SHA-1 and web OAuth client, then deletes runner temp material. It does not build an APK or perform login.
+- Local checks: actual PKCS12 export/fingerprint match, backup ZIP integrity; positive validator using explicitly synthetic OAuth metadata; negative original-config and missing-secret checks; Python syntax. Java keytool/CI checks are pending secret setup. No authenticated APK produced and no live Firebase changes.
+- First new private-key APK requires uninstalling old sample-only v0.1.0 due to certificate change. Future private-key APKs must preserve this identity and increment versionCode.

@@ -10,3 +10,17 @@ apps/mobile/ios/
 *.keystore
 .env
 .env.*
+
+# Native Firebase configuration is supplied separately to builds.
+/apps/mobile/google-services.json
+
+# Signing identities and secret helper files must never enter Git.
+*.p12
+*.pfx
+*PRIVATE*signing*backup*.zip
+ANDROID_KEYSTORE_BASE64.txt
+ANDROID_KEYSTORE_PASSWORD.txt
+FIREBASE_ANDROID_CONFIG_BASE64.txt
+private-key*.pem
+
+__pycache__/
