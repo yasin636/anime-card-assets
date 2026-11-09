@@ -1,0 +1,21 @@
+name: Economy domain tests
+on:
+  workflow_dispatch:
+  push:
+    branches: [arena/cd835a4c-anime-card-assets]
+    paths:
+      - services/economy/**
+      - docs/react-native-blueprint/reference/catalog.json
+      - .github/workflows/economy-tests.yml
+permissions:
+  contents: read
+jobs:
+  domain:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - run: node --test services/economy/domain.test.cjs
+      - run: node tools/test-blueprint-reference.cjs
