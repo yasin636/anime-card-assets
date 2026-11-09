@@ -104,3 +104,15 @@ Full private setup CI after user added third secret: **SUCCESS**, run42518442960
 - APK artifact ZIP: https://github.com/yasin636/anime-card-assets/actions/runs/42521169233/artifacts/13633274850
 - Name `AnimeMetaHub-v0.2.0-auth-profile-test`; archive27,370,513bytes; expires2026-11-22T20:48:39Z. GitHub archive digest `sha256:61a659a9a2e05184a2cbc332696d0f93a56346b76734e08664dac10eeef1b269` (archive digest, NOT APK checksum). ZIP includes APK, APK SHA256SUMS.txt and README.txt.
 - CI verification is real; device email/Google login, profile write, Storage permissions and offline/relaunch/account-switch QA are NOT yet completed. No production/iOS readiness claim. Step02 remains awaiting user's phone test/acceptance. Do not start Step03 yet.
+
+### Step02 — user phone acceptance reported
+
+User supplied three phone screenshots and explicitly confirmed all requested tests successful: Email/Password and Google login; existing XP/Gold/Gems; username/Bio/avatar persistence after closing/reopening; logout and another-account login. Step02 accepted based on the user's reported device results, not sandbox inference. Screenshot shows live3964XP/318Gems/5418Gold and existing featured inventory rendering.
+
+Caveat: first supplied screenshot also contains a `storage/object-not-found` message under the avatar section. It is not established whether this is a historical failed gallery attempt that was subsequently resolved or a remaining gallery-only failure. Preset/avatar display success does not independently prove Firebase Storage gallery upload. Ask a brief clarification before treating gallery Storage specifically as verified; do not change Rules/billing or assume a backend cause from this code alone. No Step03 implementation started in this turn.
+
+### Gallery upload failure confirmed — Step02 follow-up open
+
+User clarified gallery uploads still fail with storage/object-not-found. Login/profile text/preset/account-switch acceptance stands, but gallery Storage QA is FAILED and Step02 follow-up remains open; do not start Step03 yet.
+
+Inspected pinned RNFirebase23.5.0 modular putFile/getDownloadURL implementation and ProfileScreen: upload is awaited before fetching the URL; no evidence of a missing await. Both supplied Android client configs declare anime-meta-hub.firebasestorage.app. A config bucket name alone does not prove the remote bucket is provisioned, accessible or correctly configured. No authenticated Storage API access is available here and no remote bucket/Rules/billing changes were made. Request Firebase Console Storage screen to distinguish provisioning/billing prompt from an existing Files view before choosing a fix. Do not claim a root cause or ship a speculative fixed APK.
