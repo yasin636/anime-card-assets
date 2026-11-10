@@ -1,3 +1,7 @@
+# Current UI test: v0.3.1 Settings / Sensei
+
+See [SETTINGS-SENSEI-TEST.md](SETTINGS-SENSEI-TEST.md) for the exact seven-model menu, separate AI Provider settings, clean chat, migration and phone checklist. Previous v0.3.0 notes below are historical. Live economy deployment is still pending, gallery deferred.
+
 # Current integration build: v0.3.0 Collection + Gemini
 
 See [STEP03-TEST.md](STEP03-TEST.md) for current scope, Gemini key/model setup and backend deployment gates. Step03 economy is NOT complete/live until trusted hosting and Rules review are done. Gallery upload explicitly deferred. The v0.2 notes below are historical baseline evidence.

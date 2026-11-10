@@ -17,17 +17,20 @@ function visit(node) {
 }
 visit(source);
 assert(pages && ts.isObjectLiteralExpression(pages));
-assert.deepEqual(pages.properties.map(p => p.name.getText(source)), ['Profile', 'Arena', 'Feed', 'Shop', 'Cards', 'Tracker', 'Chat', 'Adventure']);
-assert.equal(app.version, '0.3.0');
-assert.equal(app.android.versionCode, 3);
+assert.deepEqual(pages.properties.map(p => p.name.getText(source)), ['Profile', 'Arena', 'Feed', 'Shop', 'Cards', 'Tracker', 'Chat', 'Adventure', 'Settings', 'AIProvider']);
+assert.equal(app.version, '0.3.1');
+assert.equal(app.android.versionCode, 4);
 assert.equal(app.android.package, 'com.yasin636.animemetahub');
 assert.equal(app.ios.bundleIdentifier, app.android.package);
 assert.equal(app.updates.enabled, false);
 assert.equal(pkg.dependencies.expo, '54.0.38');
 assert.equal(pkg.dependencies['react-native'], '0.81.5');
-assert(code.includes('COLLECTION / SHOP TEST'));
+assert(code.includes('SETTINGS / SENSEI TEST'));
 assert(code.includes('<AuthProvider>'));
 assert(code.includes('<EconomyProvider'));
+assert(code.includes('<AIProvider'));
+assert(code.includes('Open app Settings'));
+assert(code.includes('AIProvider: AISettings'));
 assert(code.includes('<CardsScreen'));
 assert(code.includes('<ShopScreen'));
 assert(code.includes('auth.pendingEmail'));
@@ -53,4 +56,4 @@ for (const module of nativeModules.modules) {
   }
 }
 assert(nativeModules.modules.find(m => m.packageName === 'expo-font').packageVersion.startsWith('14.'));
-console.log('PASS: 8 native destinations, Auth/Profile test app configuration, artwork integrity, scope and Android autolinking checks. Device tests still required.');
+console.log('PASS: 8 original destinations + Settings/AI Provider, Settings/Sensei test app configuration, artwork integrity, scope and Android autolinking checks. Device tests still required.');

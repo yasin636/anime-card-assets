@@ -2,36 +2,34 @@ const fs=require('node:fs'),path=require('node:path'),Module=require('node:modul
 const {test}=require('node:test');const ts=require('../apps/mobile/node_modules/typescript');
 const file=path.resolve(__dirname,'../apps/mobile/src/ai/gemini.ts');const js=ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText;
 const compiled=new Module(file,module);compiled.filename=file;compiled.paths=Module._nodeModulePaths(path.dirname(file));compiled._compile(js,file);
-const {selectModels,apiError,discoverModels,generate}=compiled.exports;
-const model=(name,methods=['generateContent'])=>({name:`models/${name}`,displayName:name,supportedGenerationMethods:methods});
-test('runtime model list only real returned Gemini generateContent entries, max six, unique',()=>{
- const raw=[...Array.from({length:10},(_,i)=>model(`gemini-${i+1}-fixture`)),model('gemini-1-fixture'),model('gemini-1-tts'),model('gemini-1-image'),model('gemini-1-embedding'),model('gemini-1-native-audio'),model('gemma-3'),model('gemini-other',['embedContent']),{name:'models/../../evil',supportedGenerationMethods:['generateContent']}];
- const selected=selectModels(raw);assert.equal(selected.length,6);assert.equal(new Set(selected.map(m=>m.name)).size,6);assert.equal(selected[0].name,'models/gemini-10-fixture');
- assert.equal(selectModels([model('gemini-1-fixture')]).length,1);assert.deepEqual(selectModels(null),[]);
+const {MODEL_IDS,apiError,generate}=compiled.exports;
+test('exact seven user-specified IDs, order retained, duplicate removed, robotics not filtered',()=>{
+ assert.deepEqual(MODEL_IDS,['gemini-3.5-flash','gemini-3.5-flash-lite','gemini-3.6-flash','gemini-robotics-er-2-preview','gemini-3.1-flash-lite','gemini-2.5-flash','gemini-2.5-flash-lite']);assert.equal(new Set(MODEL_IDS).size,7);
 });
-test('standard HTTP error text does not depend on provider payload',()=>{for(const status of [400,401,403,429,500,503,404])assert.equal(typeof apiError(status),'string');});
-test('discovery paginates without putting key in URL and ignores untrusted error text',async()=>{
- const original=global.fetch;let count=0;const secret='fixture-secret-never-log';
- try{
-  global.fetch=async(url,options)=>{assert(!url.includes(secret));assert.equal(options.headers['x-goog-api-key'],secret);count++;return {ok:true,json:async()=>count===1?{models:[model('gemini-1-fixture')],nextPageToken:'next token'}:{models:[model('gemini-2-fixture')]}};};
-  const result=await discoverModels(secret,new AbortController().signal);assert.equal(count,2);assert.equal(result.length,2);
-  global.fetch=async()=>({ok:false,status:403,json:async()=>({error:{message:secret}})});
-  await assert.rejects(discoverModels(secret,new AbortController().signal),e=>!e.message.includes(secret));
- }finally{global.fetch=original;}
+test('HTTP errors including unavailable model, quota and permissions are safe and distinct',()=>{
+ for(const status of [400,401,403,404,429,500,503])assert.equal(typeof apiError(status),'string');assert.notEqual(apiError(404),apiError(429));
 });
-test('generation uses TLS/header key, extracts text, rejects path injection and redacts errors',async()=>{
+for(const id of MODEL_IDS)test(`exact selected ID is used for generation: ${id}`,async()=>{
  const original=global.fetch;
  try{
-  global.fetch=async(url,options)=>{assert.equal(url,'https://generativelanguage.googleapis.com/v1beta/models/gemini-1-fixture:generateContent');assert.equal(options.headers['x-goog-api-key'],'fixture-key');const body=JSON.parse(options.body);assert.equal(body.contents[0].parts[0].text,'anime?');return {ok:true,json:async()=>({candidates:[{content:{parts:[{text:'internal thinking',thought:true},{text:'answer'}]}}]})};};
-  assert.equal(await generate('fixture-key','models/gemini-1-fixture',[{role:'user',parts:[{text:'anime?'}]}],new AbortController().signal),'answer');
-  await assert.rejects(generate('fixture-key','models/../evil',[],new AbortController().signal));
-  global.fetch=async()=>({ok:false,status:429,json:async()=>({error:{message:'fixture-key'}})});
-  await assert.rejects(generate('fixture-key','models/gemini-1-fixture',[],new AbortController().signal),e=>!e.message.includes('fixture-key'));
+  global.fetch=async(url,options)=>{assert.equal(url,`https://generativelanguage.googleapis.com/v1beta/models/${id}:generateContent`);assert(!url.includes('fixture-key'));assert.equal(options.headers['x-goog-api-key'],'fixture-key');assert.equal(JSON.parse(options.body).contents[0].parts[0].text,'question');return {ok:true,json:async()=>({candidates:[{content:{parts:[{text:'hidden thinking',thought:true},{text:'answer'}]}}]})};};
+  assert.equal(await generate('fixture-key',id,[{role:'user',parts:[{text:'question'}]}],new AbortController().signal),'answer');
  }finally{global.fetch=original;}
 });
-test('BYOK screen stores key only in secure store, has remove and no sensitive logging',()=>{
- const source=fs.readFileSync(path.resolve(__dirname,'../apps/mobile/src/ai/GeminiScreen.tsx'),'utf8');
- assert(source.includes('SecureStore.setItemAsync'));assert(source.includes('SecureStore.deleteItemAsync'));assert(source.includes('WHEN_UNLOCKED_THIS_DEVICE_ONLY'));
- assert(!source.includes('AsyncStorage'));assert(!/console\./.test(source));assert(!source.includes('updateDoc'));
- assert(source.includes("generate(savedKey.current,model,[{role:'user',parts:[{text}]}]"));
+test('invalid model path rejected before network; no arbitrary old model fallback',async()=>{
+ const original=global.fetch;let calls=0;global.fetch=async()=>{calls++;throw Error('not expected');};
+ try{for(const id of ['models/../../evil','gemini-unlisted','gemini-1.5-flash'])await assert.rejects(generate('fixture-key',id,[],new AbortController().signal));assert.equal(calls,0);}finally{global.fetch=original;}
+});
+test('error payload never displayed and no-text response never called success',async()=>{
+ const original=global.fetch;
+ try{
+  for(const status of [400,403,404,429,503]){global.fetch=async()=>({ok:false,status,json:async()=>({error:{message:'fixture-key'}})});await assert.rejects(generate('fixture-key',MODEL_IDS[0],[],new AbortController().signal),e=>!e.message.includes('fixture-key'));}
+  global.fetch=async()=>({ok:true,json:async()=>({candidates:[]})});await assert.rejects(generate('fixture-key',MODEL_IDS[0],[],new AbortController().signal));
+ }finally{global.fetch=original;}
+});
+test('key management separated from chat, per-owner secure store and real generation probe',()=>{
+ const root=path.resolve(__dirname,'../apps/mobile/src');const provider=fs.readFileSync(path.join(root,'ai/AIProvider.tsx'),'utf8'),settings=fs.readFileSync(path.join(root,'settings/AIProviderScreen.tsx'),'utf8'),chat=fs.readFileSync(path.join(root,'ai/GeminiScreen.tsx'),'utf8');
+ assert(provider.includes('SecureStore.setItemAsync'));assert(provider.includes('SecureStore.deleteItemAsync'));assert(provider.includes('WHEN_UNLOCKED_THIS_DEVICE_ONLY'));assert(provider.includes('SHA256,uid'));assert(!provider.includes('AsyncStorage'));assert(!/console\./.test(provider));assert(!provider.includes('updateDoc'));
+ assert(provider.includes('await generate(validateKey(replacement),selected'));assert(settings.includes('await ai.test(model,replacement,signal)'));assert(settings.includes('signal.aborted'));assert(settings.includes('নতুন key'));assert(!chat.includes('SecureStore'));assert(!chat.includes('secureTextEntry'));assert(chat.includes('Retry'));assert(chat.includes('New chat'));assert(chat.includes('controller.current?.abort()'));
+ assert(provider.includes("generate(validateKey(''),model,[{role:'user',parts:[{text}]}]"));assert(!provider.includes('discoverModels'));
 });
