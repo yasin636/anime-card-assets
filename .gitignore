@@ -31,3 +31,10 @@ __pycache__/
 /apps/mobile/src/generated/firebase-client.ts
 /apps/mobile/gradle-build.log
 /apps/mobile/apk-output/
+
+# Trusted backend credentials and local environment must never enter Git/APK/artifacts.
+.env
+.env.*
+!.env.example
+*service-account*.json
+*serviceAccount*.json

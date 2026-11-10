@@ -1,0 +1,65 @@
+[
+  {
+    "id": "dragonball",
+    "name": "Dragon Ball",
+    "price": 5000,
+    "cssClass": "theme-dragonball",
+    "emoji": "🔥",
+    "desc": "Yellow-Orange Fire Aura",
+    "gradient": "linear-gradient(135deg,#ff6a00,#ee0979,#ff6a00)"
+  },
+  {
+    "id": "onepiece",
+    "name": "One Piece",
+    "price": 4000,
+    "cssClass": "theme-onepiece",
+    "emoji": "🌊",
+    "desc": "Cyan Water Wave Effect",
+    "gradient": "linear-gradient(135deg,#00c6ff,#0072ff,#00c6ff)"
+  },
+  {
+    "id": "naruto",
+    "name": "Naruto",
+    "price": 3500,
+    "cssClass": "theme-naruto",
+    "emoji": "🌀",
+    "desc": "Red-Orange Chakra Glow",
+    "gradient": "linear-gradient(135deg,#ff4500,#ff8c00,#ff4500)"
+  },
+  {
+    "id": "bleach",
+    "name": "Bleach",
+    "price": 2500,
+    "cssClass": "theme-bleach",
+    "emoji": "💜",
+    "desc": "Black-Purple Reiatsu Smoke",
+    "gradient": "linear-gradient(135deg,#4a0072,#7b00d4,#200040)"
+  },
+  {
+    "id": "aot",
+    "name": "Attack on Titan",
+    "price": 2000,
+    "cssClass": "theme-aot",
+    "emoji": "⚙️",
+    "desc": "Steam Shake Effect",
+    "gradient": "linear-gradient(135deg,#2c3e50,#4a6741,#2c3e50)"
+  },
+  {
+    "id": "opm",
+    "name": "One Punch Man",
+    "price": 1000,
+    "cssClass": "theme-opm",
+    "emoji": "⚡",
+    "desc": "Yellow Impact Sparkle",
+    "gradient": "linear-gradient(135deg,#f7ff00,#db36a4,#f7ff00)"
+  },
+  {
+    "id": "vinland",
+    "name": "Vinland Saga",
+    "price": 1000,
+    "cssClass": "theme-vinland",
+    "emoji": "❄️",
+    "desc": "Soft Snowfall Effect",
+    "gradient": "linear-gradient(135deg,#74b9ff,#a29bfe,#74b9ff)"
+  }
+]

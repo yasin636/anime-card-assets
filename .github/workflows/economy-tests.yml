@@ -17,5 +17,5 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: '22'
-      - run: node --test services/economy/domain.test.cjs
+      - run: node --test services/economy/*.test.cjs
       - run: node tools/test-blueprint-reference.cjs

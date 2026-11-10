@@ -1,0 +1,17 @@
+# Optional MANUAL deployment scaffold. Nothing is provisioned by adding this file.
+# Stop if provider asks for paid upgrade/payment details; no billing is authorized.
+services:
+  - type: web
+    name: anime-meta-hub-economy
+    runtime: node
+    plan: free
+    autoDeploy: false
+    buildCommand: npm ci --prefix services/economy --omit=dev --no-audit --no-fund
+    startCommand: npm --prefix services/economy start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: GOOGLE_APPLICATION_CREDENTIALS
+        value: /etc/secrets/firebase-service-account.json
+# Supply the credential via the hosting Secret Files dashboard, NOT this blueprint.

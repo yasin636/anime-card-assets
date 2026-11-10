@@ -25,6 +25,7 @@ jobs:
     env:
       CI: '1'
       EXPO_NO_TELEMETRY: '1'
+      EXPO_PUBLIC_ECONOMY_API_URL: ${{ vars.ECONOMY_SECURITY_REVIEWED == 'true' && vars.ECONOMY_API_URL || '' }}
       NODE_ENV: production
       ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
     steps:
@@ -39,6 +40,8 @@ jobs:
           distribution: temurin
           java-version: '17'
       - uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: false
       - name: Validate and restore private signing and Firebase config
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
@@ -57,6 +60,8 @@ jobs:
         run: |
           node ../../tools/validate-mobile-foundation.cjs
           node ../../tools/test-mobile-profile.cjs
+          node --test ../../tools/test-gemini.cjs
+          node --test ../../services/economy/*.test.cjs
       - name: Generate Android project
         run: npx expo prebuild --platform android --no-install
       - name: Configure verified private test signing (no public-key fallback)
@@ -119,23 +124,23 @@ jobs:
           sed -n '1,40p' apk-metadata.txt
           unzip -l "$APK" | grep 'assets/index.android.bundle'
           mkdir -p apk-output
-          cp "$APK" apk-output/AnimeMetaHub-v0.2.0-auth-profile-test.apk
+          cp "$APK" apk-output/AnimeMetaHub-v0.3.0-collection-gemini-test.apk
           cd apk-output
           sha256sum *.apk > SHA256SUMS.txt
-          printf '%s\n' 'Android Auth/Profile test v0.2.0. Email/Google login and profile use real Firebase. Gameplay remains preview. Uninstall public-key v0.1.0 before installing. Private internal-test certificate, not production signing.' > README.txt
+          printf '%s\n' 'Android Collection/Gemini integration test v0.3.0. Own Gemini key in secure device storage; choose up to six live-discovered text models. No shared AI key. Auth and own inventory are live Firebase. Economy actions require trusted backend URL and reviewed server-only Rules. Without backend configuration actions stay disabled. Gallery deferred. Private-key v0.2.0 can update without uninstall; uninstall public-key v0.1.0 only.' > README.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: AnimeMetaHub-v0.2.0-auth-profile-test
+          name: AnimeMetaHub-v0.3.0-collection-gemini-test
           path: apps/mobile/apk-output/
           retention-days: 14
           if-no-files-found: error
       - name: Build summary
         run: |
           {
-            echo '## Auth/Profile Test APK v0.2.0'
+            echo '## Collection/Shop Integration APK v0.3.0'
             echo 'Standalone Android APK, ARM64 + ARMv7. Android 7.0+ (API 24+) expected; see APK metadata for the actual minimum.'
-            echo 'Email/Google login and Profile use real Firebase. Purchases, rewards, chat and combat remain preview. No production security certification.'
-            echo 'Signed with the verified PRIVATE internal-test certificate. Uninstall sample v0.1.0 first (different signature).'
+            echo 'Auth/profile/owned inventory are live. Collection/Shop commands require configured trusted backend; absent URL disables actions. Gemini BYOK in Chat, key only in device SecureStore. Gallery deferred. Not a completed production economy deployment.'
+            echo 'Signed with the verified PRIVATE internal-test certificate. Private v0.2.0 can update in place. Uninstall public-key sample v0.1.0 only.'
             echo 'Download the artifact ZIP and extract the APK to install on Android.'
             cat apk-output/SHA256SUMS.txt
           } >> "$GITHUB_STEP_SUMMARY"

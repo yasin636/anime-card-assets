@@ -1,3 +1,7 @@
+# Current integration build: v0.3.0 Collection + Gemini
+
+See [STEP03-TEST.md](STEP03-TEST.md) for current scope, Gemini key/model setup and backend deployment gates. Step03 economy is NOT complete/live until trusted hosting and Rules review are done. Gallery upload explicitly deferred. The v0.2 notes below are historical baseline evidence.
+
 # Anime Meta Hub — Auth/Profile Test 0.2.0
 
 Step02 Android test build. Expo54.0.38 / RN0.81.5 / React19.1; strict TypeScript; native Firebase23.5.0 and native Google Sign-In16.0.0. This is not a store/production release or a completed game.

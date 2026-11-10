@@ -4,6 +4,7 @@ module.exports = {
  android: {...expo.android, googleServicesFile:'./google-services.json'},
  plugins: [
   'expo-font',
+  ['expo-secure-store',{configureAndroidBackup:true}],
   '@react-native-firebase/app',
   '@react-native-google-signin/google-signin',
   ['expo-build-properties',{ios:{useFrameworks:'static'}}],

@@ -2,13 +2,13 @@
   "expo": {
     "name": "Anime Meta Hub Test",
     "slug": "anime-meta-hub",
-    "version": "0.2.0",
+    "version": "0.3.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "android": {
       "package": "com.yasin636.animemetahub",
-      "versionCode": 2,
+      "versionCode": 3,
       "adaptiveIcon": {
         "backgroundColor": "#030014"
       },
