@@ -195,3 +195,7 @@ Firestore security emulator CI42897122677 completed SUCCESS, job130113054742 (22
 ### Production Rules publication reported by owner
 
 Owner explicitly reports Publish completed for supplied strict Rules. Agent has not independently fetched deployed rules. /health success previously reported by owner. Keep server ECONOMY_ENABLED=false and CI economy-review flag disabled: publication alone is not live IAM/transaction/concurrency proof. Next compatibility check on installed accepted APK: existing profile/balances/cards readable, username/Bio save succeeds. No uninstall, resets or reward modifications. Real emulator transaction integration and controlled hosting IAM/transaction verification remain necessary before enabling economy. Deferred organization-policy/temporary-role tasks still OPEN.
+
+### Rules device compatibility accepted; real emulator transactions added
+
+Owner confirms existing balances correct and Bio saves after rule publication. No live spending authorized/executed by agent; server gate stays false. Added actual Admin SDK transaction emulator integration (not mock): concurrent same-ID replay, competing spends cannot overdraw, conflicting replay atomic rejection, per-UID isolation. CI now installs backend locked dependencies and runs Rules+transaction emulator suite. Production IAM/auth-token/Firestore connectivity still separate pending verification; these tests use demo project only.
