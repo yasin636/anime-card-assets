@@ -3,7 +3,7 @@ const {test}=require('node:test');const assert=require('node:assert/strict');
 const {createServer}=require('./http.cjs');
 async function fixture(fn,options={}){
  let verifies=0,transactions=0;
- const server=createServer({auth:{verifyIdToken:async(token,revoked)=>{verifies++;assert.equal(revoked,true);if(token!=='valid')throw Error('PRIVATE ERROR');return {uid:'actual-user'};}},db:{collection:()=>({doc:uid=>{assert.equal(uid,'actual-user');return {collection:()=>({doc:()=>({})})};}}),runTransaction:async()=>{transactions++;throw Error('SECRET FIRESTORE STACK');}},...options});
+ const server=createServer({enabled:true,auth:{verifyIdToken:async(token,revoked)=>{verifies++;assert.equal(revoked,true);if(token!=='valid')throw Error('PRIVATE ERROR');return {uid:'actual-user'};}},db:{collection:()=>({doc:uid=>{assert.equal(uid,'actual-user');return {collection:()=>({doc:()=>({})})};}}),runTransaction:async()=>{transactions++;throw Error('SECRET FIRESTORE STACK');}},...options});
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const address=`http://127.0.0.1:${server.address().port}`;
  try{await fn(address,()=>({verifies,transactions}));}finally{await new Promise(resolve=>server.close(resolve));}
 }
@@ -27,3 +27,14 @@ test('oversized body, wrong content type, and per-user throttling',()=>fixture(a
  assert.equal((await post(url,'x'.repeat(9000))).status,413);
  assert.equal((await post(url,command)).status,429);
 },{limit:1}));
+
+test('staged deployment blocks all economy commands before touching Auth/Firestore',()=>fixture(async(url,counts)=>{
+ assert.equal((await fetch(url+'/health')).status,200);
+ const r=await post(url,command);assert.equal(r.status,503);assert.deepEqual(await r.json(),{error:'economy-not-enabled'});
+ assert.deepEqual(counts(),{verifies:0,transactions:0});
+},{enabled:false}));
+test('factory default is fail-closed, health does not imply economy readiness',async()=>{
+ const server=createServer({auth:{verifyIdToken:()=>{throw Error('unexpected')}},db:{}});
+ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+ try{const url=`http://127.0.0.1:${server.address().port}`;assert.equal((await post(url,command)).status,503);}finally{await new Promise(resolve=>server.close(resolve));}
+});

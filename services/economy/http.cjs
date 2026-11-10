@@ -2,12 +2,13 @@
 const http=require('node:http');
 const {execute}=require('./transaction.cjs');
 const {EconomyError}=require('./domain.cjs');
-function createHandler({auth,db,limit=60}){
+function createHandler({auth,db,limit=60,enabled=false}){
  const windows=new Map();
  return async(req,res)=>{
   const send=(status,payload)=>{res.writeHead(status,{'Content-Type':'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(JSON.stringify(payload));};
   if(req.method==='GET'&&req.url==='/health')return send(200,{ok:true});
   if(req.method!=='POST'||req.url!=='/v1/economy')return send(404,{error:'not-found'});
+  if(!enabled)return send(503,{error:'economy-not-enabled'});
   const match=/^Bearer ([^\s]+)$/.exec(req.headers.authorization||'');
   if(!match)return send(401,{error:'unauthenticated'});
   let identity;
