@@ -1,3 +1,9 @@
+# v0.3.3 / code6 — automatic connection fix
+
+Update v0.3.2 in place; no Render redeploy/env/key change needed for this UI fix. On authenticated profile/pending recovery ready, GET status is automatic. Foreground return rechecks unless mutation/check already in progress. No timers auto-retry spending; pending commands remain explicit same-ID retry. Successful authorization is NOT persisted as a trusted flag. Each command still authorized by server. No Gold/card changes from auto check. Neutral checking message, optional Retry connection button for actual failure, corrected build labels. Free-server wakeup may still take90seconds. Device relaunch/foreground/offline/account-switch QA pending.
+
+## Previous controlled test setup (still applicable)
+
 # v0.3.2 / code5 — controlled backend verification APK
 
 Update v0.3.1 in place with same private signing key; never uninstall/reset to test. Accepted exact-seven Settings/Sensei UI and auth/profile retained. Gallery still deferred.
@@ -10,7 +16,7 @@ Manual Deploy → Deploy latest commit on current Arena branch to pick up /v1/ec
 
 ## Owner phone sequence
 
-1. Install APK update. Cards → Check server connection · no spend. This does not auto-prepare legacy cards or spend. First result should report Auth + own Firestore read verified, spending disabled. Free-instance cold start timeout now90seconds for status and mutation; pending-ID replay remains intact.
+1. Install APK update. Cards → automatic connection check (optional Retry connection · no spend). This does not auto-prepare legacy cards or spend. First result should report Auth + own Firestore read verified, spending disabled. Free-instance cold start timeout now90seconds for status and mutation; pending-ID replay remains intact.
 2. UID displayed as selectable text. Owner copies their own UID directly into Render environment variable ECONOMY_TEST_UIDS (single UID, no quotes). This is an identifier, NOT a password; never use email/display name. Keep ECONOMY_ENABLED=false. Save/redeploy. Agent does not know/pin a production UID yet.
 3. Check connection again. Owner should see allowed account; others get owner-test-only (403). Changes to allowlist require another connection check; server authorization still authoritative.
 4. FIRST mutating command requires user confirmation. Prepare legacy identities is a real inventory write, not connection diagnosis. Summon spends500Gold; recycle permanently removes selected card. Do not execute for owner silently. Confirm balances, instance IDs, receipts/retry behavior and theme affordability/owned status on phone. Do not mint balances just to test purchases.
