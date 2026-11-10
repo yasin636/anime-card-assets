@@ -1,0 +1,53 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function owner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+    function validProfile(d) {
+      return d.username is string && d.username.size() > 0 && d.username.size() <= 100
+        && d.Bio is string && d.Bio.size() <= 2000
+        && d.avatar is string && d.avatar.size() <= 4096;
+    }
+    function initialProfile(uid) {
+      let d = request.resource.data;
+      return validProfile(d) && d == {
+        'uid': uid, 'email': request.auth.token.get('email', ''),
+        'username': d.username, 'avatar': d.avatar, 'Bio': '',
+        'xp': 0, 'level': 1, 'gold': 0, 'gems': 0,
+        'inventoryCards': [], 'equippedSlots': {}, 'inventory': {'themes': []},
+        'equippedTheme': '', 'tracker': [], 'recentChats': [], 'freeSpins': 0,
+        'pityRare': 0, 'pityLegendary': 0,
+        'permBonusAtk': 0, 'permBonusHp': 0, 'permBonusDef': 0,
+        'flatBonusAtk': 0, 'flatBonusHp': 0, 'flatBonusDef': 0,
+        'storyRulesShown': false, 'dungeonConqueror': false,
+        'last_claim_date': timestamp.value(0), 'daily_read_count': 0, 'last_read_date': '',
+        'missionData': {
+          'date': '',
+          'progress': {'newsRead': 0, 'postsCreated': 0, 'socialActions': 0, 'animeAdded': 0, 'communityActions': 0},
+          'claimed': {'m_news': false, 'm_posts': false, 'm_social': false, 'm_tracker': false, 'm_community': false}
+        },
+        'created_at': request.time, 'updated_at': request.time
+      };
+    }
+    match /user_meta/{uid} {
+      allow get: if owner(uid);
+      allow list: if false;
+      allow create: if owner(uid) && initialProfile(uid);
+      allow update: if owner(uid)
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['username', 'Bio', 'avatar', 'updated_at'])
+        && validProfile(request.resource.data)
+        && request.resource.data.updated_at == request.time;
+      allow delete: if false;
+      match /{child=**} {
+        allow read, write: if false;
+      }
+    }
+    // Stage03 native scope only. Future social/tracker/story/etc. need reviewed
+    // collection-specific rules/trusted rewards, NOT a signed-in catch-all.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
