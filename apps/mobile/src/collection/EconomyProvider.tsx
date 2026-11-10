@@ -7,13 +7,13 @@ import type { Card } from '../domain/profile';
 export type Command = {type:'prepare'|'summon'} | {type:'equip';instanceId:string;slot:string} | {type:'unequip';slot:string} | {type:'recycle';instanceId:string} | {type:'buyTheme'|'equipTheme';themeId:string};
 type Pending={operationId:string;command:Command};
 type Result={type:string;card?:Card;gold?:number;xp?:number;duplicate?:boolean};
-type Context={configured:boolean;ready:boolean;busy:boolean;pending:Pending|null;error:string;result:Result|null;run:(command?:Command)=>Promise<void>};
+type Context={configured:boolean;endpointAvailable:boolean;checking:boolean;connection:string;check:()=>Promise<void>;ready:boolean;busy:boolean;pending:Pending|null;error:string;result:Result|null;run:(command?:Command)=>Promise<void>};
 const Context=createContext<Context|null>(null);
 export function useEconomy(){const c=useContext(Context);if(!c)throw Error('EconomyProvider missing');return c;}
-const raw=process.env.EXPO_PUBLIC_ECONOMY_API_URL || '';
+const raw=process.env.EXPO_PUBLIC_ECONOMY_API_URL || process.env.EXPO_PUBLIC_ECONOMY_OWNER_TEST_URL || '';
 const endpoint=/^https:\/\/[^/\s]+(?:\/[^\s]*)?$/.test(raw)?raw.replace(/\/+$/,''):'';
 const messages:Record<string,string>={
- 'insufficient-gold':'পর্যাপ্ত Gold নেই।','theme-already-owned':'এই theme আগেই কেনা হয়েছে।','theme-not-owned':'আগে theme কিনতে হবে।',
+ 'owner-test-only':'এই account live test-এর অনুমোদিত নয়।','economy-not-enabled':'Server economy বন্ধ আছে।','insufficient-gold':'পর্যাপ্ত Gold নেই।','theme-already-owned':'এই theme আগেই কেনা হয়েছে।','theme-not-owned':'আগে theme কিনতে হবে।',
  'rarity-mismatch':'এই slot-এ একই rarity-এর card লাগবে।','instance-not-unique-or-owned':'Card পাওয়া যায়নি বা পরিচয় অনিশ্চিত। Collection refresh করো।',
  'ambiguous-legacy-slot':'পুরোনো featured slot-এর card পরিচয় অনিশ্চিত। আগে ওই slot Unequip করে আবার চেষ্টা করো।',
  'unknown-legacy-card':'এই পুরোনো card-এর catalog mapping যাচাই প্রয়োজন। Card মুছে ফেলা হয়নি।',
@@ -24,12 +24,28 @@ const messages:Record<string,string>={
 export function EconomyProvider({children}:{children:React.ReactNode}){
  const {user}=useAuth();const uid=user?.uid || '';const key=`economy.pending.v1.${uid}`;
  const [ready,setReady]=useState(false),[busy,setBusy]=useState(false),[pending,setPending]=useState<Pending|null>(null),[error,setError]=useState(''),[result,setResult]=useState<Result|null>(null);
+ const [checking,setChecking]=useState(false),[connection,setConnection]=useState('Server connection পরীক্ষা করো; এটি Gold/card বদলাবে না।'),[allowed,setAllowed]=useState(false);
+ const checkLock=useRef(false);
  const lock=useRef(false),active=useRef(true),pendingRef=useRef<Pending|null>(null);
  useEffect(()=>{active.current=true;let alive=true;AsyncStorage.getItem(key).then(value=>{
   if(!alive)return;if(value){const saved=JSON.parse(value) as Pending;if(typeof saved.operationId!=='string'||!saved.command?.type)throw Error('invalid pending');pendingRef.current=saved;setPending(saved);}setReady(true);
  }).catch(()=>{if(alive)setError('Pending command পড়া যায়নি। নিরাপত্তার জন্য নতুন spend বন্ধ আছে।');});return()=>{alive=false;active.current=false;};},[key]);
+ const check=async()=>{
+  if(checkLock.current||!endpoint||!uid)return;
+  checkLock.current=true;setChecking(true);setAllowed(false);setConnection('Server যাচাই হচ্ছে… Free server জাগতে এক মিনিটের বেশি লাগতে পারে।');
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),90000);
+  try{
+   const current=getAuth().currentUser;if(current?.uid!==uid)return;
+   const token=await current.getIdToken();
+   const response=await fetch(`${endpoint}/v1/economy/status`,{headers:{Authorization:`Bearer ${token}`},signal:controller.signal});
+   if(!response.ok)throw Error(`Server check ব্যর্থ (${response.status})। Backend update/permission পরীক্ষা প্রয়োজন।`);
+   const data=await response.json();if(data.profileReadable!==true||typeof data.mutationsAllowed!=='boolean')throw Error('Server status যাচাই হয়নি।');
+   if(active.current&&getAuth().currentUser?.uid===uid){setAllowed(data.mutationsAllowed);setConnection(data.mutationsAllowed?'Connection verified · এই account-এ economy অনুমোদিত। কোনো Gold/card বদলানো হয়নি।':'Auth + own Firestore read verified · spending বন্ধ আছে। কোনো Gold/card বদলানো হয়নি।');}
+  }catch(e){if(active.current&&getAuth().currentUser?.uid===uid)setConnection(e instanceof Error&&e.name!=='AbortError'?e.message:'Server check timeout—আবার Check চাপো।');}
+  finally{clearTimeout(timer);checkLock.current=false;if(active.current)setChecking(false);}
+ };
  const run=async(command?:Command)=>{
-  if(lock.current||!ready)return;if(!endpoint){setError('Trusted economy backend এখনো configure করা হয়নি। কোনো Gold/card বদলানো হয়নি।');return;}
+  if(lock.current||!ready)return;if(!allowed){setError('আগে Check server connection দিয়ে এই account-এর অনুমতি যাচাই করো।');return;}if(!endpoint){setError('Trusted economy backend এখনো configure করা হয়নি। কোনো Gold/card বদলানো হয়নি।');return;}
   if(getAuth().currentUser?.uid!==uid)return;
   if(pendingRef.current&&command){setError('আগের কাজের ফল এখনো নিশ্চিত নয়। আগে Retry pending চাপো।');return;}
   const operation=pendingRef.current || (command?{operationId:randomUUID(),command}:null);if(!operation)return;
@@ -39,7 +55,7 @@ export function EconomyProvider({children}:{children:React.ReactNode}){
    // Persist BEFORE sending. Timeout/kill/relaunch must reuse this operation ID, not spend twice.
    await AsyncStorage.setItem(key,JSON.stringify(operation));pendingRef.current=operation;if(active.current)setPending(operation);
    const current=getAuth().currentUser;if(current?.uid!==uid)return;
-   const token=await current.getIdToken();controller=new AbortController();timer=setTimeout(()=>controller?.abort(),25000);
+   const token=await current.getIdToken();controller=new AbortController();timer=setTimeout(()=>controller?.abort(),90000);
    const response=await fetch(`${endpoint}/v1/economy`,{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify(operation),signal:controller.signal});
    const payload=await response.json();
    // Only definitive command rejection clears pending. 401/429/5xx/network errors retain it.
@@ -53,5 +69,5 @@ export function EconomyProvider({children}:{children:React.ReactNode}){
   }catch(e){if(active.current)setError(e instanceof Error&&e.message&&!e.message.includes('Network request')&&e.name!=='AbortError'?e.message:'সংযোগ বিচ্ছিন্ন বা সময় শেষ। ফল নিশ্চিত নয়—Retry pending চাপো; নতুন করে Gold খরচ হবে না।');}
   finally{if(timer)clearTimeout(timer);lock.current=false;if(active.current)setBusy(false);}
  };
- return <Context.Provider value={{configured:!!endpoint,ready,busy,pending,error,result,run}}>{children}</Context.Provider>;
+ return <Context.Provider value={{configured:!!endpoint&&allowed,endpointAvailable:!!endpoint,checking,connection,check,ready,busy,pending,error,result,run}}>{children}</Context.Provider>;
 }

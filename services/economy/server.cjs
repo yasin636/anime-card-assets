@@ -16,7 +16,7 @@ try {
  process.exit(1);
 }
 initializeApp({credential,projectId:'anime-meta-hub'});
-const server=createServer({auth:getAuth(),db:getFirestore(),enabled:process.env.ECONOMY_ENABLED==='true'});
+const server=createServer({auth:getAuth(),db:getFirestore(),enabled:process.env.ECONOMY_ENABLED==='true',testUids:(process.env.ECONOMY_TEST_UIDS||'').split(',').map(uid=>uid.trim()).filter(Boolean)});
 server.requestTimeout=30000;server.headersTimeout=15000;
 server.listen(Number(process.env.PORT)||8080,'0.0.0.0',()=>console.log('Economy API listening; credentials and user data are not logged.'));
 for(const signal of ['SIGTERM','SIGINT'])process.on(signal,()=>server.close(()=>process.exit(0)));

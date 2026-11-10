@@ -38,3 +38,15 @@ test('factory default is fail-closed, health does not imply economy readiness',a
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
  try{const url=`http://127.0.0.1:${server.address().port}`;assert.equal((await post(url,command)).status,503);}finally{await new Promise(resolve=>server.close(resolve));}
 });
+
+test('owner-test gate uses verified UID only; other authenticated users cannot mutate',()=>fixture(async(url,counts)=>{
+ const r=await post(url,command);assert.equal(r.status,403);assert.deepEqual(await r.json(),{error:'owner-test-only'});assert.equal(counts().transactions,0);
+},{enabled:false,testUids:['different-uid']}));
+test('allowlisted owner reaches transaction even when global enablement is false',()=>fixture(async(url,counts)=>{
+ const r=await post(url,command);assert.equal(r.status,503);assert.equal(counts().transactions,1);
+},{enabled:false,testUids:['actual-user']}));
+test('authenticated read-only status checks own Firestore without mutation',()=>fixture(async(url,counts)=>{
+ const r=await fetch(url+'/v1/economy/status',{headers:{Authorization:'Bearer valid'}});
+ assert.equal(r.status,200);assert.deepEqual(await r.json(),{profileReadable:true,mutationsAllowed:false,mode:'disabled'});assert.equal(counts().transactions,0);
+ const missing=await fetch(url+'/v1/economy/status');assert.equal(missing.status,401);
+},{enabled:false,db:{collection:name=>{assert.equal(name,'user_meta');return {doc:uid=>{assert.equal(uid,'actual-user');return {get:async()=>({exists:true})};}};}}}));

@@ -10,6 +10,10 @@ services:
     startCommand: npm --prefix services/economy start
     healthCheckPath: /health
     envVars:
+      - key: ECONOMY_ENABLED
+        value: 'false'
+      - key: ECONOMY_TEST_UIDS
+        value: ''
       - key: NODE_VERSION
         value: 22
       - key: GOOGLE_APPLICATION_CREDENTIALS
