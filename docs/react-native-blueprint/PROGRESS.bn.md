@@ -288,3 +288,11 @@ v0.5.2/code10 CI43002803307 SUCCESS: security1304628109011m10s and Android130463
 
 ## v0.5.3 — Step04 implementation completion, owner acceptance pending
 একই Settings Gemini key/model: Sensei direct, Quiz trusted HTTPS backend transient headers; কোনো দ্বিতীয় key নয়। Server-validated five-question/restart/resume/reward/retry, weekly claimed state, confirmed battle artwork/damage/shield animation ও original toggleable SFX। Existing artwork/economy unchanged; owner-only access retained. Render latest deploy required, no new Firebase/Rules/config. See apps/mobile/STEP04-COMPLETION.md. Live Google/quota and phone acceptance not performed. Gallery ও temporary GCP exception/role cleanup deferred.
+
+### v0.5.3 signed APK delivered
+- Source: c44481729066b0f47b8dc9c6b0716138b1af5e5f (implementation 9e1051c).
+- CI 43009924762 SUCCESS: Firestore emulator security/transactions/HTTP checks, TypeScript, mobile/provider tests, native build and pinned signature/bundle verification passed.
+- Download: https://github.com/yasin636/anime-card-assets/actions/runs/43009924762/artifacts/13851046239
+- Artifact: AnimeMetaHub-v0.5.3-arena-redesign-test, 34,604,633 bytes; archive SHA256 0efa9e5ea447c7013b9bbb1e2fb3d411a43f60f5c4c21a7b06ef0d609b3e7b57.
+- Local: 49 server tests, 19 Gemini/autoconnect/presentation tests, 16 provider/broker/visual tests, 23 profile checks and foundation/autolinking validator passed. Local TypeScript lacked ignored generated Firebase config; CI securely generated it and TypeScript passed.
+- Needs existing Render service Manual Deploy latest commit, then install update and Arena refresh. No extra AI key/config/Rules. Live Google/provider/phone/weekly acceptance still pending; implementation complete does not mean owner acceptance complete.
