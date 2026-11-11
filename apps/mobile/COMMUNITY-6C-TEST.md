@@ -1,4 +1,4 @@
-# 6C — implementation in progress (not APK delivery)
+# 6C — signed test release candidate v0.10.0 (code 19)
 
 6B phone acceptance was reported by the owner. Media uploads remain deferred.
 
@@ -12,21 +12,20 @@
 
 ## Local checks performed
 - `node --test services/economy/*.test.cjs`: 78/78 passed (9 new community/catalog tests).
-- `node --test tools/test-*.cjs`: 72/72 passed (existing tool regressions).
+- `node --test tools/test-*.cjs`: 76/76 passed (including four community native tests).
 - Mobile typecheck: only missing ignored `src/generated/firebase-client` module reported. Production generated-config CI typecheck still required; do not claim a complete typecheck pass.
 
-## Still required before delivery
-- Dedicated React lifecycle/mock coverage of new CommunityScreen, including pending requests resolving while hidden, timer cancellation, UTC reset and session-scoped duplicate UI.
-- Firestore emulator tests of new reward transactions, concurrent claims, read-session direct client denial and mission interoperability. Unit fake DB tests are not concurrency proof.
-- Workflow inclusion, version bump, secure generated-config typecheck, signed APK build and verification.
-- Owner Render deploy (autodeploy is off), then phone test / acceptance before next feature step.
-- External Jikan availability has not been live-tested from this network-restricted workspace.
+## Delivery gates / limitations
+- Owner Render deploy (autodeploy off), then phone acceptance remains required.
+- External Jikan availability is not live-tested from this network-restricted workspace.
+- Initial APK security gate hit an existing recycle test's emulator INVALID_ARGUMENT error; independent same-source security run passed. File-level emulator execution is now serialized to reduce emulator contention; concurrency inside individual tests is retained. No security test was removed.
+- Signed APK CI is authoritative for generated-config typecheck, emulator, release compile and private signature.
 
 ## Workspace provenance resolved
 Remote branch was verified at 4aa3b07. Local files were backed up, the current branch fast-forwarded to that existing remote HEAD, and only the five differing implementation files reapplied. No branch switch or destructive reset was used. Existing untracked 6C files were preserved.
 
 ## Release candidate v0.10.0 / Android code 19
-Backend tests 78/78 and tool tests 75/75 pass locally. Added native tests cover manual add, five mission controls, foreground cancellation and late start cancellation. Added emulator tests cover concurrent duplicate add, receipt replay, concurrent reading/mission claims and numeric overflow; Rules tests deny direct client forgery. These are included in the signed APK CI gate; CI result is authoritative.
+Backend tests 78/78 and tool tests 76/76 pass locally. Added native tests cover manual add, five mission controls, foreground cancellation and late start cancellation. Added emulator tests cover concurrent duplicate add, receipt replay, concurrent reading/mission claims and numeric overflow; Rules tests deny direct client forgery. These are included in the signed APK CI gate; CI result is authoritative.
 
 ## Phone acceptance checklist
 1. Owner deploys this release's backend commit to the existing Render service (autodeploy off); keep existing secrets/owner allowlist.
