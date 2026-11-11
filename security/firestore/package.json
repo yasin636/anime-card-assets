@@ -2,7 +2,7 @@
   "name": "anime-meta-hub-firestore-security",
   "private": true,
   "scripts": {
-    "test": "firebase emulators:exec --only firestore --project demo-anime-meta-hub 'node --test rules.test.cjs transactions.test.cjs arena.test.cjs social.test.cjs chat.test.cjs'"
+    "test": "firebase emulators:exec --only firestore --project demo-anime-meta-hub 'node --test rules.test.cjs transactions.test.cjs arena.test.cjs social.test.cjs chat.test.cjs community.test.cjs'"
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "4.0.1",

@@ -383,3 +383,11 @@ Owner confirmed v0.6.1 System reward/claim flow via two Goblin screenshots. Owne
 - Artifact AnimeMetaHub-v0.9.0-community-chat-6B-test;36,380,215bytes; archiveSHA256 05974d24940722c07776f8bc42f3b5d781b27cd2bea34d589600b6045a62a54d; API verified exists/not expired. This digest describes the artifact archive, not the APK file inside (use bundled SHA256SUMS.txt).
 - Owner handoff: update in place; manually deploy latest current-branch commit on EXISTING Render economy service, then More→Chat (Messages/Global/Sensei). Agent has NOT deployed Render or touched real chat/account data. No new key, billing, Rules publish or composite index needed. Same owner UID test allowlist retained. Use already-authorized test accounts for actual two-way DM/unread checks; no public rollout/allowlist expansion inferred.
 -6B runtime/physical-phone/two-account acceptance still pending. Live view refresh ~6s and foreground inbox~15s, not OS push. See apps/mobile/CHAT-6B-TEST.md; retain older APK app data/key/journal/drafts. Wait for phone feedback before6C. Previously deferred gallery/cloud journal/GCP cleanup remain deferred.
+
+
+## 6C release candidate — 2026-11-08
+- Owner accepted 6B; authorized Tracker/News/community integration, media deferred.
+- Checkout provenance resolved by safe backup + fast-forward to existing remote 4aa3b07 on the same branch.
+- Trusted Tracker, Jikan airing catalog, ten-second reading sessions, UTC five-read cap and shared five-mission reward claims implemented. Native tabs + Feed entry points added.
+- v0.10.0/code19 candidate; backend 78/78, tools 75/75 locally. Generated Firebase configuration typecheck and security emulator run are CI gates, not claimed locally.
+- Phone acceptance remains required after signed build; owner manually deploys existing Render backend. See apps/mobile/COMMUNITY-6C-TEST.md.
