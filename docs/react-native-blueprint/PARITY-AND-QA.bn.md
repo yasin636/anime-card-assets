@@ -66,7 +66,7 @@ Implementation repairs below do **not** authorize deleting features or changing 
 |D13 Approval|Social text says5 likes+5 comments but counter total10; community says1 global+2 quiz but total3|Baseline uses aggregate counts; changing to distinct subgoals needs approval/data migration|
 |D14 Approval|Mission/news dates UTC; reset countdown local; week local Sunday→ISO|Default preserve UTC mission/day; correct label countdown to same boundary. Select explicit weekly timezone rather than silently Dhaka reset|
 |D15 Approval|Heavy says3 turns but Guard doesn't decrement|Default exact attack-only cooldown; if actual all turns desired, update rules/tests with approval|
-|D16 Approval|ARISE can repeat-stack; flags missing resets|Recommend once/fight + full reset, approval required (substantial power change)|
+|D16 Approved by owner|ARISE can repeat-stack; flags missing resets|Owner explicitly approved once per battle + full ARISE state reset for every new battle. Enforce server-side; same-operation replay must not apply stats twice. Implementation/QA pending in Step05.|
 |D17 Required|Timers/callbacks survive exit/navigation and multiple button taps|Phase/turn lock, cancellation registry, session generation guard, no stale mutation|
 |D18 Approval|Shield-down Story HP subtracts5% but displayed dmg says2%|Preserve5% actual damage; recommended display actual delta; golden test captures defect|
 |D19 Approval|A hit can trigger boss mid dialogue before lethal victory check; later re-entry may allow dead enemy actions|Priority death→victory before rage/mid; don't silently add enemy damage|

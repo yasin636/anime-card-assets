@@ -349,7 +349,7 @@ Coin2500ms → Bengali intro dialogue → fight। Enemy initiative schedules fi
 - ARISE button/selection starts Ch2; Ch1 denied with toast। Multi-select any number (no source cap), no selection→toast; show original shadow cards and bonus summary।
 - Each chosen shadow contributes **round(original stat*.5) per shadow**, then sum. Add to current/max HP, ATK, current/max DEF; active indicator/bonus fields। No enemy turn consumed by source confirm।
 - Play separate ARISE voice clip and kinetic burst, selected shadow portraits/particles, aura/system text. Entire animation port from `triggerAriseBurst`, not replace with generic spinner。
-- Source confirm can stack repeatedly and reset omits ARISE flags; do not invent a one-use restriction without decision. Recommended safe rule: one confirmed ARISE application per battle, reset all shadow flags per fight, approval gate in QA।
+- Source confirm can stack repeatedly and reset omits ARISE flags; do not invent a one-use restriction without decision. Owner-approved rule (D16): one confirmed ARISE application per battle; reset all shadow flags per new fight. Enforce on server, including retries/concurrent requests; UI button state alone is insufficient।
 
 ---
 
