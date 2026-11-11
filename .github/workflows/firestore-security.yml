@@ -27,5 +27,22 @@ jobs:
         working-directory: security/firestore
       - run: npm ci --ignore-scripts --no-audit --no-fund
         working-directory: services/economy
-      - run: npm test
+      - name: Test Rules and transactions (surface failure diagnostics)
         working-directory: security/firestore
+        shell: bash
+        run: |
+          set +e
+          npm test > security-test.log 2>&1
+          result=$?
+          cat security-test.log
+          if [ "$result" -ne 0 ]; then
+            python3 - <<'PYDIAG'
+          from pathlib import Path
+          text=Path('security-test.log').read_text(errors='replace')
+          # Logs downloads may be unavailable; expose failure context via Checks API.
+          for chunk in [text[:3500], text[-10000:]]:
+              escaped=chunk.replace('%','%25').replace('\r','%0D').replace('\n','%0A')
+              print('::error::Security test failed: '+escaped)
+          PYDIAG
+          fi
+          exit "$result"
