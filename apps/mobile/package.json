@@ -1,6 +1,6 @@
 {
   "name": "anime-meta-hub-mobile",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "private": true,
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
@@ -27,6 +27,7 @@
     "expo-build-properties": "~1.0.10",
     "expo-crypto": "15.0.9",
     "expo-font": "~14.0.12",
+    "expo-haptics": "15.0.8",
     "expo-image-manipulator": "~14.0.8",
     "expo-image-picker": "~17.0.11",
     "expo-linear-gradient": "~15.0.8",

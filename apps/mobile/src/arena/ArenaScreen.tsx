@@ -4,6 +4,8 @@ import {LinearGradient} from 'expo-linear-gradient';
 import {Ionicons} from '@expo/vector-icons';
 import Svg,{Path,Circle,Text as SvgText} from 'react-native-svg';
 import {useAudioPlayer} from 'expo-audio';
+import {useIsFocused} from '@react-navigation/native';
+import {SystemWindow,SystemNotice} from '../story/SystemWindow';
 import {useAI} from '../ai/AIProvider';
 import {useAuth} from '../auth/AuthProvider';
 import {useEconomy,Command,Battle,Quiz,BoardRow,PublicProfile} from '../collection/EconomyProvider';
@@ -22,6 +24,7 @@ function WheelFace(){
  return <Svg width={260} height={260} viewBox="0 0 260 260">{labels.map((label,i)=>{const start=point(i*45,122),end=point((i+1)*45,122),mid=point(i*45+22.5,83);return <React.Fragment key={label}><Path d={`M130 130 L${start[0]} ${start[1]} A122 122 0 0 1 ${end[0]} ${end[1]} Z`} fill={['#282340','#15363b','#342443','#4b3a22','#342131','#21374b','#342650','#254039'][i]} stroke="#ffffff12" strokeWidth={1}/><SvgText x={mid[0]} y={mid[1]} fill={i===3?palette.gold:'#e7e5f4'} textAnchor="middle" fontSize={9} fontWeight="800" transform={`rotate(${i*45+22.5},${mid[0]},${mid[1]})`}>{label}</SvgText></React.Fragment>;})}<Circle cx={130} cy={130} r={123} stroke="#a58be5" strokeWidth={3} fill="none"/><Circle cx={130} cy={130} r={37} fill="#111426" stroke="#9c82d5" strokeWidth={2}/><SvgText x={130} y={138} fontSize={26} textAnchor="middle" fill={palette.gold}>✦</SvgText></Svg>;
 }
 export function ArenaScreen(){
+ const focused=useIsFocused();const [systemNotice,setSystemNotice]=useState<SystemNotice|null>(null);
  const impact=useAudioPlayer(require('../../assets/audio/duel-impact.wav'));
  const [sound,setSound]=useState(true);
  const ai=useAI();const {profile:p,user}=useAuth(),e=useEconomy();
@@ -48,15 +51,18 @@ export function ArenaScreen(){
     if(player||enemy)setDuel({id:`${after.id}_${after.log.length}`,player,enemy,playerDamage:Math.max(0,before.player.hp-after.player.hp),enemyDamage:Math.max(0,before.enemy.hp-after.enemy.hp),shieldBreak:(before.player.def>0&&after.player.def===0)||(before.enemy.def>0&&after.enemy.def===0)});
    }
    previousBattle.current=after;setBattle(r.battle);if(r.battle.status!=='active')setSelected([]);}
+  if(r.reward&&r.battle?.status==='finished')setSystemNotice({id:`${r.battle.id}:reward`,title:r.battle.outcome==='win'?'VICTORY':'DEFEAT',kicker:'ARENA SETTLEMENT',kind:r.battle.outcome==='win'?'reward':'danger',message:'Reward server-এ যোগ হয়েছে। Entry fee battle শুরুর সময় কাটা হয়েছিল; এখানে আবার কাটছে না।',rows:[{label:'GROSS GOLD REWARD',value:r.reward.gold},{label:'ENTRY FEE (ALREADY PAID)',value:-400},{label:'NET GOLD',value:r.reward.gold-400},{label:'GEMS',value:r.reward.gems},{label:'XP',value:r.reward.xp}]});
+  if(r.type==='weeklyClaim'&&r.reward)setSystemNotice({id:`weekly:${r.week}`,title:'WEEKLY REWARD',kicker:'RANKING HONOURS',kind:'reward',message:'এই সপ্তাহের reward সফলভাবে account-এ যোগ হয়েছে।',rows:[{label:'GOLD',value:r.reward.gold},{label:'GEMS',value:r.reward.gems},{label:'XP',value:r.reward.xp}]});
   if(r.quiz)setQuiz(r.quiz);
+  if(r.type==='quizAnswer'&&r.quiz?.status==='finished'&&typeof r.gems==='number')setSystemNotice({id:`quiz:${r.quiz.id}`,title:'QUIZ COMPLETE',kicker:'KNOWLEDGE QUEST',kind:'reward',message:`সঠিক ${r.quiz.correct} / ${r.quiz.total}। প্রশ্নপ্রতি XP আগেই হিসাব হয়েছে; নিচের Gems completion reward।`,rows:[{label:'COMPLETION GEMS',value:r.gems}]});
   if(r.feedback){setAnswer('');setFeedback(`${r.feedback.correct?'Correct':'Wrong / skipped'} · ${r.feedback.xpDelta} XP\nAnswer: ${r.feedback.answer}\n${r.feedback.explanation}`);}
   if(r.type==='wheelSpin'&&typeof r.index==='number'){
    setSpinning(true);setWheelResult('');const target=angle.current+360*6+((360-(r.index*45+22.5))-(angle.current%360)+360)%360;
-   Animated.timing(rotation,{toValue:target,duration:5200,useNativeDriver:true}).start(({finished})=>{angle.current=target;if(alive.current){setSpinning(false);if(finished)setWheelResult(`${r.label} · ${r.xpDelta!>=0?'+':''}${r.xpDelta} XP`);}});
+   Animated.timing(rotation,{toValue:target,duration:5200,useNativeDriver:true}).start(({finished})=>{angle.current=target;if(alive.current){setSpinning(false);if(finished){setWheelResult(`${r.label} · ${r.xpDelta!>=0?'+':''}${r.xpDelta} XP`);setSystemNotice({id:`wheel:${Date.now()}`,title:r.label||'WHEEL RESULT',kicker:'FORTUNE REPORT',kind:(r.xpDelta||0)<0?'danger':'reward',message:'Fee/reward মিলিয়ে server-confirmed মোট XP পরিবর্তন। এখানে দ্বিতীয়বার কিছু যোগ বা কাটা হচ্ছে না।',rows:[{label:'NET XP CHANGE',value:r.xpDelta||0}]});}}});
   }
  },[e.result,rotation,sound,impact]);
  if(!p)return <Text style={f.body}>Loading your arena…</Text>;
- const disabled=!e.configured||!e.ready||e.busy||!!e.pending||spinning||!!duel;
+ const disabled=!e.configured||!e.ready||e.busy||!!e.pending||spinning||!!duel||!!systemNotice;
  const send=(c:Command,message?:string)=>{if(message)Alert.alert('Confirm',message,[{text:'Cancel',style:'cancel'},{text:'Confirm',onPress:()=>void e.run(c)}]);else void e.run(c);};
  const openProfile=(row:BoardRow)=>{inspectUid.current=row.uid;setInspect(null);setProfileOpen(true);send({type:'publicProfile',uid:row.uid});};
  const closeProfile=()=>{inspectUid.current=null;setProfileOpen(false);setInspect(null);};
@@ -114,6 +120,7 @@ export function ArenaScreen(){
  </>}
  <Pressable accessibilityRole="button" disabled={disabled} onPress={()=>send({type:'arenaView'})} style={a.resume}><Ionicons name="sync-outline" size={14} color={palette.muted}/><Text style={v.description}>Refresh / resume saved Arena</Text></Pressable>
  <PublicProfileSheet open={profileOpen} profile={inspect} loading={e.busy} error={e.error} onClose={closeProfile} onRetry={()=>{if(e.pending)void e.run();else if(inspectUid.current)send({type:'publicProfile',uid:inspectUid.current});}}/>
+ <SystemWindow notice={focused&&!duel&&!spinning?systemNotice:null} onClose={()=>setSystemNotice(null)}/>
  <DuelFeedback event={duel} onClose={()=>setDuel(null)}/>
  <CardDetail card={detail} onClose={()=>setDetail(null)}/>
  </>;

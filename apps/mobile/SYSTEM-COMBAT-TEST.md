@@ -1,0 +1,20 @@
+# v0.6.1 / code13 — System & combat visual upgrade
+
+Owner reported Step05 tests successful. Owner then requested the combat polish proposal and supplied five anime System-window screenshots as style references. This release is mobile-only; no balance, stat, reward, penalty, RNG, AI-key or server changes. Keep Step05 backend as deployed. No Render redeploy required if it already serves accepted Step05.
+
+## Presentation changes
+- Original native-rendered holographic System panels: layered dark navy gradients, cyan borders/bracket corners, faint static scanlines, glowing title, account-safe count-up rows, scrollable modal and explicit dismiss/Android Back. Anime-inspired, not a screenshot pasted over controls or a claim of exact shot-for-shot reproduction.
+- Story boss entry, verified victory + Shadow reveal, explicit pending reward claim, confirmed acquired rewards and defeat/forfeit reports. Dismissing never claims/deletes progress; inline claim/retry remains. No invented punishment: Story defeat/exit has XP/Gold/Gems delta0. Arena settlement reports actual gross reward, prior400Gold fee and net; no second deduction. Weekly/Quiz completion and finished Wheel also use System notifications. Quiz Gems taken directly from response, not awarded by animation; Wheel shows exact server net XP including fee/floor.
+- Five procedural vector dungeon environments/palettes: Blue Gate, Demon Castle, Red Gate, Orc Territory, Jeju. Full original contained character art, compact VS/turn/version HUD, boss enrage tint/warning, damage-trail HP/DEF bars.
+- Server-confirmed dash/slash/hit reaction, floating actual HP delta, heavy/critical/miss/shield-break indicators. Short presentation lock prevents tapping through an exchange; no reward or damage calculated by effects. No global flashing loop.
+- Compact Strike/Heavy/Guard dock with Heavy cooldown ring, distinct ARISE special skill, secondary log/exit tools. Existing source cooldown/once-per-battle rules untouched.
+- ARISE burst retains kinetic portraits/mist/rings, now uses current chapter Jin-Woo portrait; summoned shadows stay in the battlefield and visible formation strip. No new ARISE charge or stat application.
+- Per-account local presentation preferences for sound/haptics/reduced effects; initial device reduced-motion setting respected. Reduced mode removes dash/slash/hitshake/coin loop/ARISE burst/count-up and haptics, retaining readable outcomes and authoritative phase timing. Effects stop/hide on lost focus/background. Existing device TTS ARISE equivalent and bundled SFX retained, not original inaccessible external voice clip.
+- Connection diagnostics collapsed when healthy, but connection failure/error/pending retry are never hidden.
+
+## Tests / acceptance boundary
+Local unit/real-React mocked-native tests cover map/action/version/ARISE, exact System delta signs/zero-loss, no automatic claim, disabled pending claim, dismiss-only Back, actual-damage/heavy/crit/shield/enrage/formation and prior provider retry/account guards. CI additionally runs TypeScript with securely generated Firebase config, emulator security/transaction tests and signed native compile/bundle/certificate checks. No independent physical-device rendering, animation smoothness or iOS acceptance claimed.
+
+Update APK in place; do not uninstall. More → Adventure: inspect new environment/control layout, use a normal free-entry fight to see effects and System victory/explicit claim/confirmed values; defeat/exit correctly shows zero deduction. Reopen preferences and confirm reduced effects/sound/haptics; switch away/background and resume. Use ARISE on a battle you choose and inspect visible formation/once-per-battle state. Arena reward notifications appear on your next intended action; extra paid battle/wheel testing is optional, not required just for screenshots. Check modal scrolling and Android Back on your device. Send screenshots if art/text/controls clip.
+
+Deferred Gallery/GCP policy/role cleanup and social/legacy-browser migration remain as previously documented; this visual update doesn't silently complete them.
