@@ -412,3 +412,12 @@ Owner confirmed v0.6.1 System reward/claim flow via two Goblin screenshots. Owne
 - Added provider destroy + bounded delayed server cleanup worker. Reference checks/attachment locks prevent deletion of linked media; failed jobs retry. Free Render sleeping delays cleanup, and invalid uploads can temporarily consume storage before finalize rejects them.
 - Added seven native photo tests and emulator concurrency/cleanup/Rules denial coverage. Backend 86/86 locally; tool suite expected 83 after new photo cases, signed CI authoritative for full generated-config TS/security/build.
 - Critical remaining owner setup: Media Library User key needs explicit API-assigned folder permission on animemetahub; selection of role alone is insufficient. No root credentials requested, no silent Master Admin promotion, no live provider upload or Render deployment performed. APK is an owner-test candidate, not proof that Cloudinary permissions work.
+
+### 6D signed APK verification result
+- Build/runtime source `625e19a8ac7a629a24e6b62a2a3f16155e9e8f50`, v0.11.0/code20.
+- Android run `43101239269` **SUCCESS** on first attempt: security/emulator (including new media concurrency/cleanup/Rules tests), generated-config TypeScript, foundation/native/backend regressions, release compile, pinned private signature/metadata/embedded JavaScript verification, artifact upload.
+- Artifact `13891489210`, `AnimeMetaHub-v0.11.0-gallery-photo-6D-test`, 36,388,434 bytes, not expired at verification. Archive SHA256 `bdbe6e7d490b2f13fa804f995d48df6c3c53d47313f5926e7cc0fde5c5078599` (archive, not APK; bundled SHA256SUMS is APK digest).
+- https://github.com/yasin636/anime-card-assets/actions/runs/43101239269/artifacts/13891489210
+- Local full checks: backend 86/86, tool/native 83/83, foundation PASS.
+- Deliver as owner-test APK. Actual Cloudinary upload/delete and folder permissions are NOT live-verified. Media Library User role still requires explicit folder access bootstrap; do not present this as completed configuration. Agent did not deploy Render or access owner credentials.
+- Owner: deploy latest branch to existing Render service, update APK in place (no uninstall), test profile/Feed photo and existing feature regressions. If permission error appears, report error-only screenshot; do not send secrets, alter billing or auto-promote Master Admin. Video remains deferred, waiting for phone feedback.
