@@ -23,7 +23,7 @@ const visual=renderModule(path.join(__dirname,'../apps/mobile/src/arena/ArenaVis
 afterEach(async()=>{if(tree)await act(async()=>tree.unmount());tree=null;});
 test('real card component renders artwork, rarity/raw stats, selectable state and callback',async()=>{
  let pressed=0;await act(async()=>{tree=create(React.createElement(visual.TradingCard,{card:{id:'gojo',instanceId:'a',hp:111,atk:333,def:222},selected:true,order:2,onPress:()=>pressed++}));});
- const press=tree.root.findByType('Pressable');assert.equal(press.props.accessibilityState.selected,true);assert(press.props.accessibilityLabel.includes('HP 111, ATK 333, DEF 222'));assert.equal(tree.root.findByType('Image').props.source,1);assert(JSON.stringify(tree.toJSON()).includes('LEGENDARY'));await act(async()=>press.props.onPress());assert.equal(pressed,1);
+ const press=tree.root.findByType('Pressable');assert.equal(press.props.accessibilityState.selected,true);assert(press.props.accessibilityLabel.includes('HP 111, ATK 333, DEF 222'));const image=tree.root.findByType('Image');assert.equal(image.props.source,1);assert.equal(image.props.resizeMode,'contain');assert.equal(image.props.style.width,'100%');assert.equal(image.props.style.height,'100%');assert.equal(image.props.style.position,'absolute');assert(JSON.stringify(tree.toJSON()).includes('LEGENDARY'));await act(async()=>press.props.onPress());assert.equal(pressed,1);
 });
 test('leaderboard is one tappable avatar/name row rather than separate Inspect buttons',async()=>{
  let tapped=0;await act(async()=>{tree=create(React.createElement(visual.BoardIdentity,{row:{uid:'u',rank:1,username:'Hunter',avatar:'https://example.com/a',xp:4234,equippedTheme:''},own:true,disabled:false,onPress:()=>tapped++}));});

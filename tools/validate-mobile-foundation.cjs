@@ -18,8 +18,8 @@ function visit(node) {
 visit(source);
 assert(pages && ts.isObjectLiteralExpression(pages));
 assert.deepEqual(pages.properties.map(p => p.name.getText(source)), ['Profile', 'Arena', 'Feed', 'Shop', 'Cards', 'Tracker', 'Chat', 'Adventure', 'Settings', 'AIProvider']);
-assert.equal(app.version, '0.5.1');
-assert.equal(app.android.versionCode, 9);
+assert.equal(app.version, '0.5.2');
+assert.equal(app.android.versionCode, 10);
 assert.equal(app.android.package, 'com.yasin636.animemetahub');
 assert.equal(app.ios.bundleIdentifier, app.android.package);
 assert.equal(app.updates.enabled, false);
