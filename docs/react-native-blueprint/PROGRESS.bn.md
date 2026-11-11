@@ -391,3 +391,11 @@ Owner confirmed v0.6.1 System reward/claim flow via two Goblin screenshots. Owne
 - Trusted Tracker, Jikan airing catalog, ten-second reading sessions, UTC five-read cap and shared five-mission reward claims implemented. Native tabs + Feed entry points added.
 - v0.10.0/code19 candidate; backend 78/78, tools 75/75 locally. Generated Firebase configuration typecheck and security emulator run are CI gates, not claimed locally.
 - Phone acceptance remains required after signed build; owner manually deploys existing Render backend. See apps/mobile/COMMUNITY-6C-TEST.md.
+
+### 6C signed APK delivered for phone acceptance
+- Runtime/build source: `63dc709` (v0.10.0/code19), Android run `43086308838` rerun **SUCCESS**. Security emulator, generated-config TypeScript, full regression checks, release compile and pinned private signature/embedded JS checks all passed.
+- Artifact `13887506992`: AnimeMetaHub-v0.10.0-community-6C-test; archive 36,390,258 bytes, SHA256 `3a5dd1f61b5758dc38f6dbf862d4c248536412a2d0d115d351328119c9bf1eb0` (archive, not APK; APK digest is included in SHA256SUMS).
+- https://github.com/yasin636/anime-card-assets/actions/runs/43086308838/artifacts/13887506992
+- Local backend 78/78; tool/native 76/76; foundation validation passed.
+- Initial runs exposed old pinned version assertion (fixed) and intermittent existing concurrent recycle emulator INVALID_ARGUMENT. Serializing test files did not fully eliminate that transient error: the unchanged final-source rerun passed. No test was removed, reward gate bypassed or live account mutated.
+- Agent did not deploy Render. Owner must deploy source 63dc709 or descendant to the existing service, retain existing configuration, then update APK in place and perform COMMUNITY-6C-TEST.md checklist. Media remains deferred; awaiting phone acceptance.

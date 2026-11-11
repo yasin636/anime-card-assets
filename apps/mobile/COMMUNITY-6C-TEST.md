@@ -37,3 +37,10 @@ Backend tests 78/78 and tool tests 76/76 pass locally. Added native tests cover 
 7. Test offline/retry and provider failure; no balances are client-authored. Do not continue to media or another feature step until owner phone acceptance.
 
 Foreground gating is a native-client UX property, not proof a human read or an attestation of foreground state against modified clients. Server enforces minimum elapsed time, one active session, expiry, daily cap and idempotent rewards. No push, media or paid provider added.
+
+## Verified build
+Android run 43086308838 (rerun) succeeded from source 63dc709. Security emulator, generated-config TS, regression checks, standalone release compilation and pinned private signature/embedded JS verification passed.
+Artifact: https://github.com/yasin636/anime-card-assets/actions/runs/43086308838/artifacts/13887506992
+Archive SHA256: 3a5dd1f61b5758dc38f6dbf862d4c248536412a2d0d115d351328119c9bf1eb0 (not the APK hash).
+An existing concurrent recycle emulator test intermittently returned INVALID_ARGUMENT even with serialized files; the final unchanged-source rerun passed without removing tests.
+Backend deploy and real-phone acceptance are still owner actions, not completed by the agent.
