@@ -6,7 +6,7 @@ const mobileRequire=Module.createRequire(path.join(__dirname,'../apps/mobile/pac
 const React=mobileRequire('react'),{create,act}=mobileRequire('react-test-renderer'),ts=mobileRequire('typescript');
 global.IS_REACT_ACT_ENVIRONMENT=true;
 const filename=path.join(__dirname,'../apps/mobile/src/collection/EconomyProvider.tsx');
-let store,identity,context,tree,view,listener,requests,send,storageFails,tokenHook;
+let store,identity,context,tree,view,listener,requests,send,storageFails,tokenHook,quizSender;
 const storage={getItem:async key=>store.get(key)||null,setItem:async(k,v)=>{if(storageFails)throw Error('storage unavailable');store.set(k,v);},removeItem:async k=>{store.delete(k);}};
 const originalFetch=global.fetch;
 function load(){
@@ -17,6 +17,7 @@ function load(){
   if(name==='@react-native-async-storage/async-storage')return storage;
   if(name==='expo-crypto')return {randomUUID:require('node:crypto').randomUUID};
   if(name==='@react-native-firebase/auth')return {getAuth:()=>({currentUser:identity})};
+  if(name==='../ai/AIProvider')return {useAI:()=>({requestQuiz:(...args)=>quizSender(...args)})};
   if(name==='../auth/AuthProvider')return {useAuth:()=>context};
   return mobileRequire(name);
  };
@@ -29,7 +30,7 @@ async function settle(){await new Promise(resolve=>setImmediate(resolve));}
 async function mount(uid){identity=user(uid);context={user:identity,profile:{uid}};await act(async()=>{tree=create(React.createElement(api.EconomyProvider,{key:uid},React.createElement(function Probe(){view=api.useEconomy();return null;})));await settle();});}
 async function unmount(){if(tree){await act(async()=>{tree.unmount();await settle();});tree=null;}}
 beforeEach(()=>{
- store=new Map();requests=[];storageFails=false;tokenHook=null;view=null;tree=null;listener=null;
+ quizSender=async()=>{throw Error('unexpected AI call');};store=new Map();requests=[];storageFails=false;tokenHook=null;view=null;tree=null;listener=null;
  process.env.EXPO_PUBLIC_ECONOMY_API_URL='';
  process.env.EXPO_PUBLIC_ECONOMY_OWNER_TEST_URL='https://example.com';
  send=async(url,opts)=>url.endsWith('/status')?ok({profileReadable:true,mutationsAllowed:true}):ok({result:{type:JSON.parse(opts.body).command.type}});
@@ -67,4 +68,15 @@ test('definitive command conflict clears pending, revoked access disables spendi
 });
 test('malformed stored pending fails closed without silently deleting it or spending',async()=>{
  store.set('economy.pending.v1.alice','{broken');await mount('alice');assert.equal(view.ready,false);assert(view.error);assert.equal(requests.length,0);assert.equal(store.get('economy.pending.v1.alice'),'{broken');
+});
+
+test('Quiz retries use ephemeral broker credentials while persisted operation contains no key',async()=>{
+ await mount('alice');let transientKey='first-test-key',firstId;
+ quizSender=async(operation)=>{
+  const persisted=store.get('economy.pending.v1.alice');assert(persisted);assert(!persisted.includes('test-key'));assert.deepEqual(JSON.parse(persisted),operation);
+  if(!firstId)firstId=operation.operationId;else assert.equal(operation.operationId,firstId);
+  return transientKey==='first-test-key'?ok({error:'service-unavailable'},503):ok({result:{type:'quizStart'}});
+ };
+ await act(async()=>view.run({type:'quizStart',title:'Naruto'}));assert(view.pending);assert(!JSON.stringify(view.pending).includes(transientKey));
+ transientKey='replacement-test-key';await act(async()=>view.run());assert.equal(view.pending,null);assert.equal(view.result.type,'quizStart');
 });

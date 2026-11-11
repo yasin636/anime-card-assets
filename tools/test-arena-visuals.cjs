@@ -6,7 +6,7 @@ global.IS_REACT_ACT_ENVIRONMENT=true;
 const renderModule=file=>{
  const m=new Module(file);m.filename=file;m.paths=Module._nodeModulePaths(path.dirname(file));
  m.require=name=>{
-  if(name==='react-native')return {Image:'Image',Modal:'Modal',Pressable:'Pressable',ScrollView:'ScrollView',Text:'Text',View:'View',StyleSheet:{create:v=>v,absoluteFill:{},absoluteFillObject:{}}};
+  if(name==='react-native')return {Animated:{Value:class {setValue(){} interpolate(){return 1;}},View:'AnimatedView',sequence:()=>({start(){},stop(){}}),timing:()=>({}),delay:()=>({})},Image:'Image',Modal:'Modal',Pressable:'Pressable',ScrollView:'ScrollView',Text:'Text',View:'View',StyleSheet:{create:v=>v,absoluteFill:{},absoluteFillObject:{}}};
   if(name==='react-native-safe-area-context')return {SafeAreaView:'SafeAreaView'};
   if(name==='expo-linear-gradient')return {LinearGradient:'LinearGradient'};
   if(name==='@expo/vector-icons')return {Ionicons:'Icon'};
@@ -32,4 +32,10 @@ test('leaderboard is one tappable avatar/name row rather than separate Inspect b
 test('public profile sheet renders actual avatar/bio/featured card and empty slots; no actions for ownership',async()=>{
  await act(async()=>{tree=create(React.createElement(visual.PublicProfileSheet,{open:true,profile:{uid:'u',rank:1,username:'Hunter',avatar:'https://example.com/a',xp:4000,Bio:'My bio',equippedTheme:'naruto',featuredSlots:{'rare-1':{id:'deku',hp:100,atk:200,def:300}}},loading:false,error:'',onClose:()=>{},onRetry:()=>{}}));});
  const text=JSON.stringify(tree.toJSON());assert(text.includes('My bio'));assert(text.includes('Featured legends'));assert(text.includes('Izuku Midoriya'));assert(text.includes('Empty slot'));assert(!text.includes('Recycle'));assert(!text.includes('Equip theme'));assert.equal(tree.root.findByType('Avatar').props.size,88);
+});
+
+test('confirmed duel overlay keeps full artwork, actual damage and shield break; dismisses',async()=>{
+ let dismissed=0;await act(async()=>{tree=create(React.createElement(visual.DuelFeedback,{event:{id:'battle-turn-1',player:{id:'gojo',used:true},enemy:{id:'deku',used:true},playerDamage:13,enemyDamage:27,shieldBreak:true},onClose:()=>dismissed++}));});
+ const text=JSON.stringify(tree.toJSON());const labels=tree.root.findAllByType('Text').map(n=>n.props.children.flat?.().join('')||n.props.children);assert(labels.includes('−13 HP'));assert(labels.includes('−27 HP'));assert(text.includes('SHIELD BREAK'));assert(!text.includes('USED'));assert.equal(tree.root.findAllByType('Image').length,2);
+ await act(async()=>tree.root.findAllByType('Pressable')[0].props.onPress());assert.equal(dismissed,1);
 });

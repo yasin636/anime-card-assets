@@ -98,7 +98,7 @@ function AppRoot() {
   useEffect(() => { const id = setTimeout(() => setBooting(false), 1100); return () => clearTimeout(id); }, []);
   if (booting || !auth.ready) return <View style={s.boot}><StatusBar style="light" /><IconBubble icon="flash" /><Text style={s.bootTitle}>SYSTEM REBOOTING</Text><Text style={s.description}>Extracting Shadow Files... ⚡</Text><Text style={s.buildStamp}>STEP 04 / ARENA · v0.5.2</Text></View>;
   if (!auth.user || auth.pendingEmail) return <AuthScreen />;
-  return <EconomyProvider key={auth.user.uid}><AIProvider key={auth.user.uid}><NavigationContainer key={auth.user.uid} ref={navigation}><Stack.Navigator initialRouteName="Profile" screenOptions={{ headerShown: false, animation: 'fade', contentStyle: { backgroundColor: C.bg } }}>{(Object.keys(pages) as Route[]).map(name => <Stack.Screen key={name} name={name} component={Screen} />)}</Stack.Navigator></NavigationContainer></AIProvider></EconomyProvider>;
+  return <AIProvider key={auth.user.uid}><EconomyProvider key={auth.user.uid}><NavigationContainer key={auth.user.uid} ref={navigation}><Stack.Navigator initialRouteName="Profile" screenOptions={{ headerShown: false, animation: 'fade', contentStyle: { backgroundColor: C.bg } }}>{(Object.keys(pages) as Route[]).map(name => <Stack.Screen key={name} name={name} component={Screen} />)}</Stack.Navigator></NavigationContainer></EconomyProvider></AIProvider>;
 }
 export default function App() { return <SafeAreaProvider><AuthProvider><AppRoot /></AuthProvider></SafeAreaProvider>; }
 

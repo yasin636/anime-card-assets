@@ -38,7 +38,7 @@ function createHandler({auth,db,limit=60,enabled=false,testUids=[]}){
    for await(const chunk of req){bytes+=Buffer.byteLength(chunk);if(bytes>8192)return send(413,{error:'request-too-large'});body+=chunk;}
    let parsed;try{parsed=JSON.parse(body);}catch{return send(400,{error:'invalid-json'});}
    if(!parsed||Array.isArray(parsed)||Object.keys(parsed).some(k=>!['operationId','command'].includes(k)))return send(400,{error:'invalid-request'});
-   const result=await execute({db,verifiedUid:identity.uid,operationId:parsed.operationId,command:parsed.command});
+   const result=await execute({db,verifiedUid:identity.uid,operationId:parsed.operationId,command:parsed.command,ai:{key:req.headers['x-amh-ai-key'],model:req.headers['x-amh-ai-model']}});
    return send(200,{result});
   }catch(error){
    if(error instanceof EconomyError)return send(409,{error:error.code});

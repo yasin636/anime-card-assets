@@ -3,12 +3,14 @@ import {Alert,Animated,Pressable,ScrollView,StyleSheet,Text,TextInput,View} from
 import {LinearGradient} from 'expo-linear-gradient';
 import {Ionicons} from '@expo/vector-icons';
 import Svg,{Path,Circle,Text as SvgText} from 'react-native-svg';
+import {useAudioPlayer} from 'expo-audio';
+import {useAI} from '../ai/AIProvider';
 import {useAuth} from '../auth/AuthProvider';
 import {useEconomy,Command,Battle,Quiz,BoardRow,PublicProfile} from '../collection/EconomyProvider';
 import {EconomyStatus} from '../collection/CollectionScreens';
 import {ActionButton,f} from '../ui/forms';
 import {Avatar} from '../ui/Avatar';
-import {TradingCard,CardDetail,BoardIdentity,Podium,PublicProfileSheet,Metric,SmallTag,v,palette,pretty} from './ArenaVisuals';
+import {DuelFeedback,DuelEvent,TradingCard,CardDetail,BoardIdentity,Podium,PublicProfileSheet,Metric,SmallTag,v,palette,pretty} from './ArenaVisuals';
 import {DisplayCard,displayCard,deckTotals,rarityColors} from './presentation';
 const labels=['LOSE','2x XP','10 XP','JACKPOT','BANKRUPT','50 XP','3x XP','FREE'];
 const tabs=[{id:'battle',name:'Battle',icon:'flash'},{id:'board',name:'Rankings',icon:'trophy'},{id:'wheel',name:'Wheel',icon:'aperture'},{id:'quiz',name:'Quiz',icon:'help-circle'}] as const;
@@ -20,9 +22,12 @@ function WheelFace(){
  return <Svg width={260} height={260} viewBox="0 0 260 260">{labels.map((label,i)=>{const start=point(i*45,122),end=point((i+1)*45,122),mid=point(i*45+22.5,83);return <React.Fragment key={label}><Path d={`M130 130 L${start[0]} ${start[1]} A122 122 0 0 1 ${end[0]} ${end[1]} Z`} fill={['#282340','#15363b','#342443','#4b3a22','#342131','#21374b','#342650','#254039'][i]} stroke="#ffffff12" strokeWidth={1}/><SvgText x={mid[0]} y={mid[1]} fill={i===3?palette.gold:'#e7e5f4'} textAnchor="middle" fontSize={9} fontWeight="800" transform={`rotate(${i*45+22.5},${mid[0]},${mid[1]})`}>{label}</SvgText></React.Fragment>;})}<Circle cx={130} cy={130} r={123} stroke="#a58be5" strokeWidth={3} fill="none"/><Circle cx={130} cy={130} r={37} fill="#111426" stroke="#9c82d5" strokeWidth={2}/><SvgText x={130} y={138} fontSize={26} textAnchor="middle" fill={palette.gold}>✦</SvgText></Svg>;
 }
 export function ArenaScreen(){
- const {profile:p,user}=useAuth(),e=useEconomy();
+ const impact=useAudioPlayer(require('../../assets/audio/duel-impact.wav'));
+ const [sound,setSound]=useState(true);
+ const ai=useAI();const {profile:p,user}=useAuth(),e=useEconomy();
  const [tab,setTab]=useState<'battle'|'board'|'wheel'|'quiz'>('battle'),[filter,setFilter]=useState('all'),[sortPower,setSortPower]=useState(false),[diagnostics,setDiagnostics]=useState(false),[showRules,setShowRules]=useState(false),[showLog,setShowLog]=useState(false);
- const [selected,setSelected]=useState<string[]>([]),[battle,setBattle]=useState<Battle|null>(null),[quiz,setQuiz]=useState<Quiz|null>(null),[board,setBoard]=useState<BoardRow[]>([]),[quizAvailable,setQuizAvailable]=useState(false),[title,setTitle]=useState(''),[answer,setAnswer]=useState(''),[feedback,setFeedback]=useState(''),[inspect,setInspect]=useState<PublicProfile|null>(null),[profileOpen,setProfileOpen]=useState(false),[detail,setDetail]=useState<DisplayCard|null>(null),[week,setWeek]=useState(''),[spinning,setSpinning]=useState(false),[wheelResult,setWheelResult]=useState('');
+ const [selected,setSelected]=useState<string[]>([]),[battle,setBattle]=useState<Battle|null>(null),[quiz,setQuiz]=useState<Quiz|null>(null),[board,setBoard]=useState<BoardRow[]>([]),[quizAvailable,setQuizAvailable]=useState(false),[title,setTitle]=useState(''),[answer,setAnswer]=useState(''),[feedback,setFeedback]=useState(''),[inspect,setInspect]=useState<PublicProfile|null>(null),[profileOpen,setProfileOpen]=useState(false),[detail,setDetail]=useState<DisplayCard|null>(null),[weeklyClaimed,setWeeklyClaimed]=useState(false),[week,setWeek]=useState(''),[spinning,setSpinning]=useState(false),[wheelResult,setWheelResult]=useState('');
+ const [duel,setDuel]=useState<DuelEvent|null>(null);const previousBattle=useRef<Battle|null>(null);
  const inspectUid=useRef<string|null>(null),rotation=useRef(new Animated.Value(0)).current,angle=useRef(0),loaded=useRef(false),lastResult=useRef<unknown>(null),alive=useRef(true),boardXp=useRef<number|undefined>(p?.xp);
  useEffect(()=>{alive.current=true;return()=>{alive.current=false;rotation.stopAnimation();};},[rotation]);
  useEffect(()=>{if(e.configured&&e.ready&&!e.busy&&!e.pending&&!loaded.current){loaded.current=true;void e.run({type:'arenaView'});}},[e.configured,e.ready,e.busy,e.pending]);
@@ -30,19 +35,28 @@ export function ArenaScreen(){
  useEffect(()=>{if(loaded.current&&e.configured&&e.ready&&!e.busy&&!e.pending&&p&&boardXp.current!==p.xp){boardXp.current=p.xp;void e.run({type:'leaderboardView'});}},[p?.xp,e.configured,e.ready,e.busy,e.pending]);
  useEffect(()=>{
   const r=e.result;if(!r||lastResult.current===r)return;lastResult.current=r;
+  if(typeof r.weeklyClaimed==='boolean')setWeeklyClaimed(r.weeklyClaimed);
   if(r.leaderboard){setBoard(r.leaderboard);setWeek(r.week||'');}
-  if(r.type==='arenaView'){setBattle(current=>r.battle||((current?.status==='finished'||current?.status==='forfeited')?current:null));setQuiz(r.quiz||null);setQuizAvailable(!!r.quizAvailable);}
+  if(r.type==='arenaView'){if(r.battle)previousBattle.current=r.battle;setBattle(current=>r.battle||((current?.status==='finished'||current?.status==='forfeited')?current:null));setQuiz(r.quiz||null);setQuizAvailable(!!r.quizAvailable&&r.quizCredentialMode==='user-provider');}
   if(r.publicProfile&&inspectUid.current===r.publicProfile.uid)setInspect(r.publicProfile);
-  if(r.battle){setBattle(r.battle);if(r.battle.status!=='active')setSelected([]);}
+  if(r.battle){
+   const before=previousBattle.current,after=r.battle;
+   if(r.type==='battleTurn'&&before?.id===after.id){
+    const player=after.player.cards.find(c=>c.used&&!before.player.cards.find(b=>b.instanceId===c.instanceId)?.used);
+    const enemy=after.enemy.cards.find(c=>c.used&&!before.enemy.cards.find(b=>b.instanceId===c.instanceId)?.used);
+    if((player||enemy)&&sound){void impact.seekTo(0).then(()=>impact.play()).catch(()=>{});}
+    if(player||enemy)setDuel({id:`${after.id}_${after.log.length}`,player,enemy,playerDamage:Math.max(0,before.player.hp-after.player.hp),enemyDamage:Math.max(0,before.enemy.hp-after.enemy.hp),shieldBreak:(before.player.def>0&&after.player.def===0)||(before.enemy.def>0&&after.enemy.def===0)});
+   }
+   previousBattle.current=after;setBattle(r.battle);if(r.battle.status!=='active')setSelected([]);}
   if(r.quiz)setQuiz(r.quiz);
   if(r.feedback){setAnswer('');setFeedback(`${r.feedback.correct?'Correct':'Wrong / skipped'} · ${r.feedback.xpDelta} XP\nAnswer: ${r.feedback.answer}\n${r.feedback.explanation}`);}
   if(r.type==='wheelSpin'&&typeof r.index==='number'){
    setSpinning(true);setWheelResult('');const target=angle.current+360*6+((360-(r.index*45+22.5))-(angle.current%360)+360)%360;
    Animated.timing(rotation,{toValue:target,duration:5200,useNativeDriver:true}).start(({finished})=>{angle.current=target;if(alive.current){setSpinning(false);if(finished)setWheelResult(`${r.label} · ${r.xpDelta!>=0?'+':''}${r.xpDelta} XP`);}});
   }
- },[e.result,rotation]);
+ },[e.result,rotation,sound,impact]);
  if(!p)return <Text style={f.body}>Loading your arena…</Text>;
- const disabled=!e.configured||!e.ready||e.busy||!!e.pending||spinning;
+ const disabled=!e.configured||!e.ready||e.busy||!!e.pending||spinning||!!duel;
  const send=(c:Command,message?:string)=>{if(message)Alert.alert('Confirm',message,[{text:'Cancel',style:'cancel'},{text:'Confirm',onPress:()=>void e.run(c)}]);else void e.run(c);};
  const openProfile=(row:BoardRow)=>{inspectUid.current=row.uid;setInspect(null);setProfileOpen(true);send({type:'publicProfile',uid:row.uid});};
  const closeProfile=()=>{inspectUid.current=null;setProfileOpen(false);setInspect(null);};
@@ -52,8 +66,8 @@ export function ArenaScreen(){
  const nextEnemy=battle?.enemy.cards.find(c=>!c.used),nextPlayer=battle?.player.cards.find(c=>!c.used);
  return <>
  <LinearGradient colors={['#24213d','#151b2b','#0f1422']} start={{x:0,y:0}} end={{x:1,y:1}} style={a.hero}>
-  <View style={a.heroTop}><SmallTag text="ARENA / SEASON 01" color={palette.gold}/><Pressable accessibilityRole="button" accessibilityLabel="Toggle connection diagnostics" onPress={()=>setDiagnostics(!diagnostics)} style={a.connection}><View style={[a.dot,{backgroundColor:e.configured?palette.cyan:'#f8ce75'}]}/><Text style={a.connectionText}>{e.configured?'CONNECTED':e.checking?'CONNECTING':'OFFLINE'}</Text></Pressable></View>
-  <View style={a.heroMain}><View style={{flex:1,gap:6}}><Text style={a.heroTitle}>Rise above.{`\n`}Rule the arena.</Text><Text style={v.description}>Build your squad. Make every move count.</Text></View><View style={a.heroEmblem}><Ionicons name="shield-half" size={49} color={palette.gold}/><Text style={a.emblemText}>AMH</Text></View></View>
+  <View style={a.heroTop}><SmallTag text="ARENA / CARD DUELS" color={palette.gold}/><Pressable accessibilityRole="button" accessibilityLabel="Toggle connection diagnostics" onPress={()=>setDiagnostics(!diagnostics)} style={a.connection}><View style={[a.dot,{backgroundColor:e.configured?palette.cyan:'#f8ce75'}]}/><Text style={a.connectionText}>{e.configured?'CONNECTED':e.checking?'CONNECTING':'OFFLINE'}</Text></Pressable></View>
+  <View style={a.heroMain}><View style={{flex:1,gap:6}}><Pressable accessibilityRole="button" accessibilityLabel="Toggle battle sound" onPress={()=>setSound(!sound)}><Text style={v.caption}>SOUND {sound?'ON':'OFF'}</Text></Pressable><Text style={a.heroTitle}>Rise above.{`\n`}Rule the arena.</Text><Text style={v.description}>Build your squad. Make every move count.</Text></View><View style={a.heroEmblem}><Ionicons name="shield-half" size={49} color={palette.gold}/><Text style={a.emblemText}>AMH</Text></View></View>
   <View style={a.heroBottom}><View style={{flexDirection:'row',alignItems:'center',gap:9}}><Avatar key={p.avatar} uri={p.avatar} size={30}/><Text numberOfLines={1} style={a.hunter}>{p.username}</Text></View><Text style={a.heroXp}>{pretty(p.xp)} <Text style={v.caption}>XP</Text></Text></View>
  </LinearGradient>
  {diagnostics&&<EconomyStatus/>}
@@ -84,7 +98,7 @@ export function ArenaScreen(){
   <View style={a.sectionHeader}><View><Text style={v.kicker}>HALL OF HUNTERS</Text><Text style={a.sectionTitle}>The leaderboard</Text></View><Pressable disabled={disabled} accessibilityLabel="Refresh leaderboard" onPress={()=>send({type:'leaderboardView'})} style={a.iconButton}><Ionicons name="refresh" size={19} color={palette.violet}/></Pressable></View>
   <Text style={v.description}>All-time XP. Tap any hunter to open their profile and featured collection.</Text>
   {board.length>0?<><View style={a.podiumPanel}><SmallTag text="TOP THREE" color={palette.gold}/><Podium rows={board.slice(0,3)} onPress={openProfile} disabled={disabled}/></View><View style={a.rankingPanel}><View style={a.tableHeading}><Text style={v.caption}>RANK / HUNTER</Text><Text style={v.caption}>TOTAL XP</Text></View>{board.map(row=><BoardIdentity key={row.uid} row={row} own={row.uid===user?.uid} disabled={disabled} onPress={()=>openProfile(row)}/>)}</View></>:<View style={a.surface}><Text style={v.description}>Standings are loading. Refresh once connection is ready.</Text></View>}
-  <View style={a.weeklyPanel}><View style={a.deckTop}><View style={{gap:6}}><Text style={v.kicker}>WEEKLY HONOURS</Text><Text style={a.deckTitle}>A reward for the best.</Text></View><Ionicons name="ribbon" size={29} color={palette.gold}/></View><View style={a.prizeRow}>{[['#1','500','30','50'],['#2','300','20','30'],['#3','100','10','15']].map(([rank,gold,gems,xp])=><View key={rank} style={a.prize}><Text style={a.prizeRank}>{rank}</Text><Text style={a.prizeGold}>{gold} G</Text><Text style={v.caption}>{gems} ◆ / {xp} XP</Text></View>)}</View><ActionButton title="Claim weekly Top3 reward" disabled={disabled||!board.some(r=>r.uid===user?.uid&&r.rank<=3)} onPress={()=>send({type:'weeklyClaim'},'Server বর্তমান rank যাচাই করে এই সপ্তাহে একবার reward দেবে। Claim করবে?')}/><Text style={v.description}>Week {week||'…'} · Sunday 00:00 Asia/Dhaka. Server verifies your rank; one claim per week. XP ties use document ID order.</Text></View>
+  <View style={a.weeklyPanel}><View style={a.deckTop}><View style={{gap:6}}><Text style={v.kicker}>WEEKLY HONOURS</Text><Text style={a.deckTitle}>A reward for the best.</Text></View><Ionicons name="ribbon" size={29} color={palette.gold}/></View><View style={a.prizeRow}>{[['#1','500','30','50'],['#2','300','20','30'],['#3','100','10','15']].map(([rank,gold,gems,xp])=><View key={rank} style={a.prize}><Text style={a.prizeRank}>{rank}</Text><Text style={a.prizeGold}>{gold} G</Text><Text style={v.caption}>{gems} ◆ / {xp} XP</Text></View>)}</View><ActionButton title={weeklyClaimed?"Weekly reward claimed ✓":"Claim weekly Top3 reward"} disabled={disabled||weeklyClaimed||!board.some(r=>r.uid===user?.uid&&r.rank<=3)} onPress={()=>send({type:'weeklyClaim'},'Server বর্তমান rank যাচাই করে এই সপ্তাহে একবার reward দেবে। Claim করবে?')}/><Text style={v.description}>Week {week||'…'} · Sunday 00:00 Asia/Dhaka. Server verifies your rank; one claim per week. XP ties use document ID order.</Text></View>
  </>}
  {tab==='wheel'&&<>
   <View style={a.sectionHeader}><View><Text style={v.kicker}>ONE TURN. EIGHT POSSIBILITIES.</Text><Text style={a.sectionTitle}>Fortune favours you.</Text></View><SmallTag text={`${p.freeSpins} FREE`} color={palette.cyan}/></View>
@@ -93,12 +107,14 @@ export function ArenaScreen(){
  {tab==='quiz'&&<>
   <View style={a.sectionHeader}><View><Text style={v.kicker}>TEST YOUR ANIME KNOWLEDGE</Text><Text style={a.sectionTitle}>Five questions. One run.</Text></View><Ionicons name="sparkles" size={27} color={palette.violet}/></View>
   <View style={a.surface}><View style={a.prizeRow}><Metric label="CORRECT" value="+10 XP" color={palette.cyan}/><Metric label="WRONG" value="−10 XP" color="#f59db3"/><Metric label="SKIP" value="−15 XP" color={palette.gold}/></View><Text style={v.description}>5/5 → 10 Gems · 4/5 → 5 Gems. XP floor 0. Close early: keep applied XP, no completion Gems.</Text>
-  {!quizAvailable&&<View style={a.quizNotice}><Ionicons name="lock-closed-outline" size={21} color={palette.gold}/><Text style={[v.description,{flex:1}]}>Trusted quiz provider is not configured on the server. Your private Settings/Sensei key is not uploaded or reused. Quiz rewards stay safely disabled.</Text></View>}
-  {quiz?.status==='active'?<><View style={a.deckTop}><SmallTag text={`${quiz.index+1} / ${quiz.total}`} color={palette.gold}/><Text style={v.description}>{quiz.title}</Text></View>{feedback?<><Text style={a.quizFeedback}>{feedback}</Text><ActionButton title="Next question" disabled={disabled} onPress={()=>setFeedback('')}/></>:<><Text style={a.question}>{quiz.question?.question}</Text><Text style={v.description}>Hint: {quiz.question?.hint}</Text><TextInput accessibilityLabel="Quiz answer" value={answer} onChangeText={setAnswer} maxLength={1000} editable={!disabled} style={f.input} placeholder="Your answer" placeholderTextColor={palette.muted}/><ActionButton title="Submit answer" disabled={disabled||!answer.trim()} onPress={()=>send({type:'quizAnswer',quizId:quiz.id,questionIndex:quiz.index,answer:answer.trim(),skip:false})}/><ActionButton secondary title="Skip · −15 XP" disabled={disabled} onPress={()=>send({type:'quizAnswer',quizId:quiz.id,questionIndex:quiz.index,answer:'',skip:true})}/></>}<ActionButton secondary title="Close quiz" disabled={disabled} onPress={()=>send({type:'quizClose',quizId:quiz.id},'ইতিমধ্যে দেওয়া/কাটা XP থাকবে। Completion Gems পাবে না।')}/></>:<>{quiz&&<Text style={a.quizFeedback}>Quiz {quiz.status} · Correct {quiz.correct} / Wrong {quiz.wrong} / Skip {quiz.skipped}{'\n'}{feedback}</Text>}<Text style={a.deckTitle}>CHOOSE YOUR UNIVERSE</Text><TextInput accessibilityLabel="Anime title for quiz" value={title} onChangeText={setTitle} maxLength={120} editable={!disabled} style={f.input} placeholder="e.g. Naruto, One Piece, Bleach…" placeholderTextColor={palette.muted}/><ActionButton title="Generate 5-question quiz" disabled={disabled||!quizAvailable||!title.trim()} onPress={()=>{setFeedback('');send({type:'quizStart',title:title.trim()},'Server AI quota ব্যবহার হবে; কোনো entry fee নেই। শুরু করবে?');}}/></>}
+  {!quizAvailable&&<View style={a.quizNotice}><Ionicons name="lock-closed-outline" size={21} color={palette.gold}/><Text style={[v.description,{flex:1}]}>Backend update প্রয়োজন। Render-এ latest commit deploy করে Refresh / resume Arena চাপো। আলাদা server AI key লাগবে না।</Text></View>}
+  <Text style={v.description}>একই Settings → AI Provider · {ai.model}{'\n'}{ai.ready&&ai.enabled&&ai.hasKey?'Saved provider ready. Quiz AI calls use this key/model; no second key.':'Settings-এ Gemini enable করে key Save করো।'}</Text>
+  {quiz?.status==='active'?<><View style={a.deckTop}><SmallTag text={`${feedback?quiz.index:quiz.index+1} / ${quiz.total}`} color={palette.gold}/><Text style={v.description}>{quiz.title}</Text></View>{feedback?<><Text style={a.quizFeedback}>{feedback}</Text><ActionButton title="Next question" disabled={disabled} onPress={()=>setFeedback('')}/></>:<><Text style={a.question}>{quiz.question?.question}</Text><Text style={v.description}>Hint: {quiz.question?.hint}</Text><TextInput accessibilityLabel="Quiz answer" value={answer} onChangeText={setAnswer} maxLength={1000} editable={!disabled} style={f.input} placeholder="Your answer" placeholderTextColor={palette.muted}/><ActionButton title="Submit answer" disabled={disabled||!answer.trim()||!ai.ready||!ai.enabled||!ai.hasKey} onPress={()=>send({type:'quizAnswer',quizId:quiz.id,questionIndex:quiz.index,answer:answer.trim(),skip:false})}/><ActionButton secondary title="Skip · −15 XP" disabled={disabled} onPress={()=>send({type:'quizAnswer',quizId:quiz.id,questionIndex:quiz.index,answer:'',skip:true})}/></>}<ActionButton secondary title="Close quiz" disabled={disabled} onPress={()=>send({type:'quizClose',quizId:quiz.id},'ইতিমধ্যে দেওয়া/কাটা XP থাকবে। Completion Gems পাবে না।')}/></>:<>{quiz&&<Text style={a.quizFeedback}>Quiz {quiz.status} · Correct {quiz.correct} / Wrong {quiz.wrong} / Skip {quiz.skipped}{'\n'}{feedback}</Text>}<Text style={a.deckTitle}>CHOOSE YOUR UNIVERSE</Text><TextInput accessibilityLabel="Anime title for quiz" value={title} onChangeText={setTitle} maxLength={120} editable={!disabled} style={f.input} placeholder="e.g. Naruto, One Piece, Bleach…" placeholderTextColor={palette.muted}/><ActionButton title="Generate 5-question quiz" disabled={disabled||!quizAvailable||!ai.ready||!ai.enabled||!ai.hasKey||!title.trim()} onPress={()=>{setFeedback('');send({type:'quizStart',title:title.trim()},'Settings-এর একই saved key/model ব্যবহার হবে। Key HTTPS header-এ trusted backend-এ শুধু AI request-এর জন্য যাবে; database/application log-এ save হবে না। নিজের Google quota/খরচ হতে পারে। কোনো entry fee নেই। শুরু করবে?');}}/></>}
   </View>
  </>}
  <Pressable accessibilityRole="button" disabled={disabled} onPress={()=>send({type:'arenaView'})} style={a.resume}><Ionicons name="sync-outline" size={14} color={palette.muted}/><Text style={v.description}>Refresh / resume saved Arena</Text></Pressable>
  <PublicProfileSheet open={profileOpen} profile={inspect} loading={e.busy} error={e.error} onClose={closeProfile} onRetry={()=>{if(e.pending)void e.run();else if(inspectUid.current)send({type:'publicProfile',uid:inspectUid.current});}}/>
+ <DuelFeedback event={duel} onClose={()=>setDuel(null)}/>
  <CardDetail card={detail} onClose={()=>setDetail(null)}/>
  </>;
 }

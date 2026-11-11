@@ -3,6 +3,7 @@ import { AppState } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { randomUUID } from 'expo-crypto';
 import { getAuth } from '@react-native-firebase/auth';
+import {useAI} from '../ai/AIProvider';
 import { useAuth } from '../auth/AuthProvider';
 import type { Card } from '../domain/profile';
 export type ArenaCommand={type:'arenaView'|'leaderboardView'|'wheelSpin'|'weeklyClaim'}|{type:'publicProfile';uid:string}|{type:'battleStart';instanceIds:string[]}|{type:'battleTurn';battleId:string;instanceId:string}|{type:'battleForfeit';battleId:string}|{type:'quizStart';title:string}|{type:'quizAnswer';quizId:string;questionIndex:number;answer:string;skip:boolean}|{type:'quizClose';quizId:string};
@@ -13,14 +14,14 @@ export type Battle={id:string;status:string;outcome?:string;first:string;player:
 export type Quiz={id:string;title:string;index:number;total:number;correct:number;wrong:number;skipped:number;status:string;question:{question:string;hint:string}|null};
 export type BoardRow={uid:string;rank:number;username:string;avatar:string;xp:number;equippedTheme:string};
 export type PublicProfile=Omit<BoardRow,'rank'>&{Bio:string;badge?:string;featuredSlots?:Record<string,import('../arena/presentation').DisplayCard>};
-type Result={type:string;index?:number;label?:string;xpDelta?:number;freeSpins?:number;publicProfile?:PublicProfile;leaderboard?:BoardRow[];week?:string;battle?:Battle|null;quiz?:Quiz|null;quizAvailable?:boolean;reward?:{gold:number;gems:number;xp:number};feedback?:{correct:boolean;answer:string;explanation:string;xpDelta:number;fallback:boolean};gems?:number;card?:Card;gold?:number;xp?:number;duplicate?:boolean};
+type Result={type:string;index?:number;label?:string;xpDelta?:number;freeSpins?:number;publicProfile?:PublicProfile;leaderboard?:BoardRow[];week?:string;battle?:Battle|null;quiz?:Quiz|null;quizAvailable?:boolean;quizCredentialMode?:string;weeklyClaimed?:boolean;reward?:{gold:number;gems:number;xp:number};feedback?:{correct:boolean;answer:string;explanation:string;xpDelta:number;fallback:boolean};gems?:number;card?:Card;gold?:number;xp?:number;duplicate?:boolean};
 type Context={configured:boolean;endpointAvailable:boolean;checking:boolean;connection:string;check:()=>Promise<void>;ready:boolean;busy:boolean;pending:Pending|null;error:string;result:Result|null;run:(command?:Command)=>Promise<void>};
 const Context=createContext<Context|null>(null);
 export function useEconomy(){const c=useContext(Context);if(!c)throw Error('EconomyProvider missing');return c;}
 const raw=process.env.EXPO_PUBLIC_ECONOMY_API_URL || process.env.EXPO_PUBLIC_ECONOMY_OWNER_TEST_URL || '';
 const endpoint=/^https:\/\/[^/\s]+(?:\/[^\s]*)?$/.test(raw)?raw.replace(/\/+$/,''):'';
 const messages:Record<string,string>={
- 'invalid-command':'এই কাজ server-এ পাওয়া যায়নি। Render-এ latest backend deploy করে আবার চেষ্টা করো।','insufficient-xp':'Spin-এর জন্য অন্তত20XP প্রয়োজন।','battle-already-active':'আগের battle শেষ করো বা Resume চাপো।','battle-not-active':'Battle আর active নয়। Refresh করো।','quiz-server-key-required':'Quiz-এর trusted server provider এখনো configure হয়নি।','quiz-provider-unavailable':'Quiz provider পাওয়া যায়নি। Pending request Retry করো।','quiz-already-active':'আগের Quiz শেষ বা close করো।','weekly-already-claimed':'এই সপ্তাহের reward আগেই নেওয়া হয়েছে।','not-top-three':'এই মুহূর্তে Top3-এ নেই।','quiz-question-changed':'প্রশ্ন বদলেছে—Refresh করো।','owner-test-only':'এই account live test-এর অনুমোদিত নয়।','economy-not-enabled':'Server economy বন্ধ আছে।','insufficient-gold':'পর্যাপ্ত Gold নেই।','theme-already-owned':'এই theme আগেই কেনা হয়েছে।','theme-not-owned':'আগে theme কিনতে হবে।',
+ 'quiz-provider-key-required':'Settings → AI Provider-এ key save করে Gemini enable করো।','invalid-ai-provider':'Settings-এর saved key/model যাচাই করো।','gemini-model-unavailable':'Saved model এই key/API-তে নেই। Settings থেকে অন্য model বেছে Test করো; নিজে থেকে model বদলানো হয়নি।','gemini-quota':'Saved Gemini key/model-এর quota শেষ। পরে চেষ্টা করো।','gemini-permission-denied':'Saved Gemini key-এর permission গ্রহণ হয়নি। Settings-এ Test করো।','gemini-invalid-request':'Saved Gemini model/request গ্রহণ হয়নি। Settings-এ real Test করো।','invalid-command':'এই কাজ server-এ পাওয়া যায়নি। Render-এ latest backend deploy করে আবার চেষ্টা করো।','insufficient-xp':'Spin-এর জন্য অন্তত20XP প্রয়োজন।','battle-already-active':'আগের battle শেষ করো বা Resume চাপো।','battle-not-active':'Battle আর active নয়। Refresh করো।','quiz-server-key-required':'Quiz-এর trusted server provider এখনো configure হয়নি।','quiz-provider-unavailable':'Quiz provider পাওয়া যায়নি। Pending request Retry করো।','quiz-already-active':'আগের Quiz শেষ বা close করো।','weekly-already-claimed':'এই সপ্তাহের reward আগেই নেওয়া হয়েছে।','not-top-three':'এই মুহূর্তে Top3-এ নেই।','quiz-question-changed':'প্রশ্ন বদলেছে—Refresh করো।','owner-test-only':'এই account live test-এর অনুমোদিত নয়।','economy-not-enabled':'Server economy বন্ধ আছে।','insufficient-gold':'পর্যাপ্ত Gold নেই।','theme-already-owned':'এই theme আগেই কেনা হয়েছে।','theme-not-owned':'আগে theme কিনতে হবে।',
  'rarity-mismatch':'এই slot-এ একই rarity-এর card লাগবে।','instance-not-unique-or-owned':'Card পাওয়া যায়নি বা পরিচয় অনিশ্চিত। Collection refresh করো।',
  'ambiguous-legacy-slot':'পুরোনো featured slot-এর card পরিচয় অনিশ্চিত। আগে ওই slot Unequip করে আবার চেষ্টা করো।',
  'unknown-legacy-card':'এই পুরোনো card-এর catalog mapping যাচাই প্রয়োজন। Card মুছে ফেলা হয়নি।',
@@ -29,7 +30,7 @@ const messages:Record<string,string>={
  'rate-limited':'একটু অপেক্ষা করে একই কাজ Retry করো।','service-unavailable':'Server এখন পাওয়া যাচ্ছে না। একই কাজ Retry করো।',
 };
 export function EconomyProvider({children}:{children:React.ReactNode}){
- const {user,profile}=useAuth();const uid=user?.uid || '';const key=`economy.pending.v1.${uid}`;
+ const ai=useAI();const {user,profile}=useAuth();const uid=user?.uid || '';const key=`economy.pending.v1.${uid}`;
  const [ready,setReady]=useState(false),[busy,setBusy]=useState(false),[pending,setPending]=useState<Pending|null>(null),[error,setError]=useState(''),[result,setResult]=useState<Result|null>(null);
  const [checking,setChecking]=useState(false),[connection,setConnection]=useState('Server-এর সঙ্গে সংযোগ হচ্ছে…'),[allowed,setAllowed]=useState(false);
  const checkLock=useRef(false);
@@ -74,7 +75,8 @@ export function EconomyProvider({children}:{children:React.ReactNode}){
    const token=await current.getIdToken();
    if(!active.current||getAuth().currentUser?.uid!==uid)return;
    controller=new AbortController();timer=setTimeout(()=>controller?.abort(),90000);
-   const response=await fetch(`${endpoint}/v1/economy`,{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify(operation),signal:controller.signal});
+   const needsAI=operation.command.type==='quizStart'||(operation.command.type==='quizAnswer'&&!operation.command.skip);
+   const response=needsAI?await ai.requestQuiz(operation,token,controller.signal):await fetch(`${endpoint}/v1/economy`,{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify(operation),signal:controller.signal});
    const payload=await response.json();
    // Only definitive command rejection clears pending. 401/429/5xx/network errors retain it.
    if(!response.ok){
