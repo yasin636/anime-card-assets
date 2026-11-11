@@ -406,3 +406,9 @@ Owner confirmed v0.6.1 System reward/claim flow via two Goblin screenshots. Owne
 - Added media signed preparation, provider-verified finalization, UID-scoped sessions, per-day prepare quota and idempotent receipts. Feed attachment consumption occurs atomically with existing post/XP/quota/mission transaction.
 - Backend local 86/86 passed. Added Rules denial coverage; emulator not run yet. No mobile UI enabled, no new APK/deployment claimed.
 - Remaining: folder-permission bootstrap, real cleanup execution, native upload retry/cancellation/draft lifecycle, emulator/security and signed release. Details: apps/mobile/MEDIA-6D-TEST.md.
+
+### 6D signed owner-test candidate v0.11.0/code20
+- Added native Gallery/resize/JPEG preview, persisted account-scoped signed upload workflow, retry/stop/background handling, Profile photo and one-photo Feed composer. Video deferred.
+- Added provider destroy + bounded delayed server cleanup worker. Reference checks/attachment locks prevent deletion of linked media; failed jobs retry. Free Render sleeping delays cleanup, and invalid uploads can temporarily consume storage before finalize rejects them.
+- Added seven native photo tests and emulator concurrency/cleanup/Rules denial coverage. Backend 86/86 locally; tool suite expected 83 after new photo cases, signed CI authoritative for full generated-config TS/security/build.
+- Critical remaining owner setup: Media Library User key needs explicit API-assigned folder permission on animemetahub; selection of role alone is insufficient. No root credentials requested, no silent Master Admin promotion, no live provider upload or Render deployment performed. APK is an owner-test candidate, not proof that Cloudinary permissions work.

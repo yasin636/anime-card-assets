@@ -26,7 +26,7 @@ function identity(p,uid){return {uid,username:String(p.username||'Hunter').slice
 // Strict public projection: never return private user data, full liker UID maps or other clients' operation receipts.
 function view(p,id,uid){
  const comments=Array.isArray(p.comments)?p.comments:[],reactions=p.reactions||{};
- return {id,...identity(p,p.uid),gems:Number(p.gems)||0,equippedTheme:String(p.equippedTheme||''),caption:String(p.caption||p.text||''),linkUrl:safeLink(p.linkUrl)?p.linkUrl:'',mediaUrl:typeof p.mediaUrl==='string'&&(safeLink(p.mediaUrl)||(/^data:image\//.test(p.mediaUrl)&&p.mediaUrl.length<260000))?p.mediaUrl:'',mediaType:String(p.mediaType||''),hasLegacyMedia:!!p.mediaUrl,created_at_ms:Number(p.created_at_ms)||0,isAdmin:p.isAdmin===true,edited:!!p.edited,version:Number(p.socialVersion)||0,likesCount:Number(p.likesCount)||0,liked:!!p.likedBy?.[uid],shareCount:Number(p.shareCount)||0,reaction:emojis.find(e=>Array.isArray(reactions[e])&&reactions[e].includes(uid))||'',reactions:Object.fromEntries(emojis.map(e=>[e,Array.isArray(reactions[e])?reactions[e].length:0])),comments:comments.map(c=>({id:String(c.id),...identity(c,c.uid),text:String(c.text||''),createdAtMs:Number(c.createdAtMs)||0,edited:!!c.edited}))};
+ return {id,...(typeof p.mediaId==='string'&&/^img_[a-f0-9]{40}$/.test(p.mediaId)?{mediaId:p.mediaId}:{}),...identity(p,p.uid),gems:Number(p.gems)||0,equippedTheme:String(p.equippedTheme||''),caption:String(p.caption||p.text||''),linkUrl:safeLink(p.linkUrl)?p.linkUrl:'',mediaUrl:typeof p.mediaUrl==='string'&&(safeLink(p.mediaUrl)||(/^data:image\//.test(p.mediaUrl)&&p.mediaUrl.length<260000))?p.mediaUrl:'',mediaType:String(p.mediaType||''),hasLegacyMedia:!!p.mediaUrl,created_at_ms:Number(p.created_at_ms)||0,isAdmin:p.isAdmin===true,edited:!!p.edited,version:Number(p.socialVersion)||0,likesCount:Number(p.likesCount)||0,liked:!!p.likedBy?.[uid],shareCount:Number(p.shareCount)||0,reaction:emojis.find(e=>Array.isArray(reactions[e])&&reactions[e].includes(uid))||'',reactions:Object.fromEntries(emojis.map(e=>[e,Array.isArray(reactions[e])?reactions[e].length:0])),comments:comments.map(c=>({id:String(c.id),...identity(c,c.uid),text:String(c.text||''),createdAtMs:Number(c.createdAtMs)||0,edited:!!c.edited}))};
 }
 async function executeSocial({db,verifiedUid:uid,verifiedAdmin=false,operationId,command:c,now=Date.now()}){
  validate(c);const users=db.collection('user_meta'),actor=users.doc(uid),posts=db.collection('feed_posts'),date=new Date(now).toISOString().slice(0,10);
@@ -74,7 +74,7 @@ async function executeSocial({db,verifiedUid:uid,verifiedAdmin=false,operationId
   for(const v of Object.values(patch))if(typeof v==='number'&&!Number.isSafeInteger(v))fail('numeric-overflow');
   if(postRef){result.postId=postRef.id;if(deleted){tx.delete(postRef);result.deleted=true;}else{tx.set(postRef,post);result.post=view(post,postRef.id,uid);}}
   if(mediaRef)tx.update(mediaRef,{status:'attached',postId:id,attachedAt:now});
-  if(deleted&&post?.mediaPublicId)tx.set(actor.collection('media_cleanup').doc(post.mediaId),{publicId:post.mediaPublicId,reason:'post-deleted',createdAt:now});
+  if(deleted&&post?.mediaPublicId)tx.set(db.collection('media_cleanup_jobs').doc(post.mediaId),{uid,uploadId:post.mediaId,publicId:post.mediaPublicId,notBefore:now+7200000});
   if(activityRef)tx.set(activityRef,activityPatch,{merge:true});tx.update(actor,patch);tx.create(receipt,{fingerprint,result,createdAt:new Date(now)});return result;
  });
 }

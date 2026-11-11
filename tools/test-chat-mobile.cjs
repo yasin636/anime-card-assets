@@ -6,6 +6,7 @@ const session={id:'session',version:2,chapterId:2,enemyId:'baran',enemy:{...play
 const audio={pause(){},play(){},replace(){},seekTo:async()=>{}};
 let audioHook=null;let copied=[],clipboardFails=false;
 function load(file=path.join(__dirname,'../apps/mobile/src/chat/ChatScreen.tsx')){const m=new Module(file);m.filename=file;m.paths=Module._nodeModulePaths(path.dirname(file));m.require=name=>{
+ if(name==='../media/PhotoUploader')return {PhotoUploader:props=>React.createElement('PhotoUploader',props)};
  if(name==='react-native')return {KeyboardAvoidingView:'KeyboardAvoidingView',Platform:{OS:'android'},AccessibilityInfo:{isReduceMotionEnabled:async()=>false},Alert:{alert:(_title,_message,buttons)=>buttons.at(-1).onPress()},AppState:{currentState:'active',addEventListener:()=>({remove(){}})},Animated:{Value:class{setValue(){} interpolate(){return 1;}stopAnimation(){}},View:'AnimatedView',Image:'Image',Text:'Text',sequence:()=>({start(){},stop(){}}),timing:()=>({start(){},stop(){}}),loop:()=>({start(){},stop(){}})},Linking:{openURL:async()=>{}},TextInput:'TextInput',Image:'Image',Modal:'Modal',Pressable:'Pressable',ScrollView:'ScrollView',Text:'Text',View:'View',StyleSheet:{create:s=>s}};
  if(name==='@react-navigation/native')return {useIsFocused:()=>true,useRoute:()=>({params:{}}),useNavigation:()=>({setParams(){}})};
  if(name==='./ChatProvider')return {useChat:()=>chat};

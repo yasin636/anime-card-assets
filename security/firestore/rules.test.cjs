@@ -83,3 +83,6 @@ test('6D upload sessions, quotas and cleanup tasks cannot be read or forged by m
  }
  await assertFails(updateDoc(doc(own,'user_meta',uid),{avatarMedia:{uploadId:'forged',publicId:'someone-else'}}));
 });
+test('6D global cleanup queue is server-only',async()=>{
+ const r=doc(db('media-denial'),'media_cleanup_jobs','forged');await assertFails(getDoc(r));await assertFails(setDoc(r,{publicId:'victim',notBefore:0}));await assertFails(deleteDoc(r));
+});
