@@ -30,6 +30,7 @@ async function mount(uid){identity=user(uid);context={user:identity,profile:{uid
 async function unmount(){if(tree){await act(async()=>{tree.unmount();await settle();});tree=null;}}
 beforeEach(()=>{
  store=new Map();requests=[];storageFails=false;tokenHook=null;view=null;tree=null;listener=null;
+ process.env.EXPO_PUBLIC_ECONOMY_API_URL='';
  process.env.EXPO_PUBLIC_ECONOMY_OWNER_TEST_URL='https://example.com';
  send=async(url,opts)=>url.endsWith('/status')?ok({profileReadable:true,mutationsAllowed:true}):ok({result:{type:JSON.parse(opts.body).command.type}});
  global.fetch=async(url,opts)=>{requests.push({url,opts});return send(url,opts);};api=load();

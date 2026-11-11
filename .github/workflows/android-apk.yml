@@ -66,7 +66,8 @@ jobs:
         run: |
           node ../../tools/validate-mobile-foundation.cjs
           node ../../tools/test-mobile-profile.cjs
-          node --test ../../tools/test-gemini.cjs ../../tools/test-economy-autoconnect.cjs ../../tools/test-economy-provider.cjs
+          node --test ../../tools/test-gemini.cjs ../../tools/test-economy-autoconnect.cjs
+          NODE_ENV=test node --test ../../tools/test-economy-provider.cjs
           node --test ../../services/economy/*.test.cjs
       - name: Generate Android project
         run: npx expo prebuild --platform android --no-install
