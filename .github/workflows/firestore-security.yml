@@ -40,7 +40,9 @@ jobs:
           from pathlib import Path
           text=Path('security-test.log').read_text(errors='replace')
           # Logs downloads may be unavailable; expose failure context via Checks API.
-          for chunk in [text[:3500], text[-10000:]]:
+          import re
+          failures=[text[max(0,m.start()-150):m.start()+2400] for m in re.finditer(r'not ok',text)]
+          for chunk in failures or [text[-3000:]]:
               escaped=chunk.replace('%','%25').replace('\r','%0D').replace('\n','%0A')
               print('::error::Security test failed: '+escaped)
           PYDIAG
