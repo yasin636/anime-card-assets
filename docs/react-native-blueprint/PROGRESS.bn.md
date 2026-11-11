@@ -399,3 +399,10 @@ Owner confirmed v0.6.1 System reward/claim flow via two Goblin screenshots. Owne
 - Local backend 78/78; tool/native 76/76; foundation validation passed.
 - Initial runs exposed old pinned version assertion (fixed) and intermittent existing concurrent recycle emulator INVALID_ARGUMENT. Serializing test files did not fully eliminate that transient error: the unchanged final-source rerun passed. No test was removed, reward gate bypassed or live account mutated.
 - Agent did not deploy Render. Owner must deploy source 63dc709 or descendant to the existing service, retain existing configuration, then update APK in place and perform COMMUNITY-6C-TEST.md checklist. Media remains deferred; awaiting phone acceptance.
+
+## 6D started — Cloudinary Free image media
+- Owner explicitly accepted 6C and authorized profile Gallery + Feed photo (not video). Cloudinary Image and Video Free/$0/25 credits confirmed by owner's screenshot; owner reports saving three environment variables in Render (Save only). Agent never received or requested full secret.
+- Current branch safely fast-forwarded to existing remote 65e1f32 before starting; no local differences lost.
+- Added media signed preparation, provider-verified finalization, UID-scoped sessions, per-day prepare quota and idempotent receipts. Feed attachment consumption occurs atomically with existing post/XP/quota/mission transaction.
+- Backend local 86/86 passed. Added Rules denial coverage; emulator not run yet. No mobile UI enabled, no new APK/deployment claimed.
+- Remaining: folder-permission bootstrap, real cleanup execution, native upload retry/cancellation/draft lifecycle, emulator/security and signed release. Details: apps/mobile/MEDIA-6D-TEST.md.

@@ -6,10 +6,11 @@ const emojis=['👍','❤️','😂','😮','😢','🔥'];
 const types=['feedView','feedPostView','feedCreate','feedEdit','feedDelete','feedLike','feedReact','feedComment','feedCommentEdit','feedCommentDelete','feedShare','socialMissionClaim'];
 const fields={feedView:[],feedPostView:['postId'],feedCreate:['caption','linkUrl'],feedEdit:['postId','caption'],feedDelete:['postId'],feedLike:['postId','liked'],feedReact:['postId','emoji'],feedComment:['postId','text'],feedCommentEdit:['postId','commentId','text'],feedCommentDelete:['postId','commentId'],feedShare:['postId'],socialMissionClaim:['missionId']};
 function validate(c){
- if(!c||!Object.hasOwn(fields,c.type)||Object.keys(c).some(k=>k!=='type'&&!fields[c.type].includes(k))||fields[c.type].some(k=>!Object.hasOwn(c,k)))fail('invalid-command');
+ if(!c||!Object.hasOwn(fields,c.type)||Object.keys(c).some(k=>k!=='type'&&!fields[c.type].includes(k)&&!(c.type==='feedCreate'&&k==='mediaId'))||fields[c.type].some(k=>!Object.hasOwn(c,k)))fail('invalid-command');
  for(const key of ['postId','commentId'])if(fields[c.type].includes(key)&&(typeof c[key]!=='string'||!/^[a-zA-Z0-9_-]{1,160}$/.test(c[key])))fail('invalid-command-field');
  for(const key of ['caption','text'])if(fields[c.type].includes(key)&&(typeof c[key]!=='string'||!c[key].trim()||c[key].length>(key==='caption'?2000:1000)))fail('social-text-invalid');
  if(c.type==='feedCreate'&&(typeof c.linkUrl!=='string'||c.linkUrl.length>2000||(c.linkUrl&&!safeLink(c.linkUrl))))fail('social-link-invalid');
+ if(c.type==='feedCreate'&&c.mediaId!==undefined&&(typeof c.mediaId!=='string'||!/^img_[a-f0-9]{40}$/.test(c.mediaId)))fail('invalid-command-field');
  if(c.type==='feedLike'&&typeof c.liked!=='boolean')fail('invalid-command');
  if(c.type==='feedReact'&&!emojis.includes(c.emoji))fail('invalid-command');
  if(c.type==='socialMissionClaim'&&!['m_posts','m_social'].includes(c.missionId))fail('invalid-command');
@@ -38,13 +39,14 @@ async function executeSocial({db,verifiedUid:uid,verifiedAdmin=false,operationId
  const fingerprint=createHash('sha256').update(JSON.stringify(Object.fromEntries(Object.entries(c).sort()))).digest('hex'),receipt=actor.collection('economy_receipts').doc(operationId),id=`s_${createHash('sha256').update(uid+':'+operationId).digest('hex').slice(0,40)}`;
  return db.runTransaction(async tx=>{
   const saved=await tx.get(receipt);if(saved.exists){if(saved.data().fingerprint!==fingerprint)fail('operation-id-conflict');return saved.data().result;}
-  const me=await tx.get(actor);if(!me.exists)fail('profile-not-found');const p=me.data(),m=missions(p,date),patch={},result={type:c.type,socialCapability:'social-v1',xpDelta:0,creatorXpDelta:0};let post,postRef,creator,creatorRef,actorDelta=0,creatorDelta=0,deleted=false,activityRef,activityPatch;
+  const me=await tx.get(actor);if(!me.exists)fail('profile-not-found');const p=me.data(),m=missions(p,date),patch={},result={type:c.type,socialCapability:'social-v1',xpDelta:0,creatorXpDelta:0};let post,postRef,creator,creatorRef,actorDelta=0,creatorDelta=0,deleted=false,activityRef,activityPatch,mediaRef,media;
   if(c.type==='socialMissionClaim'){
    const key=c.missionId==='m_posts'?'postsCreated':'socialActions';if(m.claimed?.[c.missionId])fail('social-mission-claimed');if(Number(m.progress?.[key]||0)<goals[key])fail('social-mission-incomplete');
    m.claimed={...m.claimed,[c.missionId]:true};const reward={gold:50,xp:key==='postsCreated'?15:20,gems:5};patch.gold=num(p,'gold')+reward.gold;patch.gems=num(p,'gems')+reward.gems;actorDelta=reward.xp;result.reward=reward;
   }else if(c.type==='feedCreate'){
    activityRef=db.collection('post_activity').doc(uid);const a=await tx.get(activityRef),count=a.data()?.day_key===date?num(a.data(),'count'):0;if(!verifiedAdmin&&count>=10)fail('social-daily-limit');
-   postRef=posts.doc(id);post={...identity(p,uid),gems:num(p,'gems'),equippedTheme:String(p.equippedTheme||''),caption:c.caption.trim(),linkUrl:c.linkUrl.trim(),mediaUrl:'',mediaType:'',likesCount:0,likedBy:{},shareCount:0,comments:[],reactions:{},created_at_ms:now,created_at:new Date(now),isAdmin:verifiedAdmin,socialVersion:1};
+   if(c.mediaId){mediaRef=actor.collection('media_uploads').doc(c.mediaId);const ms=await tx.get(mediaRef);media=ms.data();if(!ms.exists||media.uid!==uid||media.purpose!=='feed'||media.status!=='ready'||media.expiresAt<now||!media.asset?.url)fail('media-upload-not-ready');}
+   postRef=posts.doc(id);post={...identity(p,uid),gems:num(p,'gems'),equippedTheme:String(p.equippedTheme||''),caption:c.caption.trim(),linkUrl:c.linkUrl.trim(),mediaUrl:media?.asset.url||'',mediaType:media?'image':'',...(media?{mediaId:c.mediaId,mediaPublicId:media.publicId}:{}),likesCount:0,likedBy:{},shareCount:0,comments:[],reactions:{},created_at_ms:now,created_at:new Date(now),isAdmin:verifiedAdmin,socialVersion:1};
    activityPatch={uid,day_key:date,count:count+1,updated_at:new Date(now)};actorDelta=15;progress(m,'postsCreated');
   }else{
    postRef=posts.doc(c.postId);const snapshot=await tx.get(postRef);if(!snapshot.exists||!visible(snapshot.data(),now))fail('social-post-unavailable');post=snapshot.data();
@@ -71,6 +73,8 @@ async function executeSocial({db,verifiedUid:uid,verifiedAdmin=false,operationId
   if(creator&&creatorDelta){const cxp=num(creator,'xp')+creatorDelta;if(!Number.isSafeInteger(cxp))fail('numeric-overflow');tx.update(creatorRef,{xp:cxp,level:level(cxp),updated_at:new Date(now)});result.creatorXpDelta=creatorDelta;}
   for(const v of Object.values(patch))if(typeof v==='number'&&!Number.isSafeInteger(v))fail('numeric-overflow');
   if(postRef){result.postId=postRef.id;if(deleted){tx.delete(postRef);result.deleted=true;}else{tx.set(postRef,post);result.post=view(post,postRef.id,uid);}}
+  if(mediaRef)tx.update(mediaRef,{status:'attached',postId:id,attachedAt:now});
+  if(deleted&&post?.mediaPublicId)tx.set(actor.collection('media_cleanup').doc(post.mediaId),{publicId:post.mediaPublicId,reason:'post-deleted',createdAt:now});
   if(activityRef)tx.set(activityRef,activityPatch,{merge:true});tx.update(actor,patch);tx.create(receipt,{fingerprint,result,createdAt:new Date(now)});return result;
  });
 }

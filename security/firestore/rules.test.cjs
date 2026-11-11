@@ -76,3 +76,10 @@ test('6C direct client tracker, reward, mission and read-session forgery denied'
  for(const patch of [{tracker:[{id:1,title:'Forged',episode:1}]},{daily_read_count:5,last_read_date:'2026-11-08'},{activeNewsReadId:'forged'},{missionData:{date:'2026-11-08',progress:{newsRead:5},claimed:{}}}])await assertFails(updateDoc(doc(own,'user_meta',uid),patch));
  const session=doc(own,'user_meta',uid,'news_sessions','forged');await assertFails(setDoc(session,{status:'claimed',notBefore:0}));await assertFails(getDoc(session));await assertFails(deleteDoc(session));
 });
+test('6D upload sessions, quotas and cleanup tasks cannot be read or forged by mobile clients',async()=>{
+ const uid='media-denial';await seed(uid);const own=db(uid);
+ for(const name of ['media_uploads','media_limits','media_cleanup']){
+  const r=doc(own,'user_meta',uid,name,'forged');await assertFails(getDoc(r));await assertFails(setDoc(r,{status:'ready',asset:{url:'https://evil.example/image.jpg'}}));await assertFails(deleteDoc(r));
+ }
+ await assertFails(updateDoc(doc(own,'user_meta',uid),{avatarMedia:{uploadId:'forged',publicId:'someone-else'}}));
+});

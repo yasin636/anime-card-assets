@@ -8,6 +8,8 @@ const {plan,validateCommand,EconomyError}=require('./domain.cjs');
 async function execute({db,verifiedUid,operationId,command,ai,verifiedAdmin=false}) {
   if(typeof verifiedUid!=='string'||!verifiedUid||verifiedUid.includes('/')) throw new EconomyError('unauthenticated');
   if(typeof operationId!=='string'||!/^[a-zA-Z0-9_-]{20,100}$/.test(operationId)) throw new EconomyError('invalid-operation-id');
+  const media=require('./media.cjs');
+  if(media.types.includes(command?.type))return media.executeMedia({db,verifiedUid,operationId,command});
   const community=require('./community.cjs');
   if(community.types.includes(command?.type))return community.executeCommunity({db,verifiedUid,operationId,command});
   const chat=require('./chat.cjs');
