@@ -1,14 +1,14 @@
 'use strict';
 const {test,afterEach}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),Module=require('node:module');
 const req=Module.createRequire(path.join(__dirname,'../apps/mobile/package.json')),React=req('react'),{create,act}=req('react-test-renderer'),ts=req('typescript');global.IS_REACT_ACT_ENVIRONMENT=true;
-let calls=[],econ,tree;const player={hp:100,atk:30,def:20,maxHp:100,maxDef:20};const army=[{id:'goblin',name:'Goblin Scout',hp:170,atk:350,def:310}];
+let calls=[],econ,tree,prefs=new Map();const player={hp:100,atk:30,def:20,maxHp:100,maxDef:20};const army=[{id:'goblin',name:'Goblin Scout',hp:170,atk:350,def:310}];
 const session={id:'session',version:2,chapterId:2,enemyId:'baran',enemy:{...player,id:'baran',name:'Baran'},player,playerName:'Hunter',phase:'fight',first:'player',dialogue:[],dialogueIndex:0,events:[],log:[],shadowIds:[],ariseBonus:{hp:0,atk:0,def:0},ariseUsed:false,heavyCooldown:0,turn:0};
 const audio={pause(){},play(){},seekTo:async()=>{}};
 function load(file=path.join(__dirname,'../apps/mobile/src/story/StoryScreen.tsx')){const m=new Module(file);m.filename=file;m.paths=Module._nodeModulePaths(path.dirname(file));m.require=name=>{
  if(name==='react-native')return {AccessibilityInfo:{isReduceMotionEnabled:async()=>false},Alert:{alert:(_title,_message,buttons)=>buttons.at(-1).onPress()},AppState:{currentState:'active',addEventListener:()=>({remove(){}})},Animated:{Value:class{setValue(){} interpolate(){return 1;}stopAnimation(){}},View:'AnimatedView',Image:'Image',Text:'Text',sequence:()=>({start(){},stop(){}}),timing:()=>({start(){},stop(){}}),loop:()=>({start(){},stop(){}})},Image:'Image',Modal:'Modal',Pressable:'Pressable',ScrollView:'ScrollView',Text:'Text',View:'View',StyleSheet:{create:s=>s}};
  if(name==='@react-navigation/native')return {useIsFocused:()=>true};if(name==='react-native-safe-area-context')return {SafeAreaView:'SafeAreaView'};
  if(name==='expo-linear-gradient')return {LinearGradient:'LinearGradient'};if(name==='@expo/vector-icons')return {Ionicons:'Icon'};
- if(name==='@react-native-async-storage/async-storage')return {getItem:async()=>null,setItem:async()=>{}};
+ if(name==='@react-native-async-storage/async-storage')return {getItem:async key=>prefs.get(key)||null,setItem:async(key,value)=>{prefs.set(key,value);}};
  if(name==='expo-haptics')return {impactAsync:async()=>{},ImpactFeedbackStyle:{Heavy:'heavy',Light:'light'}};
  if(name==='react-native-svg')return {__esModule:true,default:'Svg',Circle:'Circle',Rect:'Rect',Line:'Line',Path:'Path'};
  if(name==='./CombatTheater'||name==='./SystemWindow')return load(path.join(path.dirname(file),name+'.tsx'));
@@ -73,4 +73,14 @@ test('Story defeat report uses zero currency changes and close does not award an
  econ.result={type:'storyAdvance',story:{...session,version:7,phase:'defeat',outcome:'lose'}};await act(async()=>tree.update(React.createElement(StoryScreen)));
  const text=tree.root.findAllByType('Text').map(n=>[n.props.children].flat(Infinity).join('')).join(' ');assert(text.includes('DEFEAT'));assert(text.includes('কোনো XP, Gold বা Gems কাটা হয়নি'));assert(!calls.some(c=>c.type==='storyClaim'));
  await act(async()=>skill('Close system notification').props.onPress());assert(!calls.some(c=>c.type==='storyClaim'));
+});
+
+test('cosmetic effects preferences survive screen remount without adding server commands',async()=>{
+ prefs.clear();await mount({type:'storyView',storyCapability:'story-v1',story:null,shadows:[],cleared:[]});
+ const settings=tree.root.findAllByType('Pressable').find(p=>[p.props.children].flat(Infinity).some(c=>c?.props?.children==='⚙ Combat effects'));
+ await act(async()=>settings.props.onPress());const count=calls.length;
+ await act(async()=>button('Reduced effects: OFF').props.onPress());await act(async()=>button('Haptics: ON').props.onPress());assert.equal(calls.length,count);
+ await act(async()=>tree.unmount());tree=null;await mount({type:'storyView',storyCapability:'story-v1',story:null,shadows:[],cleared:[]});
+ const reopened=tree.root.findAllByType('Pressable').find(p=>[p.props.children].flat(Infinity).some(c=>c?.props?.children==='⚙ Combat effects'));await act(async()=>reopened.props.onPress());
+ assert(button('Reduced effects: ON'));assert(button('Haptics: OFF'));prefs.clear();
 });

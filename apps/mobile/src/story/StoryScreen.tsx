@@ -58,7 +58,7 @@ export function StoryScreen(){
      const won=s.outcome==='win',reward=s.reward;
      setNotice({id:key,title:s.phase==='claimed'?'REWARDS ACQUIRED':s.phase==='victory'?'DUNGEON CLEARED':s.phase==='defeat'?'DEFEAT':'BATTLE EXITED',kicker:won?'QUEST COMPLETE':'BATTLE REPORT',image:storyArtwork[s.enemyId],kind:won?'reward':'danger',message:s.phase==='victory'?`${s.enemy.name} তোমার Shadow Army-তে যোগ দিয়েছে। Reward এখনো claim হয়নি।`:s.phase==='claimed'?`${s.firstClear?'FIRST CLEAR':'REPEAT CLEAR'} · ${s.enemy.name}\nReward সফলভাবে account-এ যোগ হয়েছে।`:'কোনো reward পাওয়া যায়নি। Story entry fee নেই; কোনো XP, Gold বা Gems কাটা হয়নি।',rows:reward?[{label:'XP',value:reward.xp},{label:'GOLD',value:reward.gold},{label:'GEMS',value:reward.gems},{label:'ATK BONUS',value:reward.permAtk,unit:'%'},{label:'HP BONUS',value:reward.permHp,unit:'%'},{label:'DEF BONUS',value:reward.permDef,unit:'%'}]:s.phase==='victory'?undefined:[{label:'XP CHANGE',value:0},{label:'GOLD CHANGE',value:0},{label:'GEMS CHANGE',value:0}],action:s.phase==='victory'?'CLAIM VERIFIED REWARD':undefined});
     }
-    if(r.type==='storyArise'){setArise(false);setChosen([]);if(!reduced)setBurst(s.shadowIds);play(pulse);if(sound)Speech.speak('Arise',{language:'en',rate:.65,pitch:.65});}
+    if(r.type==='storyArise'){setArise(false);setChosen([]);if(!reduced)setBurst(s.shadowIds);play(pulse);if(sound&&focused&&foreground)Speech.speak('Arise',{language:'en',rate:.65,pitch:.65});}
    }
    if(s.outcome==='win'){const enemy=chapters.flatMap(c=>c.enemies).find(en=>en.id===s.enemyId);if(enemy)setArmy(a=>a.some(sh=>sh.id===enemy.id)?a:[...a,enemy]);}
    if(r.type==='storyClaim')setCleared(a=>a.includes(s.enemyId)?a:[...a,s.enemyId]);
