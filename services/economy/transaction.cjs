@@ -8,6 +8,8 @@ const {plan,validateCommand,EconomyError}=require('./domain.cjs');
 async function execute({db,verifiedUid,operationId,command}) {
   if(typeof verifiedUid!=='string'||!verifiedUid||verifiedUid.includes('/')) throw new EconomyError('unauthenticated');
   if(typeof operationId!=='string'||!/^[a-zA-Z0-9_-]{20,100}$/.test(operationId)) throw new EconomyError('invalid-operation-id');
+  const arena=require('./arena.cjs');
+  if(arena.types.includes(command?.type))return arena.executeArena({db,verifiedUid,operationId,command});
   validateCommand(command);
   const fingerprint=createHash('sha256').update(JSON.stringify(Object.fromEntries(Object.entries(command).sort()))).digest('hex');
   const userRef=db.collection('user_meta').doc(verifiedUid);

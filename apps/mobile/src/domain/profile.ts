@@ -3,7 +3,7 @@ import cards from './cards.json';
 export type Card = { instanceId?: string; id: string; name?: string; image?: string; rarity?: string };
 export type Profile = {
   uid: string; username: string; Bio: string; avatar: string; xp: number; gold: number; gems: number;
-  pityRare: number; pityLegendary: number; themes: string[]; equippedTheme: string;
+  freeSpins:number; pityRare: number; pityLegendary: number; themes: string[]; equippedTheme: string;
   inventoryCards: Card[]; equippedSlots: Record<string, Card>;
   permBonusAtk: number; permBonusHp: number; permBonusDef: number;
   flatBonusAtk: number; flatBonusHp: number; flatBonusDef: number;
@@ -21,7 +21,7 @@ export function normalizeProfile(uid: string, data: Record<string, unknown>): Pr
   return {
     uid, username: String(data.username || 'Hunter'), Bio: String(data.Bio || ''), avatar: String(data.avatar || avatarPresets[0]),
     xp: number('xp'), gold: number('gold'), gems: number('gems'),
-    pityRare: number('pityRare'), pityLegendary: number('pityLegendary'),
+    freeSpins:number('freeSpins'), pityRare: number('pityRare'), pityLegendary: number('pityLegendary'),
     themes: Array.isArray((data.inventory as {themes?:unknown})?.themes) ? (data.inventory as {themes:unknown[]}).themes.filter((v):v is string=>typeof v==='string') : [], equippedTheme: typeof data.equippedTheme==='string' ? data.equippedTheme : '',
     inventoryCards: Array.isArray(data.inventoryCards) ? data.inventoryCards : [],
     equippedSlots: data.equippedSlots && typeof data.equippedSlots === 'object' ? data.equippedSlots as Record<string, Card> : {},

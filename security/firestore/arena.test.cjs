@@ -1,0 +1,51 @@
+'use strict';
+const {test,before,after}=require('node:test'),assert=require('node:assert/strict'),{createRequire}=require('node:module');
+const adminRequire=createRequire(require('node:path').resolve('../../services/economy/package.json'));
+const {initializeApp,deleteApp}=adminRequire('firebase-admin/app'),{getFirestore}=adminRequire('firebase-admin/firestore');
+const {execute}=require('../../services/economy/transaction.cjs'),{cards}=require('../../services/economy/domain.cjs');
+let app,db;
+before(()=>{if(!process.env.FIRESTORE_EMULATOR_HOST)throw Error('Emulator required');app=initializeApp({projectId:'demo-anime-meta-hub'},'arena-tests');db=getFirestore(app);});
+after(async()=>deleteApp(app));
+const ref=uid=>db.collection('user_meta').doc(uid),state=async uid=>(await ref(uid).get()).data();
+async function seed(uid,extra={}){await ref(uid).set({username:'Hunter',email:'PRIVATE@example.com',xp:100,gold:5000,gems:0,freeSpins:0,inventoryCards:cards.slice(0,3).map((c,i)=>({...c,instanceId:`card_${i}`})),...extra});}
+const run=(uid,id,command)=>execute({db,verifiedUid:uid,operationId:id,command});
+test('wheel concurrent same-ID replay charges fee/reward exactly once',async()=>{
+ const uid='arena-wheel';await seed(uid);const id='wheel_request_123456789012345';const [a,b]=await Promise.all([run(uid,id,{type:'wheelSpin'}),run(uid,id,{type:'wheelSpin'})]);assert.deepEqual(a,b);assert.equal((await state(uid)).xp,100+a.xpDelta);assert.equal((await state(uid)).gold,5000);
+});
+test('battle fee, same-ID start/turn retry and completion reward atomic, inventory preserved',async()=>{
+ const uid='arena-battle';await seed(uid);const initial=await state(uid),c={type:'battleStart',instanceIds:['card_0','card_1','card_2']},id='battle_start_123456789012345';
+ let r=await run(uid,id,c);assert.deepEqual(await run(uid,id,c),r);assert.equal((await state(uid)).gold,4600);
+ const battleId=r.battle.id;
+ for(let i=0;i<3&&r.battle.status==='active';i++){const op=`battle_turn_${i}_123456789012345`,cmd={type:'battleTurn',battleId,instanceId:`card_${i}`};r=await run(uid,op,cmd);assert.deepEqual(await run(uid,op,cmd),r);}
+ assert.equal(r.battle.status,'finished');const s=await state(uid),win=r.battle.outcome==='win';assert.equal(s.gold,4600+(win?800:200));assert.equal(s.xp,100+(win?30:10));assert.deepEqual(s.inventoryCards,initial.inventoryCards);assert.equal(s.activeBattleId,'');
+ await assert.rejects(run(uid,'battle_forged_reward_1234567890',{type:'battleTurn',battleId,instanceId:'card_0'}),e=>e.code==='battle-not-active');
+});
+test('battle ownership and forfeit without refund/reward; resume returns active only',async()=>{
+ const uid='arena-leave';await seed(uid);
+ await assert.rejects(run(uid,'battle_bad_owner_1234567890',{type:'battleStart',instanceIds:['fake','card_1','card_2']}),e=>e.code==='instance-not-unique-or-owned');
+ const r=await run(uid,'battle_valid_start_1234567890',{type:'battleStart',instanceIds:['card_0','card_1','card_2']});
+ const view=await run(uid,'battle_resume_123456789012345',{type:'arenaView'});assert.equal(view.battle.id,r.battle.id);assert.equal(view.leaderboard.some(row=>'email' in row),false);
+ await run(uid,'battle_forfeit_123456789012345',{type:'battleForfeit',battleId:r.battle.id});assert.equal((await state(uid)).gold,4600);assert.equal((await state(uid)).xp,100);
+});
+test('weekly rank server query, same-week concurrent claim once, no client rank accepted',async()=>{
+ const uid='arena-weekly';await seed(uid,{xp:900000000});
+ const results=await Promise.allSettled([run(uid,'weekly_claim_a_123456789012345',{type:'weeklyClaim'}),run(uid,'weekly_claim_b_123456789012345',{type:'weeklyClaim'})]);assert.equal(results.filter(r=>r.status==='fulfilled').length,1);assert.equal(results.find(r=>r.status==='rejected').reason.code,'weekly-already-claimed');
+ const s=await state(uid);assert.equal(s.gold,5500);assert.equal(s.xp,900000050);assert.equal(s.gems,30);
+ await assert.rejects(run(uid,'weekly_fake_rank_123456789012345',{type:'weeklyClaim',rank:1}),e=>e.code==='invalid-command');
+ const publicView=await run(uid,'public_profile_123456789012345',{type:'publicProfile',uid});assert.equal('email' in publicView.publicProfile,false);assert.equal('gold' in publicView.publicProfile,false);
+});
+test('trusted quiz generation/judgment never exposes answer early; reward per question/finish once',async()=>{
+ const uid='arena-quiz';await seed(uid);const original=global.fetch;process.env.QUIZ_GEMINI_API_KEY='emulator-only-not-a-real-key';let judgments=0;
+ global.fetch=async(_,opts)=>{assert.equal(opts.headers['x-goog-api-key'],process.env.QUIZ_GEMINI_API_KEY);const prompt=JSON.parse(opts.body).contents[0].parts[0].text;
+ const payload=prompt.startsWith('Generate')?Array.from({length:5},(_,i)=>({question:`Question${i}`,answer:`Answer${i}`,hint:'Hint'})):{correct:++judgments<=5,explanation:'Correct'};
+ return {ok:true,json:async()=>({candidates:[{content:{parts:[{text:JSON.stringify(payload)}]}}]})};};
+ try{
+ const start=await run(uid,'quiz_start_123456789012345',{type:'quizStart',title:'Naruto'});assert(!JSON.stringify(start).includes('Answer0'));const quizId=start.quiz.id;
+ for(let i=0;i<5;i++){const id=`quiz_answer_${i}_123456789012345`,command={type:'quizAnswer',quizId,questionIndex:i,answer:`Answer${i}`,skip:false};const r=await run(uid,id,command);assert.deepEqual(await run(uid,id,command),r);assert.equal(r.feedback.correct,true);}
+ const s=await state(uid);assert.equal(s.xp,150);assert.equal(s.gems,10);assert.equal(s.activeQuizId,'');assert.equal(s.missionData.progress.communityActions,1);
+ await assert.rejects(run(uid,'quiz_extra_reward_1234567890',{type:'quizAnswer',quizId,questionIndex:4,answer:'Answer4',skip:false}),e=>e.code==='quiz-ended');
+ }finally{global.fetch=original;delete process.env.QUIZ_GEMINI_API_KEY;}
+});
+test('missing server quiz credential fails closed without charging or exposing phone keys',async()=>{
+ const uid='arena-no-key';await seed(uid);delete process.env.QUIZ_GEMINI_API_KEY;await assert.rejects(run(uid,'quiz_missing_key_123456789012345',{type:'quizStart',title:'Naruto'}),e=>e.code==='quiz-server-key-required');assert.equal((await state(uid)).xp,100);
+});
