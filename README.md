@@ -28,11 +28,11 @@ node tools/test-blueprint-reference.cjs
 
 The generator redacts both the AI secret and Firebase web API key, records original source SHA-256 hashes, and extracts literal catalogs without executing the application. Inspect generated diffs before saving. Reference tests verify baseline rules/catalogs only; native implementation and device/CI evidence are tracked separately below.
 
-## Latest test increment — Step04 v0.5.0
+## Latest test increment — Step04 v0.5.1 Arena redesign
 
-[Download standalone Arena test APK (ZIP)](https://github.com/yasin636/anime-card-assets/actions/runs/42932854353/artifacts/13818090379) · [Step04 scope, manual backend update and QA](apps/mobile/STEP04-TEST.md).
+[Download standalone Arena test APK (ZIP)](https://github.com/yasin636/anime-card-assets/actions/runs/42999634690/artifacts/13846575074) · [Step04 scope, manual backend update and QA](apps/mobile/STEP04-TEST.md).
 
-Trusted wheel, persistent card battles, Top10/weekly rewards and server-provider quiz implementation. Quiz is visibly disabled until an owner-authorized private server provider key is configured; no phone key upload or fake rewards. This is the first Step04 test, **not final Step04 acceptance**. Keep owner-only access and existing balances; do not uninstall to update. Backend must be manually updated to latest branch before Arena commands. No Rules change needed.
+Real-artwork rarity/stat card grids, deck totals, compact avatar rankings/podium and public six-slot featured profiles replace the rejected serial-button UI. [Redesign QA and privacy boundary](apps/mobile/ARENA-REDESIGN-TEST.md). Trusted wheel, persistent card battles, Top10/weekly rewards and server-provider quiz implementation retained. Quiz is visibly disabled until an owner-authorized private server provider key is configured; no phone key upload or fake rewards. This is the first Step04 test, **not final Step04 acceptance**. Keep owner-only access and existing balances; do not uninstall to update. Backend must be manually updated to latest branch before Arena commands. No Rules change needed.
 
 ## Accepted native owner release — Step03 v0.4.0
 
