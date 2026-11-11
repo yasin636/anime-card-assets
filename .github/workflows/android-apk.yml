@@ -134,7 +134,7 @@ jobs:
           cp "$APK" apk-output/AnimeMetaHub-v0.7.1-narrative-part2-test.apk
           cd apk-output
           sha256sum *.apk > SHA256SUMS.txt
-          cp NARRATIVE-PART2-TEST.md README.txt
+          cp ../NARRATIVE-PART2-TEST.md README.txt
       - uses: actions/upload-artifact@v4
         with:
           name: AnimeMetaHub-v0.7.1-narrative-part2-test
