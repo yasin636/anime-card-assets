@@ -11,7 +11,7 @@ export function readArchive(raw:string|null):Archive{
  if(a.entries.some((e:JournalEntry)=>!e||typeof e.id!=='string'||typeof e.title!=='string'||typeof e.text!=='string'||!Number.isFinite(e.at)||!Number.isInteger(e.chapter)||e.chapter<1||e.chapter>5||!['scene','choice','echo','battle'].includes(e.kind))||a.seen.some((id:unknown)=>typeof id!=='string')||Object.values(a.choices).some(c=>!['listen','resolve'].includes(String(c))))throw Error('invalid-archive');
  return {...a,entries:a.entries.slice(-120),seen:a.seen.slice(-80)};
 }
-export function remember(a:Archive,e:JournalEntry):Archive{return {...a,entries:[...a.entries.filter(old=>old.id!==e.id),e].slice(-120),seen:[...new Set([...a.seen,e.id])].slice(-80)};}
+export function remember(a:Archive,e:JournalEntry):Archive{return {...a,entries:[...a.entries.filter(old=>old.id!==e.id),e].slice(-120),seen:e.kind==='battle'?a.seen:[...new Set([...a.seen,e.id])].slice(-80)};}
 export function authoredTalk(s:StorySession){
  const kind=s.dialogueKind as 'intro'|'mid'|'victory'|'defeat',authored=enemyScript[s.enemyId as keyof typeof enemyScript];
  const fallback=s.dialogue[s.dialogueIndex];if(!authored||!authored[kind])return fallback;
