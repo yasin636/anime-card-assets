@@ -306,3 +306,12 @@ Owner praised existing Quiz question quality and requested Bengali questions alo
 
 ## Step05 v0.6.0 implementation — owner APK requested
 Story engine services/economy/story.cjs + Adventure StoryScreen: five chapters/11 original enemies/dialogues/art, source stats/combat, explicit transactional first/repeat rewards, persistent sessions, shadows, D16 once-per-battle ARISE/reset, no Story Gemini call. Bengali Quiz prompt change included. See apps/mobile/STEP05-RELEASE.md for native audio/motion equivalents, D18/D19 safety resolutions, deployment and phone acceptance. Gallery/GCP cleanup deferred. No live mutation or reset by agent. Tests/build acceptance recorded below only when actually successful.
+
+### Step05 signed owner APK — v0.6.0 / code12
+- Source 2c6e59ddadb52e777ca11d10d9397fe79b44d51f; Android CI43018182017 SUCCESS, economy domain CI43018181982 SUCCESS.
+- CI security/emulator (including Story API ownership, same-ID/concurrent ARISE/claim, failed-transaction first-clear recovery and Rules tampering denial), TypeScript, all configured React/unit checks, native compile, pinned private signature and embedded bundle verification passed.
+- Artifact download: https://github.com/yasin636/anime-card-assets/actions/runs/43018182017/artifacts/13853473838
+- Artifact AnimeMetaHub-v0.6.0-story-test, 36,088,418 bytes; archive SHA256 ad760a9b36229a0a95af63f3ce0a922f2a2792a185066349a39f4a19f4c65e59.
+- Local: 62 economy unit tests (11 new Story), 21 real-React provider/broker/visual/Story tests with mocked native/network IO, 19 Gemini/autoconnect/presentation tests, 23 profile checks, 61 offline reference fixtures and foundation/autolinking validator passed. Local TypeScript lacked ignored generated Firebase client config; CI securely generated it and TypeScript passed.
+- Handoff: existing Render Manual Deploy latest branch, no new keys/Firebase config/Rules/billing. Install over accepted app without uninstall. More → Adventure; begin Chapter1 normal enemy, dialogue/combat/resume/claim, verify reward+Shadow, repeat XP-only; Chapter2 ARISE once then reset next battle. New Quiz after backend deploy should request Bengali.
+- Owner phone acceptance, live Bengali Google output, intended Baruka artwork confirmation and optional device TTS quality pending. Not independently tested on Android device/iOS; native effects/audio equivalents rather than exact original external voice/107-keyframe closure. Deferred Gallery/GCP cleanup and legacy-browser import remain explicit in STEP05-RELEASE.md.
