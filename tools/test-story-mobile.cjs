@@ -121,3 +121,22 @@ test('Monarch Command stores only a cosmetic response; scene cancel never starts
  assert(tree.root.findAllByType('Text').some(n=>n.props.children===choice.response));
  await act(async()=>button('Close scene · no new battle').props.onPress());assert.equal(calls.length,baseline);assert(!calls.some(c=>c.type==='storyClaim'));prefs.clear();
 });
+test('five boss signature identities are distinct, skippable and do not issue combat commands',async()=>{
+ const {bossSignatures,SignatureMoment}=load(path.join(__dirname,'../apps/mobile/src/story/SignatureMoments.tsx'));assert.equal(new Set(Object.values(bossSignatures).map(b=>b.motif)).size,5);
+ let closed=0;await act(async()=>{tree=create(React.createElement(SignatureMoment,{cue:{id:'entry:0',enemyId:'igris',kind:'entry'},reduced:true,sound:false,onClose:()=>closed++}));});
+ assert(JSON.stringify(tree.toJSON()).includes('THE SILENT OATH'));await act(async()=>tree.root.findByType('Modal').props.onRequestClose());assert.equal(closed,1);
+ for(const id of Object.keys(bossSignatures)){const raw=fs.readFileSync(path.join(__dirname,`../apps/mobile/assets/audio/boss-${id}.wav`));assert.equal(raw.toString('ascii',0,4),'RIFF');assert(raw.length>20000);}
+});
+test('verified boss cue locks gameplay until skip, historical view never replays signature',async()=>{
+ await mount({type:'storyView',storyCapability:'story-v1',chronicleCapability:'chronicle-v1',story:session,shadows:[],cleared:[]});
+ assert(!skill('Skip boss signature moment'));econ.result={type:'storyStart',story:{...session,version:0}};await act(async()=>tree.update(React.createElement(StoryScreen)));
+ assert(skill('Skip boss signature moment'));assert.equal(skill('STRIKE').props.disabled,true);
+ await act(async()=>skill('Skip boss signature moment').props.onPress());assert.equal(skill('STRIKE').props.disabled,false);
+});
+test('Chronicle journal distinguishes complete, partial and unavailable and choices change dialogue only',()=>{
+ const {battleRecord,authoredTalk}=load(path.join(__dirname,'../apps/mobile/src/story/narrative/model.ts'));const {counters}=require('../services/economy/story.cjs');
+ const s={...session,phase:'claimed',outcome:'win',chronicle:{...counters(),damageDealt:7,guards:2}};
+ assert(battleRecord(s).text.includes('সম্পূর্ণ battle'));assert(battleRecord(s).text.includes('dealt 7'));assert(battleRecord({...s,chronicle:{...s.chronicle,complete:false,fromVersion:8}}).text.includes('আংশিক record'));
+ assert(battleRecord(session).text.includes('পুরোনো record-এ নেই'));
+ const talk={...session,dialogueKind:'intro',dialogueIndex:1};assert.notEqual(authoredTalk(talk,'listen').text,authoredTalk(talk,'resolve').text);assert.equal(session.turn,0);
+});
