@@ -5,14 +5,15 @@ import { randomUUID } from 'expo-crypto';
 import { getAuth } from '@react-native-firebase/auth';
 import { useAuth } from '../auth/AuthProvider';
 import type { Card } from '../domain/profile';
-export type ArenaCommand={type:'arenaView'|'wheelSpin'|'weeklyClaim'}|{type:'publicProfile';uid:string}|{type:'battleStart';instanceIds:string[]}|{type:'battleTurn';battleId:string;instanceId:string}|{type:'battleForfeit';battleId:string}|{type:'quizStart';title:string}|{type:'quizAnswer';quizId:string;questionIndex:number;answer:string;skip:boolean}|{type:'quizClose';quizId:string};
+export type ArenaCommand={type:'arenaView'|'leaderboardView'|'wheelSpin'|'weeklyClaim'}|{type:'publicProfile';uid:string}|{type:'battleStart';instanceIds:string[]}|{type:'battleTurn';battleId:string;instanceId:string}|{type:'battleForfeit';battleId:string}|{type:'quizStart';title:string}|{type:'quizAnswer';quizId:string;questionIndex:number;answer:string;skip:boolean}|{type:'quizClose';quizId:string};
 export type Command = ArenaCommand | {type:'prepare'|'summon'} | {type:'equip';instanceId:string;slot:string} | {type:'unequip';slot:string} | {type:'recycle';instanceId:string} | {type:'buyTheme'|'equipTheme';themeId:string};
 type Pending={operationId:string;command:Command};
 export type BattleCard={id:string;instanceId:string;name:string;hp:number;atk:number;def:number;rarity:string;used:boolean};
 export type Battle={id:string;status:string;outcome?:string;first:string;player:{hp:number;def:number;cards:BattleCard[]};enemy:{hp:number;def:number;cards:BattleCard[]};log:string[]};
 export type Quiz={id:string;title:string;index:number;total:number;correct:number;wrong:number;skipped:number;status:string;question:{question:string;hint:string}|null};
 export type BoardRow={uid:string;rank:number;username:string;avatar:string;xp:number;equippedTheme:string};
-type Result={type:string;index?:number;label?:string;xpDelta?:number;freeSpins?:number;publicProfile?:(BoardRow&{Bio:string});leaderboard?:BoardRow[];week?:string;battle?:Battle|null;quiz?:Quiz|null;quizAvailable?:boolean;reward?:{gold:number;gems:number;xp:number};feedback?:{correct:boolean;answer:string;explanation:string;xpDelta:number;fallback:boolean};gems?:number;card?:Card;gold?:number;xp?:number;duplicate?:boolean};
+export type PublicProfile=Omit<BoardRow,'rank'>&{Bio:string;badge?:string;featuredSlots?:Record<string,import('../arena/presentation').DisplayCard>};
+type Result={type:string;index?:number;label?:string;xpDelta?:number;freeSpins?:number;publicProfile?:PublicProfile;leaderboard?:BoardRow[];week?:string;battle?:Battle|null;quiz?:Quiz|null;quizAvailable?:boolean;reward?:{gold:number;gems:number;xp:number};feedback?:{correct:boolean;answer:string;explanation:string;xpDelta:number;fallback:boolean};gems?:number;card?:Card;gold?:number;xp?:number;duplicate?:boolean};
 type Context={configured:boolean;endpointAvailable:boolean;checking:boolean;connection:string;check:()=>Promise<void>;ready:boolean;busy:boolean;pending:Pending|null;error:string;result:Result|null;run:(command?:Command)=>Promise<void>};
 const Context=createContext<Context|null>(null);
 export function useEconomy(){const c=useContext(Context);if(!c)throw Error('EconomyProvider missing');return c;}

@@ -4,9 +4,9 @@ const {EconomyError,cards,stats}=require('./domain.cjs');
 const fail=code=>{throw new EconomyError(code);};
 const amount=(p,key)=>{const n=p[key]??0;if(!Number.isSafeInteger(n)||n<0)fail('invalid-profile-number');return n;};
 const wheel=[['LOSE',0,0],['2x XP',40,0],['10 XP',10,0],['JACKPOT',100,0],['BANKRUPT',-20,0],['50 XP',50,0],['3x XP',60,0],['FREE',0,1]];
-const types=['arenaView','publicProfile','wheelSpin','battleStart','battleTurn','battleForfeit','weeklyClaim','quizStart','quizAnswer','quizClose'];
+const types=['arenaView','leaderboardView','publicProfile','wheelSpin','battleStart','battleTurn','battleForfeit','weeklyClaim','quizStart','quizAnswer','quizClose'];
 function validate(c){
- const fields={arenaView:[],publicProfile:['uid'],wheelSpin:[],battleStart:['instanceIds'],battleTurn:['battleId','instanceId'],battleForfeit:['battleId'],weeklyClaim:[],quizStart:['title'],quizAnswer:['quizId','answer','skip','questionIndex'],quizClose:['quizId']};
+ const fields={arenaView:[],leaderboardView:[],publicProfile:['uid'],wheelSpin:[],battleStart:['instanceIds'],battleTurn:['battleId','instanceId'],battleForfeit:['battleId'],weeklyClaim:[],quizStart:['title'],quizAnswer:['quizId','answer','skip','questionIndex'],quizClose:['quizId']};
  if(!c||!Object.hasOwn(fields,c.type)||Object.keys(c).some(k=>k!=='type'&&!fields[c.type].includes(k)))fail('invalid-command');
  if(c.type==='battleStart'&&(!Array.isArray(c.instanceIds)||c.instanceIds.length<3||new Set(c.instanceIds).size!==c.instanceIds.length||c.instanceIds.some(i=>typeof i!=='string'||!i||i.length>160)))fail('select-at-least-three-unique-cards');
  for(const k of ['battleId','instanceId','quizId','uid'])if(fields[c.type].includes(k)&&(typeof c[k]!=='string'||!/^[a-zA-Z0-9_-]{1,160}$/.test(c[k])))fail('invalid-command-field');
@@ -51,6 +51,17 @@ function weekKey(now=new Date()){
  const local=new Date(now.getTime()+6*3600000);local.setUTCDate(local.getUTCDate()-local.getUTCDay());return local.toISOString().slice(0,10);
 }
 function publicRow(doc,index){const p=doc.data();return {uid:doc.id,rank:index+1,username:String(p.username||'Hunter').slice(0,100),avatar:String(p.avatar||'').slice(0,4096),xp:typeof p.xp==='number'?p.xp:0,equippedTheme:typeof p.equippedTheme==='string'?p.equippedTheme:''};}
+function publicFeatured(data){
+ const projected={};
+ for(const slot of ['legendary-1','legendary-2','rare-1','rare-2','common-1','common-2']){
+  const raw=data.equippedSlots?.[slot];if(!raw||typeof raw.id!=='string')continue;
+  const base=cards.find(c=>c.id===raw.id);
+  if(!base){projected[slot]={id:raw.id.slice(0,160),name:String(raw.name||raw.id).slice(0,100),rarity:'unknown'};continue;}
+  const power=stats(raw);projected[slot]={id:base.id,name:base.name,rarity:base.rarity,image:base.image,...power};
+ }
+ return projected;
+}
+function publicBadge(gems){return gems>=2000?'Mythic Meta Hub':gems>=1000?'Diamond Rinnegan':gems>=600?'Golden Shuriken':gems>=300?'Silver Katana':gems>=100?'Copper Kunai':'';}
 function sanitizeQuiz(q){return {id:q.id,title:q.title,index:q.index,total:q.questions.length,correct:q.correct,wrong:q.wrong,skipped:q.skipped,status:q.status,question:q.status==='active'?{question:q.questions[q.index].question,hint:q.questions[q.index].hint}:null};}
 async function generateQuiz(title){
  if(!process.env.QUIZ_GEMINI_API_KEY)fail('quiz-server-key-required');
@@ -77,8 +88,9 @@ async function executeArena({db,verifiedUid:uid,operationId,command:c}){
  validate(c);const ref=db.collection('user_meta').doc(uid),sessions=ref.collection('arena_sessions'),receipt=ref.collection('economy_receipts').doc(operationId);
  if(c.type==='publicProfile'){
   const snap=await db.collection('user_meta').doc(c.uid).get();if(!snap.exists)fail('profile-not-found');
-  const data=snap.data();return {type:c.type,publicProfile:{...publicRow(snap,0),Bio:typeof data.Bio==='string'?data.Bio.slice(0,2000):''}};
+  const data=snap.data();const {rank,...identity}=publicRow(snap,0);return {type:c.type,publicProfile:{...identity,Bio:typeof data.Bio==='string'?data.Bio.slice(0,2000):'',badge:publicBadge(Number(data.gems)||0),featuredSlots:publicFeatured(data)}};
  }
+ if(c.type==='leaderboardView'){const board=await db.collection('user_meta').orderBy('xp','desc').limit(10).get();return {type:c.type,leaderboard:board.docs.map(publicRow),week:weekKey()};}
  if(c.type==='arenaView'){
   const p=(await ref.get()).data();if(!p)fail('profile-not-found');
   const board=await db.collection('user_meta').orderBy('xp','desc').limit(10).get();
@@ -138,4 +150,4 @@ async function executeArena({db,verifiedUid:uid,operationId,command:c}){
   tx.create(receipt,{fingerprint,result,createdAt:new Date()});return result;
  });
 }
-module.exports={types,executeArena,spin,wheel,hit,startBattle,turn,weekKey,sanitizeQuiz,validate};
+module.exports={types,executeArena,spin,wheel,hit,startBattle,turn,weekKey,sanitizeQuiz,validate,publicFeatured};

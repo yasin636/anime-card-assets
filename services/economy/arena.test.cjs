@@ -33,3 +33,9 @@ test('enemy-first lethal opening ends immediately; no dead-player attack',()=>{
  const b=startBattle({inventoryCards},inventoryCards.map(c=>c.instanceId),'opening',max=>++calls===4?1:0);
  assert.equal(b.first,'enemy');assert.equal(b.status,'finished');assert.equal(b.outcome,'lose');assert.throws(()=>turn(b,'tiny_0'),e=>e.code==='battle-ended');
 });
+test('public featured projection whitelists six slots and canonical display fields only',()=>{
+ const {publicFeatured}=require('./arena.cjs');
+ const projected=publicFeatured({email:'PRIVATE',inventoryCards:[{secret:'PRIVATE'}],equippedSlots:{'legendary-1':{id:'gojo',instanceId:'PRIVATE',name:'Forged name',hp:123,atk:456,def:789,secret:'PRIVATE',email:'PRIVATE'},'common-1':{id:'legacy-shadow',name:'Legacy'},'admin-secret':{id:'sukuna'}}});
+ assert.deepEqual(Object.keys(projected),['legendary-1','common-1']);assert.equal(projected['legendary-1'].name,'Gojo Satoru');assert.equal(projected['legendary-1'].hp,123);assert.equal(projected['legendary-1'].atk,456);assert.equal(projected['legendary-1'].def,789);
+ assert.equal(JSON.stringify(projected).includes('PRIVATE'),false);assert.equal('instanceId' in projected['legendary-1'],false);assert.equal(projected['common-1'].rarity,'unknown');assert.equal('hp' in projected['common-1'],false);
+});

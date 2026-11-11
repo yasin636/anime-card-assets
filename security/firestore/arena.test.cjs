@@ -61,3 +61,11 @@ test('quiz4correct reward, wrong XP floor, stale answer rejection and close with
  await run(uid,'quiz_close_123456789012345',{type:'quizClose',quizId:next.quiz.id});assert.equal((await state(uid)).gems,5);assert.equal((await state(uid)).xp,25);assert.equal((await state(uid)).activeQuizId,'');
  }finally{global.fetch=original;delete process.env.QUIZ_GEMINI_API_KEY;}
 });
+test('public profile shows only selected six slots, not full inventory or private session data',async()=>{
+ const uid='arena-showcase';await seed(uid,{Bio:'Public bio',avatar:'https://example.com/avatar.png',equippedTheme:'naruto',equippedSlots:{'rare-1':{id:'deku',instanceId:'private-instance',hp:100,atk:200,def:300,privateSecret:'DO-NOT-RETURN'},'admin':{id:'gojo'}},privateNotes:'DO-NOT-RETURN'});
+ const r=await run(uid,'showcase_profile_123456789012345',{type:'publicProfile',uid});const p=r.publicProfile;
+ assert.equal(p.Bio,'Public bio');assert.equal(p.avatar,'https://example.com/avatar.png');assert.equal(p.equippedTheme,'naruto');assert.deepEqual(Object.keys(p.featuredSlots),['rare-1']);assert.equal(p.featuredSlots['rare-1'].name,'Izuku Midoriya');assert.equal(p.featuredSlots['rare-1'].atk,200);
+ for(const forbidden of ['email','gold','gems','inventoryCards','activeBattleId','privateNotes'])assert.equal(forbidden in p,false);
+ assert.equal(JSON.stringify(p).includes('private-instance'),false);assert.equal(JSON.stringify(p).includes('DO-NOT-RETURN'),false);
+ const board=await run(uid,'standings_only_123456789012345',{type:'leaderboardView'});assert(Array.isArray(board.leaderboard));assert.equal('battle' in board,false);assert.equal('quiz' in board,false);assert.equal(JSON.stringify(board).includes('DO-NOT-RETURN'),false);
+});
