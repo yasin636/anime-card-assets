@@ -2,7 +2,7 @@
 const {test,before,after}=require('node:test'),assert=require('node:assert/strict'),{createRequire}=require('node:module');
 const req=createRequire(require('node:path').resolve('../../services/economy/package.json')),{initializeApp,deleteApp}=req('firebase-admin/app'),{getFirestore}=req('firebase-admin/firestore');
 const {execute}=require('../../services/economy/transaction.cjs');let app,db;
-before(()=>{if(!process.env.FIRESTORE_EMULATOR_HOST)throw Error('Emulator required');app=initializeApp({projectId:'demo-anime-meta-hub'},'social-tests');db=getFirestore(app);});after(async()=>deleteApp(app));
+before(()=>{if(!process.env.FIRESTORE_EMULATOR_HOST)throw Error('Emulator required');app=initializeApp({projectId:'demo-anime-meta-hub-social'},'social-tests');db=getFirestore(app);});after(async()=>deleteApp(app));
 const ref=uid=>db.collection('user_meta').doc(uid),post=id=>db.collection('feed_posts').doc(id),state=async uid=>(await ref(uid).get()).data();let serial=0;
 const run=(uid,command,id=`social_operation_${++serial}_1234567890123456`,verifiedAdmin=false)=>execute({db,verifiedUid:uid,verifiedAdmin,operationId:id,command});
 const seed=async(uid,extra={})=>ref(uid).set({uid,username:'ADMIN',avatar:'',xp:100,gold:0,gems:0,email:'private@example.com',inventoryCards:[],...extra});

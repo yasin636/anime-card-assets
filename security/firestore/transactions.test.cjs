@@ -9,7 +9,7 @@ const {execute}=require('../../services/economy/transaction.cjs');
 let app,db;
 before(()=>{
  if(!process.env.FIRESTORE_EMULATOR_HOST)throw Error('Emulator required; production access prohibited');
- app=initializeApp({projectId:'demo-anime-meta-hub'},'transaction-tests');db=getFirestore(app);
+ app=initializeApp({projectId:'demo-anime-meta-hub-transactions'},'transaction-tests');db=getFirestore(app);
 });
 after(async()=>{await deleteApp(app);});
 const base=()=>({gold:10000,xp:2840,gems:318,username:'Existing',Bio:'Keep',inventoryCards:[],equippedSlots:{},inventory:{themes:[],legacy:['keep']},unknown:{preserve:true}});

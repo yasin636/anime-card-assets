@@ -4,7 +4,7 @@ const adminRequire=createRequire(require('node:path').resolve('../../services/ec
 const {initializeApp,deleteApp}=adminRequire('firebase-admin/app'),{getFirestore}=adminRequire('firebase-admin/firestore');
 const {execute}=require('../../services/economy/transaction.cjs'),{cards}=require('../../services/economy/domain.cjs');
 let app,db;
-before(()=>{if(!process.env.FIRESTORE_EMULATOR_HOST)throw Error('Emulator required');app=initializeApp({projectId:'demo-anime-meta-hub'},'arena-tests');db=getFirestore(app);});
+before(()=>{if(!process.env.FIRESTORE_EMULATOR_HOST)throw Error('Emulator required');app=initializeApp({projectId:'demo-anime-meta-hub-arena'},'arena-tests');db=getFirestore(app);});
 after(async()=>deleteApp(app));
 const ref=uid=>db.collection('user_meta').doc(uid),state=async uid=>(await ref(uid).get()).data();
 async function seed(uid,extra={}){await ref(uid).set({username:'Hunter',email:'PRIVATE@example.com',xp:100,gold:5000,gems:0,freeSpins:0,inventoryCards:cards.slice(0,3).map((c,i)=>({...c,instanceId:`card_${i}`})),...extra});}
@@ -30,7 +30,7 @@ test('battle ownership and forfeit without refund/reward; resume returns active 
 });
 test('weekly rank server query, same-week concurrent claim once, no client rank accepted',async()=>{
  const uid='arena-weekly';await seed(uid,{xp:900000000});
- const results=await Promise.allSettled([run(uid,'weekly_claim_a_123456789012345',{type:'weeklyClaim'}),run(uid,'weekly_claim_b_123456789012345',{type:'weeklyClaim'})]);assert.equal(results.filter(r=>r.status==='fulfilled').length,1);assert.equal(results.find(r=>r.status==='rejected').reason.code,'weekly-already-claimed');
+ const results=await Promise.allSettled([run(uid,'weekly_claim_a_123456789012345',{type:'weeklyClaim'}),run(uid,'weekly_claim_b_123456789012345',{type:'weeklyClaim'})]);assert.equal(results.filter(r=>r.status==='fulfilled').length,1,JSON.stringify(results.map(r=>({status:r.status,code:r.reason?.code,message:r.reason?.message}))));assert.equal(results.find(r=>r.status==='rejected').reason.code,'weekly-already-claimed');
  const s=await state(uid);assert.equal(s.gold,5500);assert.equal(s.xp,900000050);assert.equal(s.gems,30);
  await assert.rejects(run(uid,'weekly_fake_rank_123456789012345',{type:'weeklyClaim',rank:1}),e=>e.code==='invalid-command');
  const publicView=await run(uid,'public_profile_123456789012345',{type:'publicProfile',uid});assert.equal('email' in publicView.publicProfile,false);assert.equal('gold' in publicView.publicProfile,false);
