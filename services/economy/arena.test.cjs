@@ -28,3 +28,8 @@ test('quiz status never returns answers or future questions; explicit Dhaka Sund
  assert.equal(JSON.stringify(q).includes('PRIVATE'),false);assert.equal(JSON.stringify(q).includes('Future'),false);
  assert.equal(weekKey(new Date('2026-11-07T17:59:59Z')),'2026-11-01');assert.equal(weekKey(new Date('2026-11-07T18:00:00Z')),'2026-11-08');
 });
+test('enemy-first lethal opening ends immediately; no dead-player attack',()=>{
+ const inventoryCards=cards.slice(0,3).map((c,i)=>({...c,hp:1,atk:1,def:1,instanceId:`tiny_${i}`}));let calls=0;
+ const b=startBattle({inventoryCards},inventoryCards.map(c=>c.instanceId),'opening',max=>++calls===4?1:0);
+ assert.equal(b.first,'enemy');assert.equal(b.status,'finished');assert.equal(b.outcome,'lose');assert.throws(()=>turn(b,'tiny_0'),e=>e.code==='battle-ended');
+});

@@ -49,3 +49,15 @@ test('trusted quiz generation/judgment never exposes answer early; reward per qu
 test('missing server quiz credential fails closed without charging or exposing phone keys',async()=>{
  const uid='arena-no-key';await seed(uid);delete process.env.QUIZ_GEMINI_API_KEY;await assert.rejects(run(uid,'quiz_missing_key_123456789012345',{type:'quizStart',title:'Naruto'}),e=>e.code==='quiz-server-key-required');assert.equal((await state(uid)).xp,100);
 });
+test('quiz4correct reward, wrong XP floor, stale answer rejection and close without gems',async()=>{
+ const uid='arena-quiz-four';await seed(uid,{xp:0});const original=global.fetch;process.env.QUIZ_GEMINI_API_KEY='emulator-only-not-a-real-key';let count=0;
+ global.fetch=async(_,opts)=>{const prompt=JSON.parse(opts.body).contents[0].parts[0].text;const value=prompt.startsWith('Generate')?Array.from({length:5},()=>({question:'Name?',answer:'Naruto Uzumaki',hint:'Ninja'})):{correct:++count>1,explanation:'Verdict'};return {ok:true,json:async()=>({candidates:[{content:{parts:[{text:JSON.stringify(value)}]}}]})};};
+ try{
+ const start=await run(uid,'quiz_four_start_123456789012345',{type:'quizStart',title:'Naruto'}),quizId=start.quiz.id;
+ for(let i=0;i<5;i++){await run(uid,`quiz_four_answer_${i}_1234567890`,{type:'quizAnswer',quizId,questionIndex:i,answer:'Naruto',skip:false});if(i===0){assert.equal((await state(uid)).xp,0);await assert.rejects(run(uid,'quiz_stale_answer_1234567890123',{type:'quizAnswer',quizId,questionIndex:0,answer:'Naruto',skip:false}),e=>e.code==='quiz-question-changed');}}
+ assert.equal((await state(uid)).gems,5);assert.equal((await state(uid)).xp,40);
+ const next=await run(uid,'quiz_close_start_123456789012345',{type:'quizStart',title:'Naruto'});
+ await run(uid,'quiz_skip_123456789012345',{type:'quizAnswer',quizId:next.quiz.id,questionIndex:0,answer:'',skip:true});assert.equal((await state(uid)).xp,25);
+ await run(uid,'quiz_close_123456789012345',{type:'quizClose',quizId:next.quiz.id});assert.equal((await state(uid)).gems,5);assert.equal((await state(uid)).xp,25);assert.equal((await state(uid)).activeQuizId,'');
+ }finally{global.fetch=original;delete process.env.QUIZ_GEMINI_API_KEY;}
+});

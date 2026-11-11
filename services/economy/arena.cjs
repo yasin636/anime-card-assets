@@ -34,7 +34,7 @@ function startBattle(p,ids,id,random=randomInt){
  const list=p.inventoryCards||[];const selected=ids.map(instanceId=>{const owned=list.filter(c=>c.instanceId===instanceId);if(owned.length!==1)fail('instance-not-unique-or-owned');const raw=owned[0],base=cards.find(c=>c.id===raw.id);if(!base)fail('unknown-legacy-card');return {...base,...stats(raw),instanceId};});
  const ai=selected.map((c,i)=>{const pool=cards.filter(a=>a.rarity===c.rarity);return {...pool[random(pool.length)],instanceId:`ai_${i}`};});
  const b={id,status:'active',player:team(selected),enemy:team(ai),log:[],first:random(2)===0?'player':'enemy'};
- if(b.first==='enemy')enemyTurn(b);return b;
+ if(b.first==='enemy')enemyTurn(b);const ended=outcome(b);if(ended){b.status='finished';b.outcome=ended;}return b;
 }
 function turn(original,instanceId){
  const b=structuredClone(original);if(b.status!=='active')fail('battle-ended');
@@ -101,7 +101,9 @@ async function executeArena({db,verifiedUid:uid,operationId,command:c}){
   if(c.type==='wheelSpin')({patch,result}=spin(p,index));
   else if(c.type==='battleStart'){
    if(p.activeBattleId)fail('battle-already-active');if(amount(p,'gold')<400)fail('insufficient-gold');
-   session=startBattle(p,c.instanceIds,id);sessionRef=sessions.doc(id);patch={gold:amount(p,'gold')-400,activeBattleId:id};result.battle=session;
+   session=startBattle(p,c.instanceIds,id);sessionRef=sessions.doc(id);patch={gold:amount(p,'gold')-400,activeBattleId:id};
+   if(session.status==='finished'){const win=session.outcome==='win';result.reward={gold:win?800:200,gems:win?10:2,xp:win?30:10};patch={gold:patch.gold+result.reward.gold,gems:amount(p,'gems')+result.reward.gems,xp:amount(p,'xp')+result.reward.xp,activeBattleId:''};}
+   result.battle=session;
   }else if(c.type==='battleTurn'||c.type==='battleForfeit'){
    if(p.activeBattleId!==c.battleId)fail('battle-not-active');sessionRef=sessions.doc(c.battleId);const saved=await tx.get(sessionRef);if(!saved.exists)fail('battle-not-active');
    if(c.type==='battleForfeit'){session={...saved.data(),status:'forfeited'};patch={activeBattleId:''};}
