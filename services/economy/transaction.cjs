@@ -5,9 +5,11 @@ const {plan,validateCommand,EconomyError}=require('./domain.cjs');
  * never from request JSON. Firestore is an Admin SDK instance, not mobile SDK.
  * Receipts and economy fields must be server-only under deployed Firestore Rules.
  */
-async function execute({db,verifiedUid,operationId,command,ai}) {
+async function execute({db,verifiedUid,operationId,command,ai,verifiedAdmin=false}) {
   if(typeof verifiedUid!=='string'||!verifiedUid||verifiedUid.includes('/')) throw new EconomyError('unauthenticated');
   if(typeof operationId!=='string'||!/^[a-zA-Z0-9_-]{20,100}$/.test(operationId)) throw new EconomyError('invalid-operation-id');
+  const social=require('./social.cjs');
+  if(social.types.includes(command?.type))return social.executeSocial({db,verifiedUid,verifiedAdmin,operationId,command});
   const story=require('./story.cjs');
   if(story.types.includes(command?.type))return story.executeStory({db,verifiedUid,operationId,command});
   const arena=require('./arena.cjs');

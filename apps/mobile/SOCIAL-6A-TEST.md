@@ -1,0 +1,22 @@
+# Step6A — Text Feed v0.8.0 / Android code17
+
+Owner accepted v0.7.2 boss-entry/ARISE fixes and Step5, then explicitly authorized 6A. 6B chat and 6C tracker/news are NOT implemented in this step. Gallery/media uploads remain deferred, not removed or represented as fixed.
+
+## Included
+- Native Feed composer: required caption1–2000 chars + optional HTTP(S) link; account/device-scoped saved composer draft; newest60 query, manual refresh and entry/foreground refresh, author avatar/badge/theme/public profile, relative time/edited flag,7-day hide for normal posts (hide != delete). No push/realtime subscription claimed.
+- Edit/delete own posts; comments1–1000 chars, edit/delete own comments, expandable thread; Like is DISTINCT from six emoji reactions, at most one selected emoji and same emoji removes it. Reaction/edit gives0XP.
+- Server-only operations and actual-result receipts: create+15/delete−15; nonself like+5/unlike−5, creator keeps+1; comment+10/delete−10, other creator keeps+3; copy+5 and other creator+5, self-copy only+5. All deductions floor0, level recalculated. Source repeated re-like and copy can reward again on NEW deliberate operations; no unapproved anti-farming cap silently added. Persisted same-operation retry cannot double-award. Process-local request limiter is not production-grade global abuse control.
+- Atomic daily10-post quota (UTC; delete doesn't refund), admin exemption ONLY from verified Firebase token custom claim `admin:true`, NEVER editable username/profile/client payload. No new admin claim is provisioned here. Existing legacy isAdmin flag retained for old post visibility; provenance audit still relevant for production.
+- Social missions m_posts2 and m_social10 combined likes/comments, capped progress and once/date trusted atomic claims (50G/15XP/5Gems;50G/20XP/5Gems). Source self-like makes mission progress but noXP, fresh comment incl self progresses. Unlike/delete don't reverse progress. Other mission fields preserved; other mission claim surfaces not added. UTC countdown/claim freshness shown.
+- Copy installed-app deep link `animemetahub://post/{id}` using native clipboard, then trusted share receipt. No invented HTTPS site/hosting. App route loads requested visible post after auth. This link only works with this app installed; web universal links not configured. Client cannot cryptographically prove a user pasted a link elsewhere (same limitation as source clipboard event).
+- Legacy fields retained on edits. Old image URLs/small data images displayed; video/upload deferred explicitly; larger legacy embedded images show unavailable notice without deleting source data. No multi-image feature added.
+
+## Hosting and Rules
+Manual deploy latest working-branch commit to EXISTING Render economy service (autodeploy off). Existing service account, endpoint and owner UID allowlist unchanged. No new key, billing, Firebase Rules publish, indexes or public Firestore access needed: all Feed reads/writes go through authenticated backend. Strict client Rules remain deny-all for feed_posts/post_activity/receipts; direct client reward minting forbidden. This remains owner-test gated: don't claim all community accounts can write until separately authorized rollout.
+
+## Tests / acceptance
+Automated checks cover strict command fields/URLs, projection privacy, hide boundary, level/mission helpers; emulator cross-owner edit/delete rejection, quota concurrency, idempotency/conflicts, exact self/nonself XP, emoji/like separation, claim once, rollback and legacy timestamp preservation; mocked-native composer/draft/like/comment/edit/copy/mission flows. APK build/signature is not physical-device or two-account acceptance.
+
+Update in place. Deploy Render first, then Feed Refresh. Try text post/link, draft after relaunch, edit/cancel/delete warning, each reaction/same-tap removal independent of Like, comments edit/delete, copy+deep-link opening, mission claim, reward receipt/header balance. Use two ALREADY authorized tester accounts for cross-user XP checks; do not relax allowlist/Rules just to test. Deletion/XP-changing actions are manual owner-confirmed tests, not actions performed on live accounts by the agent. Unsent comment drafts remain during refresh, but are not persisted across screen unmount; composer draft is persisted. Profile/saved keys/Story remain intact. Uninstall/data-clear removes local drafts/journal, not server rewards.
+
+All6A phone QA pending. Step6 as a whole remains unfinished.

@@ -57,3 +57,10 @@ test('trusted Admin-equivalent bypass can write protected data and receipt',asyn
  await assertSucceeds(setDoc(doc(ctx.firestore(),'user_meta/server/economy_receipts/op'),{fingerprint:'trusted'}));
  });
 });
+
+test('6A social documents, quota and rewards remain server-only for owners and other clients',async()=>{
+ for(const path of ['feed_posts/social_rules','post_activity/social-rules','user_meta/social-rules/economy_receipts/social_receipt']){
+  const ref=doc(db('social-rules'),path);await assertFails(setDoc(ref,{uid:'social-rules',caption:'mint',xp:999,isAdmin:true}));await assertFails(getDoc(ref));await assertFails(deleteDoc(ref));
+ }
+ await assertFails(getDocs(collection(db('social-rules'),'feed_posts')));
+});
