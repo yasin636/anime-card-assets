@@ -1,6 +1,6 @@
 {
   "name": "anime-meta-hub-mobile",
-  "version": "0.3.3",
+  "version": "0.4.0",
   "private": true,
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
@@ -40,6 +40,7 @@
   "devDependencies": {
     "@types/react": "~19.1.10",
     "babel-preset-expo": "~54.0.12",
+    "react-test-renderer": "19.1.0",
     "typescript": "~5.9.2"
   },
   "overrides": {

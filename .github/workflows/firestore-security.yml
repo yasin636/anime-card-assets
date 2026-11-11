@@ -1,5 +1,6 @@
 name: Firestore security emulator
 on:
+  workflow_call:
   workflow_dispatch:
   push:
     paths:

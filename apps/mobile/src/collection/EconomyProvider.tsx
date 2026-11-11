@@ -38,6 +38,7 @@ export function EconomyProvider({children}:{children:React.ReactNode}){
   try{
    const current=getAuth().currentUser;if(current?.uid!==uid)return;
    const token=await current.getIdToken();
+   if(!active.current||getAuth().currentUser?.uid!==uid)return;
    const response=await fetch(`${endpoint}/v1/economy/status`,{headers:{Authorization:`Bearer ${token}`},signal:controller.signal});
    if(!response.ok)throw Error(`Server check ব্যর্থ (${response.status})। Backend update/permission পরীক্ষা প্রয়োজন।`);
    const data=await response.json();if(data.profileReadable!==true||typeof data.mutationsAllowed!=='boolean')throw Error('Server status যাচাই হয়নি।');
@@ -64,11 +65,14 @@ export function EconomyProvider({children}:{children:React.ReactNode}){
    // Persist BEFORE sending. Timeout/kill/relaunch must reuse this operation ID, not spend twice.
    await AsyncStorage.setItem(key,JSON.stringify(operation));pendingRef.current=operation;if(active.current)setPending(operation);
    const current=getAuth().currentUser;if(current?.uid!==uid)return;
-   const token=await current.getIdToken();controller=new AbortController();timer=setTimeout(()=>controller?.abort(),90000);
+   const token=await current.getIdToken();
+   if(!active.current||getAuth().currentUser?.uid!==uid)return;
+   controller=new AbortController();timer=setTimeout(()=>controller?.abort(),90000);
    const response=await fetch(`${endpoint}/v1/economy`,{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify(operation),signal:controller.signal});
    const payload=await response.json();
    // Only definitive command rejection clears pending. 401/429/5xx/network errors retain it.
    if(!response.ok){
+    if((response.status===401||response.status===403)&&active.current&&getAuth().currentUser?.uid===uid)setAllowed(false);
     if(response.status===409){await AsyncStorage.removeItem(key);pendingRef.current=null;if(active.current)setPending(null);}
     throw Error(messages[payload.error]||`কাজটি নিশ্চিত হয়নি (${payload.error||response.status})। Pending থাকলে Retry করো।`);
    }
