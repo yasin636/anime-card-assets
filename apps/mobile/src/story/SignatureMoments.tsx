@@ -18,8 +18,18 @@ export function SignatureGlyph({enemyId,color}:{enemyId:keyof typeof bossSignatu
 }
 export function SignatureMoment({cue,reduced,onClose,sound=true}:{cue:BossCue|null;reduced:boolean;onClose:()=>void;sound?:boolean}){
  const p=useRef(new Animated.Value(0)).current;
- const audio=useAudioPlayer(signatureAudio[cue?.enemyId||'igris']);
- useEffect(()=>{let alive=true;if(cue&&sound&&!reduced)void audio.seekTo(0).then(()=>{if(alive)audio.play();}).catch(()=>{});return()=>{alive=false;audio.pause();};},[cue?.id,audio,sound,reduced]);
+ // Keep one native player for this mounted screen. Changing the hook source
+ // releases its old shared object before effect cleanup on Android.
+ const audio=useAudioPlayer(null);
+ useEffect(()=>{
+  let alive=true;
+  if(cue&&sound&&!reduced){
+   // Audio is cosmetic: synchronous native errors and asynchronous seek/play
+   // failures must never terminate a server-confirmed battle.
+   try{audio.replace(signatureAudio[cue.enemyId]);void audio.seekTo(0).then(()=>{if(alive)audio.play();}).catch(()=>{});}catch{}
+  }
+  return()=>{alive=false;try{audio.pause();}catch{}};
+ },[cue?.id,audio,sound,reduced]);
  useEffect(()=>{if(!cue)return;p.setValue(reduced?1:0);const a=Animated.timing(p,{toValue:1,duration:reduced?0:1900,useNativeDriver:true});a.start();const timer=setTimeout(onClose,reduced?3000:4200);return()=>{a.stop();clearTimeout(timer);};},[cue?.id,reduced,p]);
  if(!cue)return null;const b=bossSignatures[cue.enemyId];
  return <Modal visible transparent animationType="none" onRequestClose={onClose}><Pressable accessibilityRole="button" accessibilityLabel="Skip boss signature moment" onPress={onClose} style={s.backdrop}><LinearGradient colors={['#020610',`${b.color}18`,'#020610']} style={StyleSheet.absoluteFill}/><Text style={[s.micro,{color:b.color}]}>{cue.kind==='entry'?'SIGNATURE ENCOUNTER':'CONFIRMED ENRAGE / ATK +50%'}</Text><Animated.View style={{opacity:reduced?1:p.interpolate({inputRange:[0,.3,1],outputRange:[.15,1,1]}),transform:[{translateY:reduced?0:p.interpolate({inputRange:[0,1],outputRange:[25,0]})}]}}><SignatureGlyph enemyId={cue.enemyId} color={b.color}/></Animated.View><Image source={storyArtwork[cue.enemyId]} resizeMode="contain" style={s.art}/><Text style={[s.name,{color:b.color}]}>{b.name}</Text><Text style={s.title}>{b.title}</Text><Text style={s.body}>{b.description}</Text><Text style={s.foot}>CINEMATIC PRESENTATION · NOT A NEW DAMAGE SKILL</Text><Text style={[s.micro,{color:b.color}]}>TAP / BACK TO SKIP</Text></Pressable></Modal>;

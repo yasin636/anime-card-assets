@@ -3,7 +3,8 @@ const {test,afterEach}=require('node:test'),assert=require('node:assert/strict')
 const req=Module.createRequire(path.join(__dirname,'../apps/mobile/package.json')),React=req('react'),{create,act}=req('react-test-renderer'),ts=req('typescript');global.IS_REACT_ACT_ENVIRONMENT=true;
 let calls=[],econ,tree,prefs=new Map();const player={hp:100,atk:30,def:20,maxHp:100,maxDef:20};const army=[{id:'goblin',name:'Goblin Scout',hp:170,atk:350,def:310}];
 const session={id:'session',version:2,chapterId:2,enemyId:'baran',enemy:{...player,id:'baran',name:'Baran'},player,playerName:'Hunter',phase:'fight',first:'player',dialogue:[],dialogueIndex:0,events:[],log:[],shadowIds:[],ariseBonus:{hp:0,atk:0,def:0},ariseUsed:false,heavyCooldown:0,turn:0};
-const audio={pause(){},play(){},seekTo:async()=>{}};
+const audio={pause(){},play(){},replace(){},seekTo:async()=>{}};
+let audioHook=null;
 function load(file=path.join(__dirname,'../apps/mobile/src/story/StoryScreen.tsx')){const m=new Module(file);m.filename=file;m.paths=Module._nodeModulePaths(path.dirname(file));m.require=name=>{
  if(name==='react-native')return {AccessibilityInfo:{isReduceMotionEnabled:async()=>false},Alert:{alert:(_title,_message,buttons)=>buttons.at(-1).onPress()},AppState:{currentState:'active',addEventListener:()=>({remove(){}})},Animated:{Value:class{setValue(){} interpolate(){return 1;}stopAnimation(){}},View:'AnimatedView',Image:'Image',Text:'Text',sequence:()=>({start(){},stop(){}}),timing:()=>({start(){},stop(){}}),loop:()=>({start(){},stop(){}})},Image:'Image',Modal:'Modal',Pressable:'Pressable',ScrollView:'ScrollView',Text:'Text',View:'View',StyleSheet:{create:s=>s}};
  if(name==='@react-navigation/native')return {useIsFocused:()=>true};if(name==='react-native-safe-area-context')return {SafeAreaView:'SafeAreaView'};
@@ -12,7 +13,7 @@ function load(file=path.join(__dirname,'../apps/mobile/src/story/StoryScreen.tsx
  if(name==='expo-haptics')return {impactAsync:async()=>{},ImpactFeedbackStyle:{Heavy:'heavy',Light:'light'}};
  if(name==='react-native-svg')return {__esModule:true,default:'Svg',Circle:'Circle',Rect:'Rect',Line:'Line',Path:'Path'};
  if(name==='./CombatTheater'||name==='./SystemWindow')return load(path.join(path.dirname(file),name+'.tsx'));
- if(name==='expo-audio')return {useAudioPlayer:()=>audio};if(name==='expo-speech')return {stop:async()=>{},speak(){}};
+ if(name==='expo-audio')return {useAudioPlayer:source=>audioHook?audioHook(source):audio};if(name==='expo-speech')return {stop:async()=>{},speak(){}};
  if(name.endsWith('/auth/AuthProvider'))return {useAuth:()=>({user:{uid:'alice'},profile:{uid:'alice',xp:100,inventoryCards:[{id:'gojo'},{id:'sukuna'},{id:'itachi'}]}})};
  if(name==='../collection/EconomyProvider')return {useEconomy:()=>econ};if(name==='../collection/CollectionScreens')return {EconomyStatus:()=>React.createElement('Status')};
  if(name.endsWith('/ui/forms'))return {f:{},ActionButton:props=>React.createElement('Button',props)};
@@ -23,7 +24,7 @@ function load(file=path.join(__dirname,'../apps/mobile/src/story/StoryScreen.tsx
  };m._compile(ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,esModuleInterop:true}}).outputText,file);return m.exports;}
 const {StoryScreen,ShadowTile}=load();
 async function mount(result){calls=[];econ={configured:true,ready:true,busy:false,pending:null,result,run:async c=>calls.push(c)};await act(async()=>{tree=create(React.createElement(StoryScreen));});}
-afterEach(async()=>{if(tree)await act(async()=>tree.unmount());tree=null;});
+afterEach(async()=>{if(tree)await act(async()=>tree.unmount());tree=null;audioHook=null;});
 const skill=label=>tree.root.findAllByType('Pressable').find(p=>p.props.accessibilityLabel===label);
 const button=title=>tree.root.findAllByType('Button').find(b=>b.props.title===title);
 test('Story map uses original full artwork, first-clear reward previews and no-fee entry confirmation',async()=>{
@@ -139,4 +140,33 @@ test('Chronicle journal distinguishes complete, partial and unavailable and choi
  assert(battleRecord(s).text.includes('সম্পূর্ণ battle'));assert(battleRecord(s).text.includes('dealt 7'));assert(battleRecord({...s,chronicle:{...s.chronicle,complete:false,fromVersion:8}}).text.includes('আংশিক record'));
  assert(battleRecord(session).text.includes('পুরোনো record-এ নেই'));
  const talk={...session,dialogueKind:'intro',dialogueIndex:1};assert.notEqual(authoredTalk(talk,'listen').text,authoredTalk(talk,'resolve').text);assert.equal(session.turn,0);
+});
+
+test('boss source transitions never release an audio player still used by cleanup',async()=>{
+ const {SignatureMoment}=load(path.join(__dirname,'../apps/mobile/src/story/SignatureMoments.tsx'));
+ const players=[];
+ audioHook=source=>{const ref=React.useRef(null);return React.useMemo(()=>{
+  if(ref.current)ref.current.released=true;
+  const p={released:false,pause(){if(this.released)throw Error('Native shared object already released');},play(){assert(!this.released);},replace(){assert(!this.released);},seekTo:async()=>{}};
+  ref.current=p;players.push({source,p});return p;
+ },[source]);};
+ const props={reduced:false,sound:true,onClose(){}};
+ await act(async()=>{tree=create(React.createElement(SignatureMoment,{...props,cue:null}));});
+ for(const enemyId of ['kasaka','baran','igris','tusk','beru']){
+  await act(async()=>tree.update(React.createElement(SignatureMoment,{...props,cue:{id:enemyId,enemyId,kind:'entry'}})));
+  await act(async()=>tree.update(React.createElement(SignatureMoment,{...props,cue:null})));
+ }
+ assert.equal(players.length,1);assert.equal(players[0].source,null);
+ // Native object release may happen before this component's unmount cleanup.
+ players[0].p.released=true;await act(async()=>tree.unmount());tree=null;
+});
+for(const reduced of [false,true])test(`ARISE response shows presentation in one modal even reduced=${reduced}`,async()=>{
+ prefs.clear();prefs.set('story.presentation.v1.alice',JSON.stringify({reduced}));
+ await mount({type:'storyView',storyCapability:'story-v1',story:session,shadows:army,cleared:[]});
+ await act(async()=>skill('Summon Shadow Army').props.onPress());
+ econ.result={type:'storyArise',story:{...session,version:3,ariseUsed:true,shadowIds:['goblin'],events:[{arise:true}]}};
+ await act(async()=>tree.update(React.createElement(StoryScreen)));
+ assert(skill('Dismiss ARISE animation'));assert.equal(tree.root.findAllByType('Modal').filter(m=>m.props.visible).length,1);
+ assert.equal(skill('STRIKE').props.disabled,true);
+ await act(async()=>skill('Dismiss ARISE animation').props.onPress());assert.equal(skill('STRIKE').props.disabled,false);prefs.clear();
 });
