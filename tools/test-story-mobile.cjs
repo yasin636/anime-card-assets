@@ -13,13 +13,13 @@ function load(file=path.join(__dirname,'../apps/mobile/src/story/StoryScreen.tsx
  if(name==='react-native-svg')return {__esModule:true,default:'Svg',Circle:'Circle',Rect:'Rect',Line:'Line',Path:'Path'};
  if(name==='./CombatTheater'||name==='./SystemWindow')return load(path.join(path.dirname(file),name+'.tsx'));
  if(name==='expo-audio')return {useAudioPlayer:()=>audio};if(name==='expo-speech')return {stop:async()=>{},speak(){}};
- if(name==='../auth/AuthProvider')return {useAuth:()=>({profile:{xp:100,inventoryCards:[{id:'gojo'},{id:'sukuna'},{id:'itachi'}]}})};
+ if(name.endsWith('/auth/AuthProvider'))return {useAuth:()=>({user:{uid:'alice'},profile:{uid:'alice',xp:100,inventoryCards:[{id:'gojo'},{id:'sukuna'},{id:'itachi'}]}})};
  if(name==='../collection/EconomyProvider')return {useEconomy:()=>econ};if(name==='../collection/CollectionScreens')return {EconomyStatus:()=>React.createElement('Status')};
- if(name==='../ui/forms')return {f:{},ActionButton:props=>React.createElement('Button',props)};
+ if(name.endsWith('/ui/forms'))return {f:{},ActionButton:props=>React.createElement('Button',props)};
  if(name==='../domain/profile')return {storyPower:()=>player,levelInfo:()=>({level:3})};
- if(name==='./artwork')return {storyArtwork:new Proxy({},{get:()=>1})};
+ if(name.endsWith('/artwork'))return {storyArtwork:new Proxy({},{get:()=>1})};
  if(name.endsWith('.wav'))return 1;
- if(name.startsWith('.'))return req(path.resolve(path.dirname(file),name));return req(name);
+ if(name.startsWith('.')){const resolved=path.resolve(path.dirname(file),name);for(const ext of ['.tsx','.ts'])if(fs.existsSync(resolved+ext))return load(resolved+ext);return req(resolved);}return req(name);
  };m._compile(ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,esModuleInterop:true}}).outputText,file);return m.exports;}
 const {StoryScreen,ShadowTile}=load();
 async function mount(result){calls=[];econ={configured:true,ready:true,busy:false,pending:null,result,run:async c=>calls.push(c)};await act(async()=>{tree=create(React.createElement(StoryScreen));});}
@@ -30,7 +30,7 @@ test('Story map uses original full artwork, first-clear reward previews and no-f
  await mount({type:'storyView',storyCapability:'story-v1',story:null,shadows:[],cleared:[]});assert(calls.some(c=>c.type==='storyView'));
  const text=JSON.stringify(tree.toJSON());assert(text.includes('Kasaka'));assert(text.includes('FIRST CLEAR AVAILABLE'));assert(text.includes('100 XP'));
  for(const image of tree.root.findAllByType('Image'))assert.equal(image.props.resizeMode,'contain');
- const start=tree.root.findAllByType('Button').find(b=>b.props.title==='Enter battle · no fee');assert.equal(start.props.disabled,false);await act(async()=>start.props.onPress());assert.deepEqual(calls.at(-1),{type:'storyStart',enemyId:'goblin'});
+ const start=tree.root.findAllByType('Button').find(b=>b.props.title==='Enter battle · no fee');assert.equal(start.props.disabled,false);await act(async()=>start.props.onPress());assert(!calls.some(c=>c.type==='storyStart'));await act(async()=>button('Skip story & enter battle · no fee').props.onPress());assert.deepEqual(calls.at(-1),{type:'storyStart',enemyId:'goblin'});
 });
 test('combat sends server-version actions; Heavy cooldown disabled and ARISE selection preview/once gating',async()=>{
  await mount({type:'storyView',storyCapability:'story-v1',story:{...session,heavyCooldown:2},shadows:army,cleared:[]});assert.equal(skill('HEAVY').props.disabled,true);
@@ -83,4 +83,41 @@ test('cosmetic effects preferences survive screen remount without adding server 
  await act(async()=>tree.unmount());tree=null;await mount({type:'storyView',storyCapability:'story-v1',story:null,shadows:[],cleared:[]});
  const reopened=tree.root.findAllByType('Pressable').find(p=>[p.props.children].flat(Infinity).some(c=>c?.props?.children==='⚙ Combat effects'));await act(async()=>reopened.props.onPress());
  assert(button('Reduced effects: ON'));assert(button('Haptics: OFF'));prefs.clear();
+});
+
+test('authored story matches server dialogue slots for every enemy and preserves factual reaction priority',()=>{
+ const {authoredTalk}=load(path.join(__dirname,'../apps/mobile/src/story/narrative/model.ts'));
+ const script=req('./src/story/narrative/script.json'),source=require('../docs/react-native-blueprint/reference/catalog.json');
+ assert.equal(script.chapters.length,5);assert.equal(Object.keys(script.enemies).length,11);
+ for(const ch of source.STORY_CHAPTERS)for(const enemy of ch.enemies){for(const kind of ['intro','mid','victory','defeat']){
+  const original=source.BOSS_DIALOGUES[enemy.id]?.[kind]||Array.from({length:kind==='intro'||kind==='mid'?2:1},()=>({speaker:'player',text:'source'}));
+  assert.equal(script.enemies[enemy.id][kind].length,original.length,enemy.id+kind);
+  original.forEach((_,i)=>assert(authoredTalk({...session,enemyId:enemy.id,dialogueKind:kind,dialogue:original,dialogueIndex:i}).text.length>5));
+ }}
+ const mid={...session,enemyId:'igris',dialogueKind:'mid',dialogueIndex:0,ariseUsed:true,shadowIds:['goblin'],log:[]};assert(authoredTalk(mid).text.includes('সিদ্ধান্ত'));
+ assert(authoredTalk({...mid,ariseUsed:false,log:['Guard','Guard']}).text.includes('অপেক্ষা'));
+ assert(authoredTalk({...mid,ariseUsed:false,enemy:{...session.enemy,def:0}}).text.includes('বর্ম'));
+});
+test('Archive rejects malformed data, isolates bounded journal and never invents untracked battle counts',()=>{
+ const {readArchive,emptyArchive,remember,battleRecord}=load(path.join(__dirname,'../apps/mobile/src/story/narrative/model.ts'));
+ assert.throws(()=>readArchive('{broken'));assert.throws(()=>readArchive(JSON.stringify({version:99})));
+ let a=emptyArchive();for(let i=0;i<150;i++)a=remember(a,{id:String(i),title:'entry',text:'read',chapter:1,kind:'scene',at:i});assert.equal(a.entries.length,120);assert(a.seen.length<=80);
+ const r=battleRecord({...session,phase:'claimed',outcome:'win',turn:7,ariseUsed:true,shadowIds:['goblin'],reward:{xp:2,gold:0,gems:0}});assert(r.text.includes('7'));assert(r.text.includes('+2 XP'));assert(!r.text.includes('critical'));assert.equal(r.kind,'battle');
+});
+test('opening choice/replay/owned Echo require no AI or reward operation and persist scoped journal',async()=>{
+ prefs.clear();await mount({type:'storyView',storyCapability:'story-v1',story:null,shadows:army,cleared:[]});const baseline=calls.length;
+ await act(async()=>button('Chapter scene / replay').props.onPress());await act(async()=>button('Next scene line').props.onPress());
+ await act(async()=>button('Close scene · no new battle').props.onPress());assert.equal(calls.length,baseline);
+ await act(async()=>button('Open Monarch Archive').props.onPress());assert(button('Echo · Goblin Scout'));assert(!button('Echo · Beru'));
+ await act(async()=>button('Echo · Goblin Scout').props.onPress());assert(prefs.has('story.narrative.v1.alice'));const saved=JSON.parse(prefs.get('story.narrative.v1.alice'));assert(saved.entries.some(e=>e.id==='echo:goblin'));assert(!saved.entries.some(e=>e.id==='echo:beru'));assert.equal(calls.length,baseline);prefs.clear();
+});
+
+test('Monarch Command stores only a cosmetic response; scene cancel never starts/spends or grants',async()=>{
+ prefs.clear();await mount({type:'storyView',storyCapability:'story-v1',story:null,shadows:[],cleared:[]});const baseline=calls.length;
+ const start=tree.root.findAllByType('Button').find(b=>b.props.title==='Enter battle · no fee');await act(async()=>start.props.onPress());
+ for(let i=0;i<4;i++)await act(async()=>button('Next scene line').props.onPress());
+ const script=req('./src/story/narrative/script.json'),choice=script.chapters[0].choices[0];await act(async()=>button(choice.label).props.onPress());
+ assert.equal(calls.length,baseline);assert.equal(JSON.parse(prefs.get('story.narrative.v1.alice')).choices['1'],'listen');
+ assert(tree.root.findAllByType('Text').some(n=>n.props.children===choice.response));
+ await act(async()=>button('Close scene · no new battle').props.onPress());assert.equal(calls.length,baseline);assert(!calls.some(c=>c.type==='storyClaim'));prefs.clear();
 });

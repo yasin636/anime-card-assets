@@ -1,3 +1,5 @@
+import {NarrativeLayer} from './narrative/NarrativeLayer';
+import {authoredTalk} from './narrative/model';
 import React,{useEffect,useRef,useState} from 'react';
 import {AccessibilityInfo,Alert,Animated,AppState,Image,Modal,Pressable,ScrollView,StyleSheet,Text,View} from 'react-native';
 import {useIsFocused} from '@react-navigation/native';
@@ -30,6 +32,7 @@ export function AriseBurst({ids,onClose,chapter=5}:{ids:string[]|null;onClose:()
 }
 export function StoryScreen(){
  const focused=useIsFocused();
+ const [plannedEnemy,setPlannedEnemy]=useState<string|null>(null),[narrativeOpen,setNarrativeOpen]=useState(false),[skipDialogue,setSkipDialogue]=useState(false);
  const {profile,user}=useAuth(),e=useEconomy();
  const [reduced,setReduced]=useState(false),[haptic,setHaptic]=useState(true),[effects,setEffects]=useState(false),[diagnostics,setDiagnostics]=useState(false),[notice,setNotice]=useState<SystemNotice|null>(null),[fxBusy,setFxBusy]=useState(false),[prefsReady,setPrefsReady]=useState(false);
  const preferenceKey=`story.presentation.v1.${user?.uid||profile?.uid||''}`;
@@ -40,7 +43,7 @@ export function StoryScreen(){
  const loaded=useRef(false),last=useRef<unknown>(null),scheduled=useRef(''),seenEvent=useRef('');
  const hit=useAudioPlayer(require('../../assets/audio/duel-impact.wav')),slash=useAudioPlayer(require('../../assets/audio/story-slash.wav')),zing=useAudioPlayer(require('../../assets/audio/story-zing.wav')),pulse=useAudioPlayer(require('../../assets/audio/story-pulse.wav'));
  const shake=useRef(new Animated.Value(0)).current,coin=useRef(new Animated.Value(0)).current;
- const disabled=!e.configured||!e.ready||e.busy||!!e.pending||!!burst||!foreground||!focused||fxBusy||!!notice;
+ const disabled=!e.configured||!e.ready||e.busy||!!e.pending||!!burst||!foreground||!focused||fxBusy||!!notice||narrativeOpen;
  const play=(p:typeof hit)=>{if(sound&&focused&&foreground)void p.seekTo(0).then(()=>p.play()).catch(()=>{});};
  useEffect(()=>{const sub=AppState.addEventListener('change',state=>{setForeground(state==='active');if(state!=='active'){void Speech.stop();hit.pause();slash.pause();zing.pause();pulse.pause();}});return()=>{sub.remove();void Speech.stop();};},[hit,slash,zing,pulse]);
  useEffect(()=>{if(!focused){void Speech.stop();hit.pause();slash.pause();zing.pause();pulse.pause();}},[focused,hit,slash,zing,pulse]);
@@ -76,14 +79,15 @@ export function StoryScreen(){
   const delay=session.phase==='coin'?2500:Math.max(500,Math.min(1500,session.notBefore-Date.now()+150));
   const timer=setTimeout(()=>{scheduled.current=key;void e.run({type:'storyAdvance',sessionId:session.id,version:session.version});},delay);return()=>clearTimeout(timer);
  },[session?.id,session?.version,session?.phase,disabled]);
+ useEffect(()=>{if(!session||session.phase!=='dialogue'){setSkipDialogue(false);return;}if(skipDialogue&&!disabled&&!e.error)void e.run({type:'storyAdvance',sessionId:session.id,version:session.version});},[skipDialogue,session?.id,session?.version,session?.phase,disabled,e.error]);
  useEffect(()=>()=>{if(fxTimer.current)clearTimeout(fxTimer.current);shake.stopAnimation();coin.stopAnimation();},[shake,coin]);
  if(!profile)return <Text style={f.body}>Story loading…</Text>;
  const ch=chapters.find(c=>c.id===chapter)!,power=storyPower(profile),entry=levelInfo(profile.xp).level>=3&&profile.inventoryCards.length>=3;
  const command=(type:'storyAdvance'|'storyClaim'|'storyForfeit')=>{if(session)void e.run({type,sessionId:session.id,version:session.version});};
  const action=(kind:'strike'|'heavy'|'guard')=>{if(session)void e.run({type:'storyAction',sessionId:session.id,version:session.version,action:kind});};
- const confirm=(c:StoryCommand,message:string)=>Alert.alert('System confirmation',message,[{text:'Cancel',style:'cancel'},{text:'Confirm',onPress:()=>void e.run(c)}]);
+ const confirm=(c:StoryCommand,message:string)=>{if(c.type==='storyStart'){setPlannedEnemy(c.enemyId);return;}Alert.alert('System confirmation',message,[{text:'Cancel',style:'cancel'},{text:'Confirm',onPress:()=>void e.run(c)}]);};
  const total={hp:0,atk:0,def:0};army.filter(s=>chosen.includes(s.id)).forEach(s=>{total.hp+=Math.round(s.hp*.5);total.atk+=Math.round(s.atk*.5);total.def+=Math.round(s.def*.5);});
- const active=!terminal(session),talk=session?.dialogue[session.dialogueIndex];
+ const active=!terminal(session),talk=session?authoredTalk(session):undefined;
  return <>
  <LinearGradient colors={['#092f49','#071d32','#050f1e']} style={st.hero}><View style={st.between}><Text style={f.eyebrow}>SOLO LEVELING / STORY SYSTEM</Text><Pressable accessibilityRole="button" onPress={()=>{setSound(!sound);void Speech.stop();}}><Ionicons name={sound?'volume-high':'volume-mute'} color="#c5a5ff" size={22}/></Pressable></View><Text style={st.heading}>From the weakest.{ '\n'}To the Monarch.</Text><Text style={f.body}>Five chapters. Eleven enemies. One shadow army.</Text><View style={st.between}><Pressable onPress={()=>setRules(!rules)}><Text style={f.link}>System rules</Text></Pressable><Pressable onPress={()=>setShowArmy(!showArmy)}><Text style={f.link}>Shadow Army · {army.length}</Text></Pressable></View></LinearGradient>
  <Pressable accessibilityRole="button" onPress={()=>setDiagnostics(!diagnostics)}><Text style={f.link}>{e.configured?'◈ SYSTEM CONNECTED':'◈ CONNECTION STATUS'} · {diagnostics?'Hide':'Details'}</Text></Pressable>
@@ -91,6 +95,7 @@ export function StoryScreen(){
  <Pressable accessibilityRole="button" onPress={()=>setEffects(!effects)}><Text style={f.link}>⚙ Combat effects</Text></Pressable>
  {effects&&<SystemFrame><Text style={f.section}>Presentation only</Text><ActionButton secondary title={`Reduced effects: ${reduced?'ON':'OFF'}`} onPress={()=>setReduced(!reduced)}/><ActionButton secondary title={`Haptics: ${haptic?'ON':'OFF'}`} onPress={()=>setHaptic(!haptic)}/><ActionButton secondary title={`Sound: ${sound?'ON':'OFF'}`} onPress={()=>{setSound(!sound);void Speech.stop();}}/><Text style={f.body}>এই settings battle power, RNG বা rewards বদলায় না।</Text></SystemFrame>}
  {!supported&&<Text style={f.error}>Story backend update প্রয়োজন। Render-এ latest commit deploy করে Refresh / resume চাপো। আলাদা AI key লাগবে না—Story game engine দিয়ে চলে।</Text>}
+ <NarrativeLayer session={session} army={army} chapter={chapter} cleared={cleared} plannedEnemy={plannedEnemy} onCancel={()=>setPlannedEnemy(null)} onBegin={id=>{setPlannedEnemy(null);void e.run({type:'storyStart',enemyId:id});}} blocked={!e.configured||!e.ready||e.busy||!!e.pending||!!notice||!!burst} onOverlay={setNarrativeOpen}/>
  <ActionButton secondary title="Refresh / resume Story" disabled={disabled} onPress={()=>{scheduled.current='';void e.run({type:'storyView'});}}/>
  {rules&&<View style={f.panel}><Text style={f.section}>The system's rules</Text><Text style={f.body}>Level 3 + 3 owned cards। কোনো entry fee নেই; সব chapter খোলা। সব inventory copy-এর raw stats → permanent % → flat bonus। XP দিয়ে battle power গুণ হয় না।{ '\n\n'}Strike 1×; Heavy 1.5×, 3 non-heavy attack cooldown—Guard cooldown কমায় না। Guard পরের enemy ATK অর্ধেক করে। Miss 5%, critical 10% (2×)। Shield থাকলে HP 2%, DEF 1%; shield শেষ হলে HP 5%, overflow নেই। Boss mid dialogue 50%, enrage 20% HP-তে ATK +50%।{ '\n\n'}প্রথম clear-এ পূর্ণ reward; repeat-এ শুধু reduced XP। Reward claim আলাদা—network failure হলে একই request Retry করো। Chapter 2 থেকে ARISE, প্রতি battle-এ একবার; প্রতি নির্বাচিত Shadow-এর original stats-এর 50% যোগ হয়। New battle-এ reset। Legacy browser clears/shadows auto-import করা হয় না।</Text></View>}
  {showArmy&&<View style={f.panel}><Text style={f.section}>Your immortal soldiers</Text><Text style={f.body}>শুধু server-confirmed জয় থেকে পাওয়া Shadow; original stats দেখানো হচ্ছে।</Text><View style={st.grid}>{army.map(sh=><ShadowTile key={sh.id} shadow={sh}/>)}</View>{!army.length&&<Text style={f.body}>শত্রুকে হারাও—তার Shadow তোমার সেনায় যোগ হবে।</Text>}</View>}
@@ -106,7 +111,8 @@ export function StoryScreen(){
  {session.enraged&&<Text style={f.error}>BOSS ENRAGED · ATK +50%</Text>}
  {session.ariseUsed&&<Text style={f.success}>ARISE ACTIVE · HP +{fmt(session.ariseBonus.hp)} · ATK +{fmt(session.ariseBonus.atk)} · DEF +{fmt(session.ariseBonus.def)}</Text>}
  {session.phase==='coin'&&<View style={st.coinPanel}><Animated.Text style={[st.coin,{transform:[{rotateY:coin.interpolate({inputRange:[0,1],outputRange:['0deg','360deg']})}]}]}>✦</Animated.Text><Text style={f.section}>{session.first==='player'?'PLAYER INITIATIVE':'ENEMY INITIATIVE'}</Text><Text style={f.body}>The system has chosen the first attacker.</Text></View>}
- {session.phase==='dialogue'&&talk&&<Pressable accessibilityRole="button" accessibilityLabel="Next story dialogue" disabled={disabled} onPress={()=>command('storyAdvance')} style={st.dialogue}><Image source={storyArtwork[talk.speaker==='enemy'?session.enemyId:`jinwoo${session.chapterId}`]} resizeMode="contain" style={{height:130,width:'100%'}}/><Text style={f.eyebrow}>{talk.speaker==='enemy'?session.enemy.name:session.playerName}</Text><Text style={st.dialogueText}>{talk.text}</Text><Text style={st.caption}>TAP TO CONTINUE · {session.dialogueIndex+1} / {session.dialogue.length}</Text></Pressable>}
+ {session.phase==='dialogue'&&talk&&<Pressable accessibilityRole="button" accessibilityLabel="Next story dialogue" disabled={disabled} onPress={()=>command('storyAdvance')} style={st.dialogue}><Image source={storyArtwork[talk.speaker==='enemy'?session.enemyId:`jinwoo${session.chapterId}`]} resizeMode="contain" style={{height:130,width:'100%'}}/><Text style={f.eyebrow}>{talk.speaker==='enemy'?session.enemy.name:talk.speaker==='narrator'?'বর্ণনা':session.playerName}</Text><Text style={st.dialogueText}>{talk.text}</Text><Text style={st.caption}>TAP TO CONTINUE · {session.dialogueIndex+1} / {session.dialogue.length}</Text></Pressable>}
+ {session.phase==='dialogue'&&<ActionButton secondary title="Skip remaining dialogue" disabled={disabled} onPress={()=>setSkipDialogue(true)}/>}
  {!!session.events.length&&<View style={st.eventPanel}>{session.events.map((ev,i)=><Text key={i} style={ev.enrage?f.error:f.success}>{ev.arise?'⚫ ARISE · Shadow power confirmed':ev.enrage?'BOSS ENRAGED':`${ev.who==='player'?'তোমার আক্রমণ':'শত্রুর আক্রমণ'} · ${ev.miss?'MISS':`${ev.crit?'CRITICAL! ':''}−${fmt(ev.damage||0)} HP / −${fmt(ev.shieldDamage||0)} DEF`}${ev.shieldBreak?' · SHIELD BREAK':''}`}</Text>)}</View>}
  {session.phase==='fight'&&<CombatDock cooldown={session.heavyCooldown} disabled={disabled} ariseUsed={session.ariseUsed} ariseLocked={session.chapterId<2} onAction={action} onArise={()=>{setChosen([]);setArise(true);}}/>}
  {session.phase==='enemy'&&<Text style={f.body}>শত্রুর আক্রমণ প্রস্তুত হচ্ছে… action locked.</Text>}
