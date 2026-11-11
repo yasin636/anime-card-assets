@@ -1,0 +1,204 @@
+{
+  "chapters": [
+    {
+      "id": 1,
+      "title": "Chapter 1: The Dungeon Awakens",
+      "mapLabel": "Kasaka's Lair",
+      "requirement": {
+        "level": 3,
+        "cards": 3
+      },
+      "enemies": [
+        {
+          "id": "goblin",
+          "name": "Goblin Scout",
+          "hp": 170,
+          "atk": 350,
+          "def": 310,
+          "image": "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/IMG_20260325_165012.jpg"
+        },
+        {
+          "id": "wolf",
+          "name": "Iron Fang Wolf",
+          "hp": 290,
+          "atk": 550,
+          "def": 450,
+          "image": "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/IMG_20260325_165130.jpg"
+        },
+        {
+          "id": "kasaka",
+          "name": "Kasaka the Venomous",
+          "hp": 8000,
+          "atk": 15000,
+          "def": 4080,
+          "image": "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/IMG_20260325_165212.jpg",
+          "isBoss": true
+        }
+      ],
+      "reward": {
+        "xp": 100,
+        "gold": 300,
+        "gems": 10,
+        "title": "Dungeon Conqueror",
+        "permAtk": 5,
+        "permHp": 5,
+        "permDef": 3
+      }
+    },
+    {
+      "id": 2,
+      "title": "Chapter 2: The Knight Baran",
+      "mapLabel": "Demon Castle Gates",
+      "requirement": {
+        "level": 3,
+        "cards": 3
+      },
+      "enemies": [
+        {
+          "id": "archer",
+          "name": "Archer",
+          "hp": 15000,
+          "atk": 3200,
+          "def": 800,
+          "image": "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/IMG_20260326_202749.jpg"
+        },
+        {
+          "id": "baran",
+          "name": "Baran",
+          "hp": 120000,
+          "atk": 18000,
+          "def": 5000,
+          "image": "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/IMG_20260326_202550.jpg",
+          "isBoss": true
+        }
+      ],
+      "reward": {
+        "xp": 20000,
+        "gold": 10000,
+        "gems": 25,
+        "title": "Demon Slayer",
+        "permAtk": 8,
+        "permHp": 8,
+        "permDef": 5
+      }
+    },
+    {
+      "id": 3,
+      "title": "Chapter 3: The Red Gate — Igris",
+      "mapLabel": "Red Gate Dungeon",
+      "requirement": {
+        "level": 3,
+        "cards": 3
+      },
+      "enemies": [
+        {
+          "id": "demon_soldier",
+          "name": "Demon Soldier",
+          "hp": 500000,
+          "atk": 45000,
+          "def": 12000,
+          "image": "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/IMG_20260326_202705.jpg"
+        },
+        {
+          "id": "igris",
+          "name": "Igris",
+          "hp": 2500000,
+          "atk": 120000,
+          "def": 40000,
+          "image": "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/IMG_20260326_205510.jpg",
+          "isBoss": true
+        }
+      ],
+      "reward": {
+        "xp": 200000,
+        "gold": 100000,
+        "gems": 50,
+        "title": "Red Gate Conqueror",
+        "permAtk": 12,
+        "permHp": 12,
+        "permDef": 8
+      }
+    },
+    {
+      "id": 4,
+      "title": "Chapter 4: The High Orc King Tusk",
+      "mapLabel": "Orc Territory",
+      "requirement": {
+        "level": 3,
+        "cards": 3
+      },
+      "enemies": [
+        {
+          "id": "high_orc",
+          "name": "High Orc Scout",
+          "hp": 8500000,
+          "atk": 350000,
+          "def": 150000,
+          "image": "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/IMG_20260326_202818.jpg"
+        },
+        {
+          "id": "tusk",
+          "name": "Tusk",
+          "hp": 35000000,
+          "atk": 900000,
+          "def": 450000,
+          "image": "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/IMG_20260326_211233.jpg",
+          "isBoss": true
+        }
+      ],
+      "reward": {
+        "xp": 1000000,
+        "gold": 500000,
+        "gems": 100,
+        "title": "Orc Slayer",
+        "permAtk": 18,
+        "permHp": 18,
+        "permDef": 12
+      }
+    },
+    {
+      "id": 5,
+      "title": "Chapter 5: The Ant King Beru",
+      "mapLabel": "Jeju Island S-Rank Gate",
+      "requirement": {
+        "level": 3,
+        "cards": 3
+      },
+      "enemies": [
+        {
+          "id": "ice_elf_baruka",
+          "name": "Ice Elf Baruka",
+          "hp": 120000000,
+          "atk": 2500000,
+          "def": 1000000,
+          "image": "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/IMG_20260325_202505.jpg"
+        },
+        {
+          "id": "beru",
+          "name": "Beru",
+          "hp": 600000000,
+          "atk": 8000000,
+          "def": 30000000,
+          "image": "https://raw.githubusercontent.com/yasin636/anime-card-assets/refs/heads/main/IMG_20260326_205131.jpg",
+          "isBoss": true
+        }
+      ],
+      "reward": {
+        "xp": 10000000,
+        "gold": 5000000,
+        "gems": 500,
+        "title": "Shadow Monarch",
+        "permAtk": 25,
+        "permHp": 25,
+        "permDef": 20
+      }
+    }
+  ],
+  "ranks": {
+    "1": "E-Rank",
+    "2": "D/C-Rank",
+    "3": "B-Rank",
+    "4": "A-Rank",
+    "5": "S-Rank ★ Shadow Monarch"
+  }
+}

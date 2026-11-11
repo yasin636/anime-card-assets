@@ -36,7 +36,7 @@ test('existing balances and unknown legacy fields survive allowed profile edits'
 });
 test('every protected economy field rejects owner tampering',async()=>{
  const uid='protected';await seed(uid);const ref=doc(db(uid),'user_meta',uid);
- for(const [field,value]of Object.entries({gold:99999,gems:999,xp:99999,level:100,inventoryCards:[{}],equippedSlots:{a:'fake'},inventory:{themes:['naruto']},equippedTheme:'naruto',pityRare:100,pityLegendary:100,flatBonusAtk:900,flatBonusHp:900,flatBonusDef:900,permBonusAtk:900,freeSpins:9,uid:'another',email:'another@example.com',legacyUnknown:'changed'})){
+ for(const [field,value]of Object.entries({gold:99999,gems:999,xp:99999,level:100,inventoryCards:[{}],equippedSlots:{a:'fake'},inventory:{themes:['naruto']},equippedTheme:'naruto',pityRare:100,pityLegendary:100,flatBonusAtk:900,flatBonusHp:900,flatBonusDef:900,permBonusAtk:900,permBonusHp:900,permBonusDef:900,dungeonConqueror:true,activeStoryId:'fake',freeSpins:9,uid:'another',email:'another@example.com',legacyUnknown:'changed'})){
  await assertFails(updateDoc(ref,{[field]:value,updated_at:serverTimestamp()}));
  }
  await assertFails(setDoc(ref,profile(uid)));
@@ -47,7 +47,7 @@ test('anonymous and cross-account access, queries, receipts and arbitrary collec
  const ref=doc(db(actor),'user_meta',uid);await assertFails(getDoc(ref));await assertFails(updateDoc(ref,{gold:999}));await assertFails(deleteDoc(ref));
  }
  await assertFails(getDocs(collection(db(uid),'user_meta')));
- for(const path of ['user_meta/private/economy_receipts/operation_123456789012345','unreviewed/data']){
+ for(const path of ['user_meta/private/economy_receipts/operation_123456789012345','user_meta/private/story_sessions/session','user_meta/private/shadows/beru','user_meta/private/story_clears/beru','unreviewed/data']){
  const ref=doc(db(uid),path);await assertFails(getDoc(ref));await assertFails(setDoc(ref,{result:{gold:999}}));
  }
 });

@@ -83,3 +83,53 @@ test('HTTP per-request provider is authenticated, transient, never persisted, re
  const docs=[(await state(uid)),...(await ref(uid).collection('arena_sessions').get()).docs.map(d=>d.data()),...(await ref(uid).collection('economy_receipts').get()).docs.map(d=>d.data())];assert(!JSON.stringify(docs).includes(key));assert(!JSON.stringify(docs).includes('x-amh-ai'));
  }finally{global.fetch=original;await new Promise(resolve=>server.close(resolve));}
 });
+
+test('Story API entry/start/resume ownership/no fee, authoritative phases and strict payload',async()=>{
+ const uid='story-entry';await seed(uid,{xp:99});
+ await assert.rejects(run(uid,'story_entry_denied_123456789',{type:'storyStart',enemyId:'beru'}),e=>e.code==='story-entry-requirement');
+ await ref(uid).update({xp:100});const before=await state(uid),id='story_start_same_123456789012';
+ const [a,b]=await Promise.all([run(uid,id,{type:'storyStart',enemyId:'beru'}),run(uid,id,{type:'storyStart',enemyId:'beru'})]);assert.deepEqual(a,b);assert.equal((await state(uid)).gold,before.gold);assert.deepEqual((await state(uid)).inventoryCards,before.inventoryCards);
+ const s=a.story;assert.equal(s.chapterId,5);assert.equal(s.phase,'coin');
+ const view=await run(uid,'story_resume_view_1234567890',{type:'storyView'});assert.equal(view.story.id,s.id);assert.equal(view.storyCapability,'story-v1');assert.equal(view.storyEligible,true);
+ await assert.rejects(run(uid,'story_extra_start_1234567890',{type:'storyStart',enemyId:'goblin'}),e=>e.code==='story-already-active');
+ await assert.rejects(run(uid,'story_early_attack_1234567890',{type:'storyAction',sessionId:s.id,version:s.version,action:'strike'}),e=>e.code==='story-invalid-phase');
+ await seed('story-other');await assert.rejects(run('story-other','story_cross_owner_1234567890',{type:'storyForfeit',sessionId:s.id,version:0}),e=>e.code==='story-not-active');
+ await assert.rejects(run(uid,'story_forge_reward_1234567890',{type:'storyClaim',sessionId:s.id,version:0,gold:900000}),e=>e.code==='invalid-command');
+ const out=await run(uid,'story_forfeit_saved_1234567890',{type:'storyForfeit',sessionId:s.id,version:0});assert.equal(out.story.phase,'forfeited');assert.equal((await state(uid)).activeStoryId,'');assert.equal((await state(uid)).xp,100);
+});
+test('Story ARISE concurrent once/fight, stale rejection, original stats, receipt replay and reset',async()=>{
+ const uid='story-arise';await seed(uid);const shadow={id:'goblin',name:'Goblin Scout',hp:170,atk:350,def:310};await ref(uid).collection('shadows').doc('goblin').set(shadow);
+ let s=(await run(uid,'story_arise_start_12345678901',{type:'storyStart',enemyId:'baran'})).story;
+ // Fixture skips cosmetic phase; pure tests cover coin/dialogue timing independently.
+ await ref(uid).collection('story_sessions').doc(s.id).update({phase:'fight'});s.phase='fight';
+ const command={type:'storyArise',sessionId:s.id,version:s.version,shadowIds:['goblin']},op='story_arise_same_12345678901';
+ const both=await Promise.all([run(uid,op,command),run(uid,op,command)]);assert.deepEqual(both[0],both[1]);let after=both[0].story;
+ assert.equal(after.player.atk,s.player.atk+175);assert.equal(after.player.hp,s.player.hp+85);assert.equal(after.turn,s.turn);
+ await assert.rejects(run(uid,'story_arise_stale_1234567890',command),e=>e.code==='story-version-changed');
+ await assert.rejects(run(uid,'story_arise_again_1234567890',{...command,version:after.version}),e=>e.code==='arise-already-used');
+ await run(uid,'story_arise_exit_12345678901',{type:'storyForfeit',sessionId:s.id,version:after.version});
+ s=(await run(uid,'story_arise_restart_1234567890',{type:'storyStart',enemyId:'baran'})).story;assert.equal(s.ariseUsed,false);assert.deepEqual(s.shadowIds,[]);assert.deepEqual(s.ariseBonus,{hp:0,atk:0,def:0});
+});
+test('Story victory captures unique shadow before atomic claim; concurrent claim once, first/repeat rewards preserved',async()=>{
+ const uid='story-reward';await seed(uid,{flatBonusAtk:1000000000,legacyUnknown:'keep'});let counter=0;
+ async function win(){let s=(await run(uid,`story_win_start_${++counter}_1234567890`,{type:'storyStart',enemyId:'kasaka'})).story;await ref(uid).collection('story_sessions').doc(s.id).update({phase:'fight',first:'player'});s.phase='fight';
+  for(let i=0;i<30&&!s.outcome;i++){
+   s=(await run(uid,`story_win_hit_${++counter}_1234567890`,{type:'storyAction',sessionId:s.id,version:s.version,action:'strike'})).story;
+   if(s.phase==='enemy'){await ref(uid).collection('story_sessions').doc(s.id).update({notBefore:0});s=(await run(uid,`story_win_enemy_${++counter}_1234567890`,{type:'storyAdvance',sessionId:s.id,version:s.version})).story;}
+  }
+  assert.equal(s.outcome,'win');assert.equal(s.phase,'dialogue');assert.equal((await ref(uid).collection('shadows').doc('kasaka').get()).exists,true);
+  await assert.rejects(run(uid,`story_claim_early_${++counter}_1234567890`,{type:'storyClaim',sessionId:s.id,version:s.version}),e=>e.code==='story-not-victory');
+  while(s.phase==='dialogue')s=(await run(uid,`story_dialogue_${++counter}_1234567890`,{type:'storyAdvance',sessionId:s.id,version:s.version})).story;
+  assert.equal(s.phase,'victory');return s;
+ }
+ const before=await state(uid);let s=await win();assert.equal((await state(uid)).xp,before.xp);assert.equal((await ref(uid).collection('story_clears').doc('kasaka').get()).exists,false);
+ const failureId='story_reward_failure_1234567890';
+ const failingDb={collection:db.collection.bind(db),runTransaction:fn=>db.runTransaction(async tx=>{await fn(tx);throw Error('injected-before-commit');})};
+ await assert.rejects(execute({db:failingDb,verifiedUid:uid,operationId:failureId,command:{type:'storyClaim',sessionId:s.id,version:s.version}}),/injected-before-commit/);
+ assert.equal((await ref(uid).collection('story_clears').doc('kasaka').get()).exists,false);assert.equal((await state(uid)).xp,before.xp);assert.equal((await ref(uid).collection('economy_receipts').doc(failureId).get()).exists,false);
+ const command={type:'storyClaim',sessionId:s.id,version:s.version},op='story_reward_same_1234567890';const both=await Promise.all([run(uid,op,command),run(uid,op,command)]);assert.deepEqual(both[0],both[1]);assert.equal(both[0].firstClear,true);
+ let p=await state(uid);assert.equal(p.xp,before.xp+100);assert.equal(p.gold,before.gold+300);assert.equal(p.gems,before.gems+10);assert.equal(p.permBonusAtk,5);assert.equal(p.permBonusHp,5);assert.equal(p.permBonusDef,3);assert.equal(p.dungeonConqueror,true);assert.equal(p.legacyUnknown,'keep');assert.deepEqual(p.inventoryCards,before.inventoryCards);
+ await assert.rejects(run(uid,'story_reward_extra_1234567890',command),e=>e.code==='story-not-active');
+ s=await win();const claims=await Promise.allSettled([run(uid,'story_reward_repeat_a_123456789',{type:'storyClaim',sessionId:s.id,version:s.version}),run(uid,'story_reward_repeat_b_123456789',{type:'storyClaim',sessionId:s.id,version:s.version})]);assert.equal(claims.filter(r=>r.status==='fulfilled').length,1);assert.equal(claims.find(r=>r.status==='fulfilled').value.firstClear,false);
+ p=await state(uid);assert.equal(p.xp,before.xp+130);assert.equal(p.gold,before.gold+300);assert.equal(p.gems,before.gems+10);assert.equal(p.permBonusAtk,5);assert.equal((await ref(uid).collection('shadows').get()).size,1);assert.equal(p.activeStoryId,'');
+});

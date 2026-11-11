@@ -80,3 +80,13 @@ test('Quiz retries use ephemeral broker credentials while persisted operation co
  await act(async()=>view.run({type:'quizStart',title:'Naruto'}));assert(view.pending);assert(!JSON.stringify(view.pending).includes(transientKey));
  transientKey='replacement-test-key';await act(async()=>view.run());assert.equal(view.pending,null);assert.equal(view.result.type,'quizStart');
 });
+
+test('Story ARISE/claim uses no AI credential and retries exact persisted session/version after relaunch',async()=>{
+ for(const command of [{type:'storyArise',sessionId:'story-test-session',version:4,shadowIds:['goblin']},{type:'storyClaim',sessionId:'story-test-session',version:8}]){
+  send=async()=>ok({profileReadable:true,mutationsAllowed:true});await mount('alice');let operation;
+  send=async(url,opts)=>{if(url.endsWith('/status'))return ok({profileReadable:true,mutationsAllowed:true});operation=JSON.parse(opts.body);assert.deepEqual(operation.command,command);assert(!Object.keys(opts.headers).some(k=>k.startsWith('x-amh-ai')));assert.equal(store.get('economy.pending.v1.alice'),opts.body);return ok({error:'service-unavailable'},503);};
+  await act(async()=>view.run(command));assert(view.pending);await unmount();await mount('alice');
+  send=async(url,opts)=>{assert.deepEqual(JSON.parse(opts.body),operation);return ok({result:{type:command.type,story:{id:command.sessionId,version:command.version+1}}});};
+  await act(async()=>view.run());assert.equal(view.pending,null);assert.equal(view.result.story.version,command.version+1);await unmount();
+ }
+});

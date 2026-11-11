@@ -67,7 +67,7 @@ jobs:
           node ../../tools/validate-mobile-foundation.cjs
           node ../../tools/test-mobile-profile.cjs
           node --test ../../tools/test-gemini.cjs ../../tools/test-economy-autoconnect.cjs ../../tools/test-arena-presentation.cjs
-          NODE_ENV=test node --test ../../tools/test-economy-provider.cjs ../../tools/test-arena-visuals.cjs ../../tools/test-ai-quiz-broker.cjs
+          NODE_ENV=test node --test ../../tools/test-economy-provider.cjs ../../tools/test-arena-visuals.cjs ../../tools/test-ai-quiz-broker.cjs ../../tools/test-story-mobile.cjs
           node --test ../../services/economy/*.test.cjs
       - name: Generate Android project
         run: npx expo prebuild --platform android --no-install
@@ -131,22 +131,22 @@ jobs:
           sed -n '1,40p' apk-metadata.txt
           unzip -l "$APK" | grep 'assets/index.android.bundle'
           mkdir -p apk-output
-          cp "$APK" apk-output/AnimeMetaHub-v0.5.3-arena-redesign-test.apk
+          cp "$APK" apk-output/AnimeMetaHub-v0.6.0-story-test.apk
           cd apk-output
           sha256sum *.apk > SHA256SUMS.txt
-          printf '%s\n' 'Step04 v0.5.3 standalone owner test: trusted XP wheel, persistent card battle, leaderboard/weekly claim, shared saved-provider quiz (transient HTTPS key/model; no second server key). Step03 retained; accepted Settings/Sensei exact seven models retained. Auto-check does not spend. Live economy remains restricted by server UID allowlist; no global rollout authorized. Emulator security/concurrency and provider retry/account tests run before packaging. No service-account JSON or shared AI key in APK. Gallery deferred. Update private v0.3.x without uninstall. Deploy latest backend before Quiz. See STEP04-COMPLETION.md in repository for tested versus unverified scope.' > README.txt
+          printf '%s\n' 'Step05 v0.6.0 standalone owner test: five chapters/11 enemies, Bengali dialogues, trusted Story combat/rewards/first clears, Shadow Army and once-per-battle ARISE. Same saved provider for Sensei and Bengali Quiz. Deploy latest Render backend before Story/new Bengali Quiz. Existing owner UID gate and ECONOMY_ENABLED=false remain. No new Firebase config/Rules/key/billing. Update in place, do not uninstall. ARISE voice uses optional device English TTS, not external original audio; motion/SFX native equivalents, physical-device QA pending. See STEP05-RELEASE.md for acceptance and deferred work.' > README.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: AnimeMetaHub-v0.5.3-arena-redesign-test
+          name: AnimeMetaHub-v0.6.0-story-test
           path: apps/mobile/apk-output/
           retention-days: 14
           if-no-files-found: error
       - name: Build summary
         run: |
           {
-            echo '## Step04 Arena test APK v0.5.3'
+            echo '## Step05 Story test APK v0.6.0'
             echo 'Standalone Android APK, ARM64 + ARMv7. Android 7.0+ (API 24+) expected; see APK metadata for the actual minimum.'
-            echo 'Auth/profile/owned inventory are live. Collection/Shop commands require configured trusted backend; absent URL disables actions. Gemini BYOK in Settings/AI Provider; Sensei in Chat, key only in device SecureStore. Gallery deferred. Not a completed production economy deployment.'
+            echo 'Auth/profile/owned inventory are live. Collection/Shop commands require configured trusted backend; absent URL disables actions. Gemini BYOK in Settings/AI Provider; Sensei in Chat, key stored in device SecureStore; Quiz uses authorized transient HTTPS headers to trusted backend. Gallery deferred. Not a completed production economy deployment.'
             echo 'Signed with the verified PRIVATE internal-test certificate. Private v0.2.0 can update in place. Uninstall public-key sample v0.1.0 only.'
             echo 'Download the artifact ZIP and extract the APK to install on Android.'
             cat apk-output/SHA256SUMS.txt
