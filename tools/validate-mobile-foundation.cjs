@@ -8,6 +8,15 @@ const root = path.join(__dirname, '..');
 const mobile = path.join(root, 'apps/mobile');
 const app = JSON.parse(fs.readFileSync(path.join(mobile, 'app.json'))).expo;
 const pkg = JSON.parse(fs.readFileSync(path.join(mobile, 'package.json')));
+const lock = JSON.parse(fs.readFileSync(path.join(mobile, 'package-lock.json')));
+assert.equal(lock.version, pkg.version); assert.equal(lock.packages[''].version, pkg.version);
+for (const [name, entry] of Object.entries(lock.packages)) {
+  if (!entry.resolved?.startsWith('https://registry.npmjs.org/') || !entry.resolved.endsWith('.tgz')) continue;
+  const u = new URL(entry.resolved), base = decodeURIComponent(u.pathname.split('/-/')[0]).split('/').pop();
+  const filename = decodeURIComponent(u.pathname.split('/').pop());
+  assert.equal(entry.version, filename.slice(base.length + 1, -4), `Dependency metadata version mismatch: ${name}`);
+}
+
 const code = fs.readFileSync(path.join(mobile, 'App.tsx'), 'utf8');
 const source = ts.createSourceFile('App.tsx', code, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
 let pages;
