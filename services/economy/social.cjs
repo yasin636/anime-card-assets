@@ -18,7 +18,7 @@ function safeLink(s){try{const u=new URL(s);return ['https:','http:'].includes(u
 const num=(p,k)=>{const n=p[k]??0;if(!Number.isSafeInteger(n)||n<0)fail('invalid-profile-number');return n;};
 function level(xp){let l=1;while(l<100){const cost=l<=10?50:l<=20?80:l<=60?300:l<=80?650:l<=90?850:1000;if(xp<cost)break;xp-=cost;l++;}return l;}
 const goals={postsCreated:2,socialActions:10};
-function missions(p,date){const m=p.missionData;return m?.date===date?structuredClone(m):{date,progress:{newsRead:0,postsCreated:0,socialActions:0,animeAdded:0,communityActions:0},claimed:{m_news:false,m_posts:false,m_social:false,m_tracker:false,m_community:false}};}
+function missions(p,date){const base={date,progress:{newsRead:0,postsCreated:0,socialActions:0,animeAdded:0,communityActions:0},claimed:{m_news:false,m_posts:false,m_social:false,m_tracker:false,m_community:false}},m=p.missionData;return m?.date===date?{...structuredClone(m),progress:{...base.progress,...m.progress},claimed:{...base.claimed,...m.claimed}}:base;}
 function progress(m,key){m.progress={...m.progress,[key]:Math.min(goals[key],Math.max(0,Number(m.progress?.[key])||0)+1)};}
 function visible(p,now){return p.isAdmin===true||now-Number(p.created_at_ms||0)<7*86400000;}
 function identity(p,uid){return {uid,username:String(p.username||'Hunter').slice(0,100),avatar:String(p.avatar||'').slice(0,4096)};}

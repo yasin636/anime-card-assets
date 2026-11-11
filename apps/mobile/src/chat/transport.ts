@@ -1,0 +1,9 @@
+import type {ChatCommand,ChatResult} from './types';
+export class ChatError extends Error{constructor(public code:string,public status:number){super(chatError(code));}}
+export function chatError(code:string){const messages:Record<string,string>={'not-found':'Chat backend update প্রয়োজন—Render-এ latest commit deploy করো।','invalid-command':'Chat backend update প্রয়োজন—Render-এ latest commit deploy করো।','owner-test-only':'এই account trusted chat test-এর জন্য অনুমোদিত নয়।','unauthenticated':'Session যাচাই হয়নি। আবার login/connection Retry করো।','chat-text-invalid':'Message ১–২০০০ অক্ষরের হতে হবে।','chat-self':'নিজেকে DM পাঠানো যাবে না।','chat-user-unavailable':'এই user এখন পাওয়া যাচ্ছে না।','chat-not-participant':'এই conversation পড়া/বদলানোর অনুমতি নেই।','chat-not-owner':'শুধু নিজের message মুছতে পারবে।','chat-message-unavailable':'Message আগেই মুছে গেছে—Refresh করো।','chat-message-full':'Message reactions-এর আকার সীমায় পৌঁছেছে।','chat-mission-claimed':'আজ Community mission আগেই claim করেছ।','chat-mission-incomplete':'৩টি Global message/Quiz completion এখনো হয়নি।','rate-limited':'Request বেশি হচ্ছে—একটু পরে একই কাজ Retry করো।'};return messages[code]||'সংযোগে ফল নিশ্চিত হয়নি। Pending থাকলে একই request Retry করো।';}
+export async function chatRequest(endpoint:string,token:string,operation:{operationId:string;command:ChatCommand},signal:AbortSignal,fetcher:typeof fetch=fetch):Promise<ChatResult>{
+ const response=await fetcher(`${endpoint}/v1/chat`,{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify(operation),signal});const data=await response.json();
+ if(!response.ok)throw new ChatError(typeof data.error==='string'?data.error:'service-unavailable',response.status);
+ if(!data.result||data.result.type!==operation.command.type||data.result.chatCapability!=='chat-v1')throw Error('Chat result যাচাই হয়নি। একই request Retry করো।');
+ return data.result;
+}

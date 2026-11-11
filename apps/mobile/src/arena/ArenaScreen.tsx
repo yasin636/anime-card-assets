@@ -23,7 +23,7 @@ function WheelFace(){
  const point=(angle:number,r:number)=>[130+r*Math.cos((angle-90)*Math.PI/180),130+r*Math.sin((angle-90)*Math.PI/180)];
  return <Svg width={260} height={260} viewBox="0 0 260 260">{labels.map((label,i)=>{const start=point(i*45,122),end=point((i+1)*45,122),mid=point(i*45+22.5,83);return <React.Fragment key={label}><Path d={`M130 130 L${start[0]} ${start[1]} A122 122 0 0 1 ${end[0]} ${end[1]} Z`} fill={['#282340','#15363b','#342443','#4b3a22','#342131','#21374b','#342650','#254039'][i]} stroke="#ffffff12" strokeWidth={1}/><SvgText x={mid[0]} y={mid[1]} fill={i===3?palette.gold:'#e7e5f4'} textAnchor="middle" fontSize={9} fontWeight="800" transform={`rotate(${i*45+22.5},${mid[0]},${mid[1]})`}>{label}</SvgText></React.Fragment>;})}<Circle cx={130} cy={130} r={123} stroke="#a58be5" strokeWidth={3} fill="none"/><Circle cx={130} cy={130} r={37} fill="#111426" stroke="#9c82d5" strokeWidth={2}/><SvgText x={130} y={138} fontSize={26} textAnchor="middle" fill={palette.gold}>✦</SvgText></Svg>;
 }
-export function ArenaScreen(){
+export function ArenaScreen({onMessage}:{onMessage?:(uid:string)=>void}={}){
  const focused=useIsFocused();const [systemNotice,setSystemNotice]=useState<SystemNotice|null>(null);
  const impact=useAudioPlayer(require('../../assets/audio/duel-impact.wav'));
  const [sound,setSound]=useState(true);
@@ -119,7 +119,7 @@ export function ArenaScreen(){
   </View>
  </>}
  <Pressable accessibilityRole="button" disabled={disabled} onPress={()=>send({type:'arenaView'})} style={a.resume}><Ionicons name="sync-outline" size={14} color={palette.muted}/><Text style={v.description}>Refresh / resume saved Arena</Text></Pressable>
- <PublicProfileSheet open={profileOpen} profile={inspect} loading={e.busy} error={e.error} onClose={closeProfile} onRetry={()=>{if(e.pending)void e.run();else if(inspectUid.current)send({type:'publicProfile',uid:inspectUid.current});}}/>
+ <PublicProfileSheet onMessage={onMessage&&inspect?.uid!==user?.uid?p=>{closeProfile();onMessage(p.uid);}:undefined} open={profileOpen} profile={inspect} loading={e.busy} error={e.error} onClose={closeProfile} onRetry={()=>{if(e.pending)void e.run();else if(inspectUid.current)send({type:'publicProfile',uid:inspectUid.current});}}/>
  <SystemWindow notice={focused&&!duel&&!spinning?systemNotice:null} onClose={()=>setSystemNotice(null)}/>
  <DuelFeedback event={duel} onClose={()=>setDuel(null)}/>
  <CardDetail card={detail} onClose={()=>setDetail(null)}/>

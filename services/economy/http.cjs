@@ -9,7 +9,7 @@ function createHandler({auth,db,limit=60,enabled=false,testUids=[]}){
   const send=(status,payload)=>{res.writeHead(status,{'Content-Type':'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(JSON.stringify(payload));};
   if(req.method==='GET'&&req.url==='/health')return send(200,{ok:true});
   const probe=req.method==='GET'&&req.url==='/v1/economy/status';
-  if(!probe&&(req.method!=='POST'||req.url!=='/v1/economy'))return send(404,{error:'not-found'});
+  if(!probe&&(req.method!=='POST'||!['/v1/economy','/v1/chat'].includes(req.url)))return send(404,{error:'not-found'});
   if(!probe&&!enabled&&!testers.size)return send(503,{error:'economy-not-enabled'});
   const match=/^Bearer ([^\s]+)$/.exec(req.headers.authorization||'');
   if(!match)return send(401,{error:'unauthenticated'});
@@ -21,9 +21,10 @@ function createHandler({auth,db,limit=60,enabled=false,testUids=[]}){
   // Process-local backstop only. Production hosting must also enforce global quotas/abuse controls.
   const now=Date.now();
   for(const [uid,item]of windows)if(item.until<=now)windows.delete(uid);
-  const window=windows.get(identity.uid)||{until:now+60000,count:0};
+  const rateKey=identity.uid+(req.url==='/v1/chat'?':chat':':economy');
+  const window=windows.get(rateKey)||{until:now+60000,count:0};
   if(++window.count>limit)return send(429,{error:'rate-limited'});
-  windows.set(identity.uid,window);
+  windows.set(rateKey,window);
   if(probe){
    try{
     const profile=await db.collection('user_meta').doc(identity.uid).get();
@@ -38,6 +39,7 @@ function createHandler({auth,db,limit=60,enabled=false,testUids=[]}){
    for await(const chunk of req){bytes+=Buffer.byteLength(chunk);if(bytes>8192)return send(413,{error:'request-too-large'});body+=chunk;}
    let parsed;try{parsed=JSON.parse(body);}catch{return send(400,{error:'invalid-json'});}
    if(!parsed||Array.isArray(parsed)||Object.keys(parsed).some(k=>!['operationId','command'].includes(k)))return send(400,{error:'invalid-request'});
+   if(req.url==='/v1/chat'&&!require('./chat.cjs').types.includes(parsed.command?.type))return send(409,{error:'invalid-command'});
    const result=await execute({db,verifiedUid:identity.uid,verifiedAdmin:identity.admin===true,operationId:parsed.operationId,command:parsed.command,ai:{key:req.headers['x-amh-ai-key'],model:req.headers['x-amh-ai-model']}});
    return send(200,{result});
   }catch(error){

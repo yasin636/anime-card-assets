@@ -64,3 +64,10 @@ test('6A social documents, quota and rewards remain server-only for owners and o
  }
  await assertFails(getDocs(collection(db('social-rules'),'feed_posts')));
 });
+
+test('6B DM, Global, unread, recent and presence stay server-only; no signed-in catch-all',async()=>{
+ for(const path of ['direct_chats/alice_bob','direct_chats/alice_bob/messages/private','global_messages/global-msg']){
+  const ref=doc(db('alice'),path);await assertFails(setDoc(ref,{senderId:'alice',text:'forge',participants:['alice','bob']}));await assertFails(getDoc(ref));await assertFails(deleteDoc(ref));
+ }
+ const uid='chat-rules';await seed(uid);for(const patch of [{online:true,lastSeenMs:999},{recentChats:['victim']},{presenceSession:'forged'},{missionData:{progress:{communityActions:3}}}])await assertFails(updateDoc(doc(db(uid),'user_meta',uid),{...patch,updated_at:serverTimestamp()}));
+});
