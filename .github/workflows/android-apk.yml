@@ -131,20 +131,20 @@ jobs:
           sed -n '1,40p' apk-metadata.txt
           unzip -l "$APK" | grep 'assets/index.android.bundle'
           mkdir -p apk-output
-          cp "$APK" apk-output/AnimeMetaHub-v0.7.0-narrative-part1-test.apk
+          cp "$APK" apk-output/AnimeMetaHub-v0.7.1-narrative-part2-test.apk
           cd apk-output
           sha256sum *.apk > SHA256SUMS.txt
-          printf '%s\n' 'Story Narrative Part1 v0.7.0: authored Bengali chapters/dialogues/aftermath, fictional System Anomaly clues, owned Shadow Echoes, cosmetic dialogue choices and per-account on-device Monarch Archive. Local archive not cloud sync; uninstall/data-clear removes journal. Mobile-only, no Render deploy/new key/Rules/billing required with accepted Step05 backend. Economy/ARISE rules unchanged. Full eight-feature upgrade not complete: new Living Gate choreography, Signature Boss Moments, expanded Chronicle/cloud archive are later work. Update in place. See NARRATIVE-PART1-TEST.md.' > README.txt
+          cp NARRATIVE-PART2-TEST.md README.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: AnimeMetaHub-v0.7.0-narrative-part1-test
+          name: AnimeMetaHub-v0.7.1-narrative-part2-test
           path: apps/mobile/apk-output/
           retention-days: 14
           if-no-files-found: error
       - name: Build summary
         run: |
           {
-            echo '## Step05 Story test APK v0.7.0'
+            echo '## Step05 Story test APK v0.7.1'
             echo 'Standalone Android APK, ARM64 + ARMv7. Android 7.0+ (API 24+) expected; see APK metadata for the actual minimum.'
             echo 'Auth/profile/owned inventory are live. Collection/Shop commands require configured trusted backend; absent URL disables actions. Gemini BYOK in Settings/AI Provider; Sensei in Chat, key stored in device SecureStore; Quiz uses authorized transient HTTPS headers to trusted backend. Gallery deferred. Not a completed production economy deployment.'
             echo 'Signed with the verified PRIVATE internal-test certificate. Private v0.2.0 can update in place. Uninstall public-key sample v0.1.0 only.'

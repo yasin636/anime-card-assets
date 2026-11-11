@@ -1,3 +1,4 @@
+import {LivingGate} from './LivingGate';
 import React,{useEffect,useRef} from 'react';
 import {Animated,Image,Pressable,StyleSheet,Text,View} from 'react-native';
 import Svg,{Circle,Line,Path,Rect} from 'react-native-svg';
@@ -18,6 +19,7 @@ export function CombatTheater({session:s,reduced}:{session:StorySession;reduced:
  const impact=p.interpolate({inputRange:[0,.25,.35,.48,.6,1],outputRange:[0,0,1,.3,.15,0]});
  return <LinearGradient colors={s.enraged?['#491d36','#17102b','#060916']:theme.colors as [string,string,string]} style={[t.stage,{borderColor:s.enraged?'#ff6e92aa':`${theme.glow}77`}] }>
  <View pointerEvents="none" style={StyleSheet.absoluteFill}><Svg width="100%" height="100%" viewBox="0 0 360 460" preserveAspectRatio="xMidYMid slice"><Circle cx="180" cy="145" r="100" stroke={theme.glow} strokeWidth="1" fill={`${theme.glow}08`}/><Circle cx="180" cy="145" r="90" stroke={theme.glow} strokeWidth=".5" fill="none"/>{[10,62,112,237,289,340].map((x,i)=><React.Fragment key={x}><Rect x={x} y={110+i%3*25} width="12" height="300" fill="#040a13"/><Path d={`M${x-5} 400 L${x-5} ${110+i%3*25} L${x+6} ${80+i%3*25} L${x+22} ${110+i%3*25} L${x+22} 400`} fill="none" stroke={`${theme.glow}35`}/></React.Fragment>)}<Path d="M0 400 L360 400 L360 460 L0 460 Z" fill="#040914"/>{[0,60,120,180,240,300,360].map(x=><Line key={x} x1="180" y1="360" x2={x} y2="460" stroke={`${theme.glow}20`}/>)}{[410,430,455].map(y=><Line key={y} x1="0" y1={y} x2="360" y2={y} stroke={`${theme.glow}20`}/>)}</Svg></View>
+ <LivingGate session={s} reduced={reduced}/>
  <View style={t.top}><Text style={[t.micro,{color:theme.glow}]}>{theme.name}</Text><Text style={t.micro}>CH {s.chapterId} / TURN {s.turn}</Text></View>
  {s.enraged&&<Text style={t.enrage}>⚠ BOSS ENRAGED · ATK +50%</Text>}
  <View style={t.duel}>{[{id:`jinwoo${s.chapterId}`,who:'player',name:s.playerName,stats:s.player,color:'#8ff9e4'},{id:s.enemyId,who:'enemy',name:s.enemy.name,stats:s.enemy,color:'#ff9db7'}].map((side,index)=>{

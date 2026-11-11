@@ -67,3 +67,17 @@ test('strict command schema rejects rewards/winner/stat injection, duplicates/em
  for(const c of [{type:'storyStart',enemyId:'goblin',winner:true},{type:'storyClaim',sessionId:'s',version:0,gold:1e7},{type:'storyArise',sessionId:'s',version:0,shadowIds:[]},{type:'storyArise',sessionId:'s',version:0,shadowIds:['goblin','goblin']}])assert.throws(()=>validate(c));
  validate({type:'storyStart',enemyId:'beru'});
 });
+test('Chronicle counts actual capped HP loss, attacks, misses, guards and rejects stale duplicate',()=>{
+ let s=fight();s.enemy.def=0;s.enemy.hp=1;s.player.atk=10000;
+ const n=step(s,cmd(s,'storyAction',{action:'heavy'}),{roll:.1});
+ assert.equal(n.chronicle.heavy,1);assert.equal(n.chronicle.playerAttempts,1);assert.equal(n.chronicle.playerCrits,1);assert.equal(n.chronicle.damageDealt,1);assert.equal(n.chronicle.enemyAttempts,0);
+ assert.equal(s.chronicle.playerAttempts,0);
+ assert.throws(()=>step(n,cmd(s,'storyAction',{action:'heavy'})),e=>e.code==='story-version-changed');
+ let g=fight();g=step(g,cmd(g,'storyAction',{action:'guard'}),{now:0});assert.equal(g.chronicle.guards,1);assert.equal(g.chronicle.playerAttempts,0);
+ g=step(g,cmd(g,'storyAdvance'),{now:1000,roll:0});assert.equal(g.chronicle.enemyMisses,1);assert.equal(g.chronicle.damageTaken,0);
+});
+test('legacy battle starts explicitly partial counters without reconstructing bounded logs',()=>{
+ let s=fight();delete s.chronicle;s.version=12;s.log=Array(40).fill('Guard');
+ const n=step(s,cmd(s,'storyAction',{action:'strike'}),{roll:0});
+ assert.equal(n.chronicle.complete,false);assert.equal(n.chronicle.fromVersion,12);assert.equal(n.chronicle.guards,0);assert.equal(n.chronicle.playerMisses,1);assert.equal(n.chronicle.strikes,1);
+});

@@ -27,14 +27,16 @@ function lines(enemy,kind){return structuredClone(dialogues[enemy.id]?.[kind]||{
  mid:[{speaker:'enemy',text:'তুমি আমার ভাবনার চেয়ে শক্তিশালী...'},{speaker:'player',text:'তুমি এখনো কিছু দেখনি।'}],victory:[{speaker:'player',text:'পরাজিত! Shadow Monarch-এর আরেকটি জয়।'}],defeat:[{speaker:'enemy',text:'দুর্বল! তুমি এই Dungeon-এর যোগ্য নও!'}]
  }[kind]);}
 function dialogue(s,kind,next){s.phase='dialogue';s.dialogue=lines(s.enemy,kind);s.dialogueIndex=0;s.dialogueKind=kind;s.afterDialogue=next;}
+function counters(complete=true,fromVersion=0){return {schema:1,complete,fromVersion,strikes:0,heavy:0,guards:0,arises:0,playerAttempts:0,playerCrits:0,playerMisses:0,enemyAttempts:0,enemyCrits:0,enemyMisses:0,damageDealt:0,damageTaken:0,enemyShieldBreaks:0,playerShieldBreaks:0};}
 function start(p,enemyId,id,roll,now){
  if(!eligible(p))fail('story-entry-requirement');const {ch,enemy}=lookup(enemyId),st=power(p);
- return {id,version:0,chapterId:ch.id,enemyId,enemy:{...enemy,maxHp:enemy.hp,maxDef:enemy.def},player:{...st,maxHp:st.hp,maxDef:st.def},playerName:String(p.username||'Jin-Woo'),phase:'coin',first:roll<.5?'player':'enemy',notBefore:now+2500,dialogue:[],dialogueIndex:0,heavyCooldown:0,guard:false,midDone:false,enraged:false,ariseUsed:false,shadowIds:[],ariseBonus:{hp:0,atk:0,def:0},turn:0,events:[],log:[],rewardClaimed:false};
+ return {id,version:0,chapterId:ch.id,enemyId,enemy:{...enemy,maxHp:enemy.hp,maxDef:enemy.def},player:{...st,maxHp:st.hp,maxDef:st.def},playerName:String(p.username||'Jin-Woo'),phase:'coin',first:roll<.5?'player':'enemy',notBefore:now+2500,dialogue:[],dialogueIndex:0,heavyCooldown:0,guard:false,midDone:false,enraged:false,ariseUsed:false,shadowIds:[],ariseBonus:{hp:0,atk:0,def:0},turn:0,events:[],log:[],rewardClaimed:false,chronicle:counters()};
 }
 function damage(atk,target){const before=target.hp,shield=target.def;target.hp=Math.max(0,target.hp-Math.max(1,Math.round(atk*(shield>0?.02:.05))));if(shield>0)target.def=Math.max(0,target.def-Math.max(1,Math.round(atk*.01)));return {damage:before-target.hp,shieldDamage:shield-target.def,shieldBreak:shield>0&&target.def===0};}
 function attack(s,who,base,roll){
  const target=who==='player'?s.enemy:s.player,miss=roll<.05,crit=!miss&&roll<.15;
  const event={who,miss,crit,...(miss?{damage:0,shieldDamage:0,shieldBreak:false}:damage(crit?Math.round(base*2):base,target))};
+ const c=s.chronicle;if(c){const own=who==='player';c[own?'playerAttempts':'enemyAttempts']++;if(miss)c[own?'playerMisses':'enemyMisses']++;if(crit)c[own?'playerCrits':'enemyCrits']++;c[own?'damageDealt':'damageTaken']+=event.damage;if(event.shieldBreak)c[own?'enemyShieldBreaks':'playerShieldBreaks']++;}
  s.events.push(event);s.log.push(`${who==='player'?'তুমি':s.enemy.name}: ${miss?'MISS':`${crit?'CRITICAL · ':''}−${event.damage} HP / −${event.shieldDamage} DEF`}${event.shieldBreak?' · SHIELD BREAK':''}`);s.log=s.log.slice(-40);
 }
 function end(s,won){s.outcome=won?'win':'lose';dialogue(s,won?'victory':'defeat',won?'victory':'defeat');}
@@ -44,7 +46,7 @@ function enemyTurn(s,roll){
  if(s.player.hp<=0)end(s,false);else s.phase='fight';
 }
 function step(saved,c,{now=Date.now(),roll=.5,shadows=[]}={}){
- const s=structuredClone(saved);if(c.version!==s.version)fail('story-version-changed');s.events=[];
+ const s=structuredClone(saved);if(c.version!==s.version)fail('story-version-changed');s.events=[];if(!s.chronicle)s.chronicle=counters(false,s.version);
  if(c.type==='storyForfeit'){
   if(['victory','claimed'].includes(s.phase)||s.outcome==='win')fail('story-reward-pending');s.phase='forfeited';
  }else if(c.type==='storyAdvance'){
@@ -56,12 +58,13 @@ function step(saved,c,{now=Date.now(),roll=.5,shadows=[]}={}){
  }else if(c.type==='storyArise'){
   if(s.phase!=='fight')fail('story-invalid-phase');if(s.chapterId<2)fail('arise-chapter-locked');if(s.ariseUsed)fail('arise-already-used');
   const bonus={hp:0,atk:0,def:0};for(const id of c.shadowIds){if(!shadows.some(sh=>sh.id===id))fail('shadow-not-owned');const {enemy}=lookup(id);for(const k of Object.keys(bonus))bonus[k]+=Math.round(enemy[k]*.5);}
-  if(!c.shadowIds.length)fail('invalid-shadows');for(const k of Object.keys(bonus)){s.player[k]+=bonus[k];if(!Number.isSafeInteger(s.player[k]))fail('invalid-profile-number');}s.player.maxHp+=bonus.hp;s.player.maxDef+=bonus.def;s.ariseUsed=true;s.shadowIds=c.shadowIds;s.ariseBonus=bonus;s.events=[{arise:true}];
+  if(!c.shadowIds.length)fail('invalid-shadows');for(const k of Object.keys(bonus)){s.player[k]+=bonus[k];if(!Number.isSafeInteger(s.player[k]))fail('invalid-profile-number');}s.player.maxHp+=bonus.hp;s.player.maxDef+=bonus.def;s.ariseUsed=true;s.shadowIds=c.shadowIds;s.ariseBonus=bonus;s.events=[{arise:true}];s.chronicle.arises++;
  }else if(c.type==='storyAction'){
   if(s.phase!=='fight')fail('story-invalid-phase');
-  if(c.action==='guard'){s.guard=true;s.log.push('🛡 Guard · পরের enemy attack অর্ধেক');s.phase='enemy';s.notBefore=now+600;}
+  if(c.action==='guard'){s.chronicle.guards++;s.guard=true;s.log.push('🛡 Guard · পরের enemy attack অর্ধেক');s.phase='enemy';s.notBefore=now+600;}
   else{
    if(c.action==='heavy'){if(s.heavyCooldown>0)fail('heavy-cooldown');s.heavyCooldown=3;}else if(s.heavyCooldown>0)s.heavyCooldown--;
+   s.chronicle[c.action==='heavy'?'heavy':'strikes']++;
    attack(s,'player',c.action==='heavy'?Math.round(s.player.atk*1.5):s.player.atk,roll);
    // Death takes priority: a defeated boss cannot enrage or attack after dialogue.
    if(s.enemy.hp<=0)end(s,true);
@@ -79,7 +82,7 @@ async function executeStory({db,verifiedUid:uid,operationId,command:c}){
  validate(c);const user=db.collection('user_meta').doc(uid),sessions=user.collection('story_sessions'),army=user.collection('shadows'),clears=user.collection('story_clears');
  if(c.type==='storyView'){
   const profile=await user.get();if(!profile.exists)fail('profile-not-found');const p=profile.data();const [sh,cl,session]=await Promise.all([army.get(),clears.get(),p.activeStoryId?sessions.doc(p.activeStoryId).get():null]);
-  return {type:c.type,storyCapability:'story-v1',story:session?.exists?session.data():null,shadows:sh.docs.map(d=>d.data()),cleared:cl.docs.map(d=>d.id),storyPower:power(p),storyEligible:eligible(p)};
+  return {type:c.type,storyCapability:'story-v1',chronicleCapability:'chronicle-v1',story:session?.exists?session.data():null,shadows:sh.docs.map(d=>d.data()),cleared:cl.docs.map(d=>d.id),storyPower:power(p),storyEligible:eligible(p)};
  }
  const receipt=user.collection('economy_receipts').doc(operationId),fingerprint=createHash('sha256').update(JSON.stringify(Object.fromEntries(Object.entries(c).sort()))).digest('hex'),id=randomUUID(),roll=randomInt(0,2**32)/2**32;
  return db.runTransaction(async tx=>{
@@ -105,4 +108,4 @@ async function executeStory({db,verifiedUid:uid,operationId,command:c}){
   const result={type:c.type,story:s,...(reward?{reward,firstClear}:{})};tx.create(receipt,{fingerprint,result,createdAt:new Date()});return result;
  });
 }
-module.exports={types,validate,power,eligible,lookup,lines,start,damage,step,rewards,executeStory};
+module.exports={types,validate,power,eligible,lookup,lines,start,damage,step,rewards,counters,executeStory};

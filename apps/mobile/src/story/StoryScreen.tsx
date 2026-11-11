@@ -1,3 +1,4 @@
+import {SignatureMoment,BossCue,bossSignatures} from './SignatureMoments';
 import {NarrativeLayer} from './narrative/NarrativeLayer';
 import {authoredTalk} from './narrative/model';
 import React,{useEffect,useRef,useState} from 'react';
@@ -32,6 +33,7 @@ export function AriseBurst({ids,onClose,chapter=5}:{ids:string[]|null;onClose:()
 }
 export function StoryScreen(){
  const focused=useIsFocused();
+ const [bossCue,setBossCue]=useState<BossCue|null>(null),[chronicleAvailable,setChronicleAvailable]=useState(false),[monarchChoice,setMonarchChoice]=useState<string|null>(null);
  const [plannedEnemy,setPlannedEnemy]=useState<string|null>(null),[narrativeOpen,setNarrativeOpen]=useState(false),[skipDialogue,setSkipDialogue]=useState(false);
  const {profile,user}=useAuth(),e=useEconomy();
  const [reduced,setReduced]=useState(false),[haptic,setHaptic]=useState(true),[effects,setEffects]=useState(false),[diagnostics,setDiagnostics]=useState(false),[notice,setNotice]=useState<SystemNotice|null>(null),[fxBusy,setFxBusy]=useState(false),[prefsReady,setPrefsReady]=useState(false);
@@ -43,18 +45,19 @@ export function StoryScreen(){
  const loaded=useRef(false),last=useRef<unknown>(null),scheduled=useRef(''),seenEvent=useRef('');
  const hit=useAudioPlayer(require('../../assets/audio/duel-impact.wav')),slash=useAudioPlayer(require('../../assets/audio/story-slash.wav')),zing=useAudioPlayer(require('../../assets/audio/story-zing.wav')),pulse=useAudioPlayer(require('../../assets/audio/story-pulse.wav'));
  const shake=useRef(new Animated.Value(0)).current,coin=useRef(new Animated.Value(0)).current;
- const disabled=!e.configured||!e.ready||e.busy||!!e.pending||!!burst||!foreground||!focused||fxBusy||!!notice||narrativeOpen;
+ const disabled=!e.configured||!e.ready||e.busy||!!e.pending||!!burst||!foreground||!focused||fxBusy||!!notice||narrativeOpen||!!bossCue;
  const play=(p:typeof hit)=>{if(sound&&focused&&foreground)void p.seekTo(0).then(()=>p.play()).catch(()=>{});};
  useEffect(()=>{const sub=AppState.addEventListener('change',state=>{setForeground(state==='active');if(state!=='active'){void Speech.stop();hit.pause();slash.pause();zing.pause();pulse.pause();}});return()=>{sub.remove();void Speech.stop();};},[hit,slash,zing,pulse]);
  useEffect(()=>{if(!focused){void Speech.stop();hit.pause();slash.pause();zing.pause();pulse.pause();}},[focused,hit,slash,zing,pulse]);
  useEffect(()=>{if(!loaded.current&&e.configured&&e.ready&&!e.busy&&!e.pending){loaded.current=true;void e.run({type:'storyView'});}},[e.configured,e.ready,e.busy,e.pending]);
  useEffect(()=>{
   const r=e.result;if(!r||r===last.current)return;last.current=r;
-  if(r.type==='storyView'){setSupported(r.storyCapability==='story-v1');setArmy(r.shadows||[]);setCleared(r.cleared||[]);if(r.story){setSession(r.story);setChapter(r.story.chapterId);}else setSession(old=>terminal(old)?old:null);}
+  if(r.type==='storyView'){setChronicleAvailable(r.chronicleCapability==='chronicle-v1');setSupported(r.storyCapability==='story-v1');setArmy(r.shadows||[]);setCleared(r.cleared||[]);if(r.story){setSession(r.story);setChapter(r.story.chapterId);}else setSession(old=>terminal(old)?old:null);}
   if(r.story){const s=r.story;setSession({...s,events:r.type==='storyView'?[]:s.events});setChapter(s.chapterId);const key=`${s.id}:${s.version}`;
    if(seenEvent.current!==key&&r.type!=='storyView'){
     seenEvent.current=key;
-    if(r.type==='storyStart'){play(slash);if(s.enemy.isBoss)setNotice({id:key,title:'BOSS ENCOUNTER',kicker:'DUNGEON ALERT',message:`${s.enemy.name}\nশক্তিশালী শত্রু শনাক্ত হয়েছে। প্রস্তুত হও, Hunter।`,image:storyArtwork[s.enemyId],kind:'danger'});}
+    if(r.type==='storyStart'){play(slash);if(s.enemyId in bossSignatures)setBossCue({id:key,enemyId:s.enemyId as BossCue['enemyId'],kind:'entry'});}
+    if(s.events.some(ev=>ev.enrage)&&s.enemyId in bossSignatures)setBossCue({id:key,enemyId:s.enemyId as BossCue['enemyId'],kind:'enrage'});
     if(s.events.some(ev=>ev.who)){play(hit);setFxBusy(true);if(fxTimer.current)clearTimeout(fxTimer.current);fxTimer.current=setTimeout(()=>setFxBusy(false),reduced?80:780);if(haptic&&!reduced&&focused&&foreground)void Haptics.impactAsync(s.events.some(ev=>ev.crit)?Haptics.ImpactFeedbackStyle.Heavy:Haptics.ImpactFeedbackStyle.Light).catch(()=>{});shake.setValue(0);if(!reduced)Animated.sequence([Animated.timing(shake,{toValue:1,duration:60,useNativeDriver:true}),Animated.timing(shake,{toValue:-1,duration:90,useNativeDriver:true}),Animated.timing(shake,{toValue:0,duration:100,useNativeDriver:true})]).start();}
     if(s.events.some(ev=>ev.enrage)||s.phase==='victory')play(zing);
     if(hydrated.current&&['victory','claimed','defeat','forfeited'].includes(s.phase)){
@@ -87,7 +90,7 @@ export function StoryScreen(){
  const action=(kind:'strike'|'heavy'|'guard')=>{if(session)void e.run({type:'storyAction',sessionId:session.id,version:session.version,action:kind});};
  const confirm=(c:StoryCommand,message:string)=>{if(c.type==='storyStart'){setPlannedEnemy(c.enemyId);return;}Alert.alert('System confirmation',message,[{text:'Cancel',style:'cancel'},{text:'Confirm',onPress:()=>void e.run(c)}]);};
  const total={hp:0,atk:0,def:0};army.filter(s=>chosen.includes(s.id)).forEach(s=>{total.hp+=Math.round(s.hp*.5);total.atk+=Math.round(s.atk*.5);total.def+=Math.round(s.def*.5);});
- const active=!terminal(session),talk=session?authoredTalk(session):undefined;
+ const active=!terminal(session),talk=session?authoredTalk(session,monarchChoice):undefined;
  return <>
  <LinearGradient colors={['#092f49','#071d32','#050f1e']} style={st.hero}><View style={st.between}><Text style={f.eyebrow}>SOLO LEVELING / STORY SYSTEM</Text><Pressable accessibilityRole="button" onPress={()=>{setSound(!sound);void Speech.stop();}}><Ionicons name={sound?'volume-high':'volume-mute'} color="#c5a5ff" size={22}/></Pressable></View><Text style={st.heading}>From the weakest.{ '\n'}To the Monarch.</Text><Text style={f.body}>Five chapters. Eleven enemies. One shadow army.</Text><View style={st.between}><Pressable onPress={()=>setRules(!rules)}><Text style={f.link}>System rules</Text></Pressable><Pressable onPress={()=>setShowArmy(!showArmy)}><Text style={f.link}>Shadow Army · {army.length}</Text></Pressable></View></LinearGradient>
  <Pressable accessibilityRole="button" onPress={()=>setDiagnostics(!diagnostics)}><Text style={f.link}>{e.configured?'◈ SYSTEM CONNECTED':'◈ CONNECTION STATUS'} · {diagnostics?'Hide':'Details'}</Text></Pressable>
@@ -95,7 +98,8 @@ export function StoryScreen(){
  <Pressable accessibilityRole="button" onPress={()=>setEffects(!effects)}><Text style={f.link}>⚙ Combat effects</Text></Pressable>
  {effects&&<SystemFrame><Text style={f.section}>Presentation only</Text><ActionButton secondary title={`Reduced effects: ${reduced?'ON':'OFF'}`} onPress={()=>setReduced(!reduced)}/><ActionButton secondary title={`Haptics: ${haptic?'ON':'OFF'}`} onPress={()=>setHaptic(!haptic)}/><ActionButton secondary title={`Sound: ${sound?'ON':'OFF'}`} onPress={()=>{setSound(!sound);void Speech.stop();}}/><Text style={f.body}>এই settings battle power, RNG বা rewards বদলায় না।</Text></SystemFrame>}
  {!supported&&<Text style={f.error}>Story backend update প্রয়োজন। Render-এ latest commit deploy করে Refresh / resume চাপো। আলাদা AI key লাগবে না—Story game engine দিয়ে চলে।</Text>}
- <NarrativeLayer session={session} army={army} chapter={chapter} cleared={cleared} plannedEnemy={plannedEnemy} onCancel={()=>setPlannedEnemy(null)} onBegin={id=>{setPlannedEnemy(null);void e.run({type:'storyStart',enemyId:id});}} blocked={!e.configured||!e.ready||e.busy||!!e.pending||!!notice||!!burst} onOverlay={setNarrativeOpen}/>
+ {!chronicleAvailable&&<Text style={f.body}>Expanded Chronicle-এর জন্য Render-এ latest backend deploy করো। পুরোনো battle-এ অজানা statistics বানানো হবে না; gameplay চালু আছে।</Text>}
+ <NarrativeLayer session={session} army={army} chapter={chapter} cleared={cleared} plannedEnemy={plannedEnemy} onCancel={()=>setPlannedEnemy(null)} onBegin={id=>{setPlannedEnemy(null);void e.run({type:'storyStart',enemyId:id});}} blocked={!e.configured||!e.ready||e.busy||!!e.pending||!!notice||!!burst||!!bossCue} onOverlay={setNarrativeOpen} onCommand={setMonarchChoice}/>
  <ActionButton secondary title="Refresh / resume Story" disabled={disabled} onPress={()=>{scheduled.current='';void e.run({type:'storyView'});}}/>
  {rules&&<View style={f.panel}><Text style={f.section}>The system's rules</Text><Text style={f.body}>Level 3 + 3 owned cards। কোনো entry fee নেই; সব chapter খোলা। সব inventory copy-এর raw stats → permanent % → flat bonus। XP দিয়ে battle power গুণ হয় না।{ '\n\n'}Strike 1×; Heavy 1.5×, 3 non-heavy attack cooldown—Guard cooldown কমায় না। Guard পরের enemy ATK অর্ধেক করে। Miss 5%, critical 10% (2×)। Shield থাকলে HP 2%, DEF 1%; shield শেষ হলে HP 5%, overflow নেই। Boss mid dialogue 50%, enrage 20% HP-তে ATK +50%।{ '\n\n'}প্রথম clear-এ পূর্ণ reward; repeat-এ শুধু reduced XP। Reward claim আলাদা—network failure হলে একই request Retry করো। Chapter 2 থেকে ARISE, প্রতি battle-এ একবার; প্রতি নির্বাচিত Shadow-এর original stats-এর 50% যোগ হয়। New battle-এ reset। Legacy browser clears/shadows auto-import করা হয় না।</Text></View>}
  {showArmy&&<View style={f.panel}><Text style={f.section}>Your immortal soldiers</Text><Text style={f.body}>শুধু server-confirmed জয় থেকে পাওয়া Shadow; original stats দেখানো হচ্ছে।</Text><View style={st.grid}>{army.map(sh=><ShadowTile key={sh.id} shadow={sh}/>)}</View>{!army.length&&<Text style={f.body}>শত্রুকে হারাও—তার Shadow তোমার সেনায় যোগ হবে।</Text>}</View>}
@@ -122,6 +126,7 @@ export function StoryScreen(){
  {log&&session.outcome!=='win'&&<ActionButton secondary title="Forfeit · no reward" disabled={disabled} onPress={()=>confirm({type:'storyForfeit',sessionId:session.id,version:session.version},'Battle ছাড়বে? Reward পাবে না; inventory/currency কাটবে না।')}/>}
  </>}
  <Modal visible={arise&&focused} animationType="slide" onRequestClose={()=>setArise(false)}><SafeAreaView style={f.page}><ScrollView contentContainerStyle={f.content}><ActionButton secondary title="Close Shadow selection" onPress={()=>setArise(false)}/><Text style={st.heading}>ARISE</Text><Text style={f.body}>প্রতি battle-এ একবার। প্রতিটি selected Shadow-এর original stats-এর 50% যোগ হবে।</Text><View style={st.grid}>{army.map(sh=><ShadowTile key={sh.id} shadow={sh} selected={chosen.includes(sh.id)} onPress={()=>setChosen(a=>a.includes(sh.id)?a.filter(id=>id!==sh.id):[...a,sh.id])}/>)}</View>{!army.length&&<Text style={f.body}>এখনো Shadow নেই। আগে Story enemy হারাও।</Text>}<Text style={f.success}>BONUS · HP +{fmt(total.hp)} · ATK +{fmt(total.atk)} · DEF +{fmt(total.def)}</Text><ActionButton title={`ARISE · ${chosen.length} selected`} disabled={disabled||!chosen.length||session?.phase!=='fight'} onPress={()=>{if(session)void e.run({type:'storyArise',sessionId:session.id,version:session.version,shadowIds:chosen});}}/>{!!e.error&&<Text style={f.error}>{e.error}</Text>}</ScrollView></SafeAreaView></Modal>
+ <SignatureMoment cue={focused&&foreground?bossCue:null} reduced={reduced} sound={sound} onClose={()=>setBossCue(null)}/>
  <SystemWindow notice={focused&&foreground?notice:null} reduced={reduced} onClose={()=>setNotice(null)} busy={e.busy||!!e.pending} onAction={notice?.action?()=>{setNotice(null);command('storyClaim');}:undefined}/>
  <AriseBurst chapter={session?.chapterId||chapter} ids={focused&&foreground?burst:null} onClose={()=>setBurst(null)}/>
  </>;
