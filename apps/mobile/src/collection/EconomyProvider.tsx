@@ -1,3 +1,4 @@
+import {useOptionalAudio} from '../audio/AudioProvider';
 import type {CommunityCommand,CommunityResult} from '../community/types';
 import type {SocialCommand,SocialResult} from '../social/types';
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
@@ -36,6 +37,7 @@ const messages:Record<string,string>={
  'rate-limited':'একটু অপেক্ষা করে একই কাজ Retry করো।','service-unavailable':'Server এখন পাওয়া যাচ্ছে না। একই কাজ Retry করো।',
 };
 export function EconomyProvider({children}:{children:React.ReactNode}){
+ const audio=useOptionalAudio(),heard=useRef(new Set<string>());
  const ai=useAI();const {user,profile}=useAuth();const uid=user?.uid || '';const key=`economy.pending.v1.${uid}`;
  const [ready,setReady]=useState(false),[busy,setBusy]=useState(false),[pending,setPending]=useState<Pending|null>(null),[error,setError]=useState(''),[result,setResult]=useState<Result|null>(null);
  const [checking,setChecking]=useState(false),[connection,setConnection]=useState('Server-এর সঙ্গে সংযোগ হচ্ছে…'),[allowed,setAllowed]=useState(false);
@@ -92,7 +94,7 @@ export function EconomyProvider({children}:{children:React.ReactNode}){
    }
    if(!payload.result||payload.result.type!==operation.command.type)throw Error('Server result যাচাই হয়নি। একই কাজ Retry করো।');
    await AsyncStorage.removeItem(key);pendingRef.current=null;
-   if(active.current&&getAuth().currentUser?.uid===uid){setPending(null);setResult(payload.result);}
+   if(active.current&&getAuth().currentUser?.uid===uid){setPending(null);setResult(payload.result);if(!heard.current.has(operation.operationId)){heard.current.add(operation.operationId);if(heard.current.size>200)heard.current.delete(heard.current.values().next().value!);if(operation.command.type==='summon')audio?.playSfx('summon');else if((payload.result.xpDelta||payload.result.xp||payload.result.reward?.xp||0)>0&&operation.command.type!=='wheelSpin')audio?.playSfx('reward');}}
   }catch(e){if(active.current)setError(e instanceof Error&&e.message&&!e.message.includes('Network request')&&e.name!=='AbortError'?e.message:'সংযোগ বিচ্ছিন্ন বা সময় শেষ। ফল নিশ্চিত নয়—Retry pending চাপো; নতুন করে Gold খরচ হবে না।');}
   finally{if(timer)clearTimeout(timer);lock.current=false;if(active.current)setBusy(false);}
  };

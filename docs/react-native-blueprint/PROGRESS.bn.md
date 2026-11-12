@@ -435,3 +435,12 @@ Owner confirmed v0.6.1 System reward/claim flow via two Goblin screenshots. Owne
 - Local backend 87/87; native/tool 89/89; foundation PASS.
 - This fixes misleading error classification, NOT proven live upload failure resolution. Owner still needs backend deploy + APK update and a fresh upload/error-only screenshot. Existing pending sessions may have expired; remove/reselect as needed.
 - Optional folder-scoped setup tool prepared and mock-tested, but not run against owner's Cloudinary. Root credentials remain on owner device; no key privilege change, billing change or live deployment performed by agent.
+
+## 7A authorized — Audio controls / owner-test candidate
+- Owner explicitly authorized 7A. 6D profile and Feed images accepted including persistence after app reopen; owner reports test post deleted at 10am for cleanup check, but live cleanup has NOT been verified. Video stays deferred.
+- Safe checkout fast-forward to existing remote 8ab0b4c before implementation; no branch switch or owner files lost.
+- Added account-scoped AudioProvider, Music & sound settings, Play/Pause/Restart, Repeat/Continue wrap, independent music/SFX volume and global SFX/voice gate over local Story/Arena/Chat toggles. No autoplay on startup/foreground; background/inactive stops playback. Stable players and late-seek guards.
+- Added common clicks, confirmed-operation reward/summon cues, timed wheel ticks/end. No balance/RNG/backend-command changes; no backend deploy needed for this audio-only update.
+- Three original ambient DEMOS generated reproducibly + CC0 provenance notice, clearly NOT Dark Aria/Kamado Tanjiro/Suzume recordings. Source/license and owner acceptance of native music alternatives remain open; exact soundtrack/Web Audio/107-keyframe parity NOT claimed complete.
+- v0.12.0/code22 candidate. Local tool/native 97/97, backend87/87 and foundation PASS. Generated Firebase config absent locally; full TS/security/release/signature gates to run in CI.
+- Phone call/headphone/Bluetooth/OS audio focus and actual audio quality require owner physical-device feedback. 7B not started. Checklist apps/mobile/AUDIO-7A-TEST.md.

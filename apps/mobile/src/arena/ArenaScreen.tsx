@@ -1,3 +1,4 @@
+import {useSoundGate,useAppAudio} from '../audio/AudioProvider';
 import React,{useEffect,useRef,useState} from 'react';
 import {Alert,Animated,Pressable,ScrollView,StyleSheet,Text,TextInput,View} from 'react-native';
 import {LinearGradient} from 'expo-linear-gradient';
@@ -24,9 +25,9 @@ function WheelFace(){
  return <Svg width={260} height={260} viewBox="0 0 260 260">{labels.map((label,i)=>{const start=point(i*45,122),end=point((i+1)*45,122),mid=point(i*45+22.5,83);return <React.Fragment key={label}><Path d={`M130 130 L${start[0]} ${start[1]} A122 122 0 0 1 ${end[0]} ${end[1]} Z`} fill={['#282340','#15363b','#342443','#4b3a22','#342131','#21374b','#342650','#254039'][i]} stroke="#ffffff12" strokeWidth={1}/><SvgText x={mid[0]} y={mid[1]} fill={i===3?palette.gold:'#e7e5f4'} textAnchor="middle" fontSize={9} fontWeight="800" transform={`rotate(${i*45+22.5},${mid[0]},${mid[1]})`}>{label}</SvgText></React.Fragment>;})}<Circle cx={130} cy={130} r={123} stroke="#a58be5" strokeWidth={3} fill="none"/><Circle cx={130} cy={130} r={37} fill="#111426" stroke="#9c82d5" strokeWidth={2}/><SvgText x={130} y={138} fontSize={26} textAnchor="middle" fill={palette.gold}>✦</SvgText></Svg>;
 }
 export function ArenaScreen({onMessage}:{onMessage?:(uid:string)=>void}={}){
- const focused=useIsFocused();const [systemNotice,setSystemNotice]=useState<SystemNotice|null>(null);
+ const focused=useIsFocused(),appAudio=useAppAudio(),audioRef=useRef(appAudio);audioRef.current=appAudio;const [systemNotice,setSystemNotice]=useState<SystemNotice|null>(null);
  const impact=useAudioPlayer(require('../../assets/audio/duel-impact.wav'));
- const [sound,setSound]=useState(true);
+ const [sound,setSound]=useState(true);const soundGate=useSoundGate([impact],sound,focused);
  const ai=useAI();const {profile:p,user}=useAuth(),e=useEconomy();
  const [tab,setTab]=useState<'battle'|'board'|'wheel'|'quiz'>('battle'),[filter,setFilter]=useState('all'),[sortPower,setSortPower]=useState(false),[diagnostics,setDiagnostics]=useState(false),[showRules,setShowRules]=useState(false),[showLog,setShowLog]=useState(false);
  const [selected,setSelected]=useState<string[]>([]),[battle,setBattle]=useState<Battle|null>(null),[quiz,setQuiz]=useState<Quiz|null>(null),[board,setBoard]=useState<BoardRow[]>([]),[quizAvailable,setQuizAvailable]=useState(false),[title,setTitle]=useState(''),[answer,setAnswer]=useState(''),[feedback,setFeedback]=useState(''),[inspect,setInspect]=useState<PublicProfile|null>(null),[profileOpen,setProfileOpen]=useState(false),[detail,setDetail]=useState<DisplayCard|null>(null),[weeklyClaimed,setWeeklyClaimed]=useState(false),[week,setWeek]=useState(''),[spinning,setSpinning]=useState(false),[wheelResult,setWheelResult]=useState('');
@@ -47,7 +48,7 @@ export function ArenaScreen({onMessage}:{onMessage?:(uid:string)=>void}={}){
    if(r.type==='battleTurn'&&before?.id===after.id){
     const player=after.player.cards.find(c=>c.used&&!before.player.cards.find(b=>b.instanceId===c.instanceId)?.used);
     const enemy=after.enemy.cards.find(c=>c.used&&!before.enemy.cards.find(b=>b.instanceId===c.instanceId)?.used);
-    if((player||enemy)&&sound){void impact.seekTo(0).then(()=>impact.play()).catch(()=>{});}
+    if((player||enemy)&&soundGate.current){try{void impact.seekTo(0).then(()=>{if(soundGate.current)impact.play();}).catch(()=>{});}catch{}}
     if(player||enemy)setDuel({id:`${after.id}_${after.log.length}`,player,enemy,playerDamage:Math.max(0,before.player.hp-after.player.hp),enemyDamage:Math.max(0,before.enemy.hp-after.enemy.hp),shieldBreak:(before.player.def>0&&after.player.def===0)||(before.enemy.def>0&&after.enemy.def===0)});
    }
    previousBattle.current=after;setBattle(r.battle);if(r.battle.status!=='active')setSelected([]);}
@@ -58,7 +59,7 @@ export function ArenaScreen({onMessage}:{onMessage?:(uid:string)=>void}={}){
   if(r.feedback){setAnswer('');setFeedback(`${r.feedback.correct?'Correct':'Wrong / skipped'} · ${r.feedback.xpDelta} XP\nAnswer: ${r.feedback.answer}\n${r.feedback.explanation}`);}
   if(r.type==='wheelSpin'&&typeof r.index==='number'){
    setSpinning(true);setWheelResult('');const target=angle.current+360*6+((360-(r.index*45+22.5))-(angle.current%360)+360)%360;
-   Animated.timing(rotation,{toValue:target,duration:5200,useNativeDriver:true}).start(({finished})=>{angle.current=target;if(alive.current){setSpinning(false);if(finished){setWheelResult(`${r.label} · ${r.xpDelta!>=0?'+':''}${r.xpDelta} XP`);setSystemNotice({id:`wheel:${Date.now()}`,title:r.label||'WHEEL RESULT',kicker:'FORTUNE REPORT',kind:(r.xpDelta||0)<0?'danger':'reward',message:'Fee/reward মিলিয়ে server-confirmed মোট XP পরিবর্তন। এখানে দ্বিতীয়বার কিছু যোগ বা কাটা হচ্ছে না।',rows:[{label:'NET XP CHANGE',value:r.xpDelta||0}]});}}});
+   Animated.timing(rotation,{toValue:target,duration:5200,useNativeDriver:true}).start(({finished})=>{angle.current=target;if(alive.current){setSpinning(false);if(finished){if(focused)audioRef.current.playSfx('wheelEnd');setWheelResult(`${r.label} · ${r.xpDelta!>=0?'+':''}${r.xpDelta} XP`);setSystemNotice({id:`wheel:${Date.now()}`,title:r.label||'WHEEL RESULT',kicker:'FORTUNE REPORT',kind:(r.xpDelta||0)<0?'danger':'reward',message:'Fee/reward মিলিয়ে server-confirmed মোট XP পরিবর্তন। এখানে দ্বিতীয়বার কিছু যোগ বা কাটা হচ্ছে না।',rows:[{label:'NET XP CHANGE',value:r.xpDelta||0}]});}}});
   }
  },[e.result,rotation,sound,impact]);
  if(!p)return <Text style={f.body}>Loading your arena…</Text>;
@@ -69,6 +70,7 @@ export function ArenaScreen({onMessage}:{onMessage?:(uid:string)=>void}={}){
  const owned=p.inventoryCards.map(displayCard),selectedIds=selected.filter(id=>owned.some(c=>c.instanceId===id)),totals=deckTotals(owned,selectedIds);
  const visible=owned.filter(c=>filter==='all'||c.rarity===filter);if(sortPower)visible.sort((x,y)=>(y.atk||0)-(x.atk||0));
  const toggle=(id:string)=>setSelected(current=>current.includes(id)?current.filter(v=>v!==id):[...current,id]);
+ useEffect(()=>{if(!spinning||!focused)return;let cancelled=false,timer:ReturnType<typeof setTimeout>;const start=Date.now();const step=()=>{if(cancelled)return;const progress=Math.min(1,(Date.now()-start)/5200);if(progress>=1)return;audioRef.current.playSfx('tick');timer=setTimeout(step,progress<.2?160-progress*500:60+Math.pow((progress-.2)/.8,2)*240);};step();return()=>{cancelled=true;clearTimeout(timer);};},[spinning,focused]);
  const nextEnemy=battle?.enemy.cards.find(c=>!c.used),nextPlayer=battle?.player.cards.find(c=>!c.used);
  return <>
  <LinearGradient colors={['#24213d','#151b2b','#0f1422']} start={{x:0,y:0}} end={{x:1,y:1}} style={a.hero}>

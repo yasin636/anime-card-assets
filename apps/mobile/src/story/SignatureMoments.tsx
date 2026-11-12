@@ -1,3 +1,4 @@
+import {useSoundGate} from '../audio/AudioProvider';
 import {useAudioPlayer} from 'expo-audio';
 import React,{useEffect,useRef} from 'react';
 import {Animated,Image,Modal,Pressable,StyleSheet,Text,View} from 'react-native';
@@ -20,13 +21,13 @@ export function SignatureMoment({cue,reduced,onClose,sound=true}:{cue:BossCue|nu
  const p=useRef(new Animated.Value(0)).current;
  // Keep one native player for this mounted screen. Changing the hook source
  // releases its old shared object before effect cleanup on Android.
- const audio=useAudioPlayer(null);
+ const audio=useAudioPlayer(null);const gate=useSoundGate([audio],sound&&!reduced,!!cue);
  useEffect(()=>{
   let alive=true;
-  if(cue&&sound&&!reduced){
+  if(cue&&sound&&!reduced&&gate.current){
    // Audio is cosmetic: synchronous native errors and asynchronous seek/play
    // failures must never terminate a server-confirmed battle.
-   try{audio.replace(signatureAudio[cue.enemyId]);void audio.seekTo(0).then(()=>{if(alive)audio.play();}).catch(()=>{});}catch{}
+   try{audio.replace(signatureAudio[cue.enemyId]);void audio.seekTo(0).then(()=>{if(alive&&gate.current)audio.play();}).catch(()=>{});}catch{}
   }
   return()=>{alive=false;try{audio.pause();}catch{}};
  },[cue?.id,audio,sound,reduced]);

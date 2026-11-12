@@ -1,3 +1,4 @@
+import {useSoundGate} from '../audio/AudioProvider';
 import React,{useCallback,useEffect,useRef,useState} from 'react';
 import {Alert,KeyboardAvoidingView,Modal,Platform,Pressable,ScrollView,StyleSheet,Text,TextInput,View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
@@ -29,7 +30,8 @@ export function ChatScreen({onAISettings}:{onAISettings:()=>void}){
  useEffect(()=>{if(routePeer&&routePeer!==uid){setTab('inbox');setPeer({uid:routePeer,username:'Hunter',avatar:'',xp:0,gems:0,equippedTheme:'',online:false,lastSeenMs:0});navigation.setParams({peerId:undefined});}},[routePeer,uid]);
  const key=peer?`dm:${peer.uid}`:'global',active=focused&&chat.foreground&&tab!=='sensei',canRead=active&&chat.ready&&economy.configured,disabled=!canRead||chat.busy||!!chat.pending;
  const scroll=useRef<ScrollView>(null),readLock=useRef(false),requestSequence=useRef(0),seen=useRef(new Set<string>()),initial=useRef(true),olderLoaded=useRef(false),searchAbort=useRef<AbortController|null>(null),latestResult=useRef<unknown>(null),draftQueue=useRef(Promise.resolve()),draftKey=`chat.drafts.v1.${uid}`,audio=useAudioPlayer(require('../../assets/audio/chat-pop.wav'));
- const play=()=>{if(sound&&active)try{void audio.seekTo(0).then(()=>audio.play()).catch(()=>{});}catch{}};
+ const soundGate=useSoundGate([audio],sound,active);
+ const play=()=>{if(soundGate.current)try{void audio.seekTo(0).then(()=>{if(soundGate.current)audio.play();}).catch(()=>{});}catch{}};
  useEffect(()=>()=>{try{audio.pause();}catch{}},[audio]);
  useEffect(()=>{if(!focused||!chat.foreground){try{audio.pause();}catch{}}},[focused,chat.foreground,audio]);
  useEffect(()=>{let alive=true;AsyncStorage.getItem(draftKey).then(raw=>{if(!alive)return;const data=raw?JSON.parse(raw):{};if(!data||Array.isArray(data)||Object.values(data).some(v=>typeof v!=='string'))throw Error('invalid draft');setDrafts(data);setDraftReady(true);}).catch(()=>{if(alive)setDraftError('এই ফোনের message draft পড়া যায়নি; overwrite বন্ধ আছে।');});return()=>{alive=false;};},[draftKey]);

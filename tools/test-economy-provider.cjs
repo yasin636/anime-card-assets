@@ -13,6 +13,7 @@ function load(){
  const code=ts.transpileModule(fs.readFileSync(filename,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,esModuleInterop:true}}).outputText;
  const mod=new Module(filename);mod.filename=filename;mod.paths=Module._nodeModulePaths(path.dirname(filename));
  mod.require=name=>{
+  if(name==='../audio/AudioProvider')return {useOptionalAudio:()=>null};
   if(name==='react-native')return {AppState:{addEventListener:(_,fn)=>{listener=fn;return {remove:()=>{listener=null;}};}}};
   if(name==='@react-native-async-storage/async-storage')return storage;
   if(name==='expo-crypto')return {randomUUID:require('node:crypto').randomUUID};

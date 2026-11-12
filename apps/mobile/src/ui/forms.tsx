@@ -1,3 +1,4 @@
+import {useOptionalAudio} from '../audio/AudioProvider';
 import React from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -13,5 +14,6 @@ export const f = StyleSheet.create({
  section: { color: '#f3edff', fontSize: 18, fontWeight: '800' }, slot: { width: '47%', flexGrow: 1, borderWidth: 1, borderColor: '#45325e', borderRadius: 12, padding: 8, minHeight: 110, alignItems: 'center', justifyContent: 'center', gap: 6 },
 });
 export function ActionButton({ title, onPress, busy = false, disabled = false, secondary = false }: { title: string; onPress: () => void; busy?: boolean; disabled?: boolean; secondary?: boolean }) {
-  return <Pressable accessibilityRole="button" disabled={busy || disabled} onPress={onPress} style={({ pressed }) => [f.button, { opacity: disabled || busy ? .55 : pressed ? .75 : 1 }]}><LinearGradient colors={secondary ? ['#312049', '#221638'] : ['#7c3aed', '#a21caf']} style={f.buttonInner}>{busy ? <ActivityIndicator color="white" /> : <Text style={f.buttonText}>{title}</Text>}</LinearGradient></Pressable>;
+  const audio=useOptionalAudio();
+  return <Pressable accessibilityRole="button" disabled={busy || disabled} onPress={()=>{audio?.playSfx('click');onPress();}} style={({ pressed }) => [f.button, { opacity: disabled || busy ? .55 : pressed ? .75 : 1 }]}><LinearGradient colors={secondary ? ['#312049', '#221638'] : ['#7c3aed', '#a21caf']} style={f.buttonInner}>{busy ? <ActivityIndicator color="white" /> : <Text style={f.buttonText}>{title}</Text>}</LinearGradient></Pressable>;
 }

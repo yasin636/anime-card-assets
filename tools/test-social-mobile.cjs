@@ -7,6 +7,7 @@ const audio={pause(){},play(){},replace(){},seekTo:async()=>{}};
 let audioHook=null;let copied=[],clipboardFails=false;
 function load(file=path.join(__dirname,'../apps/mobile/src/social/FeedScreen.tsx')){const m=new Module(file);m.filename=file;m.paths=Module._nodeModulePaths(path.dirname(file));m.require=name=>{
  if(name==='../media/PhotoUploader')return {PhotoUploader:props=>React.createElement('PhotoUploader',props)};
+ if(name==='../audio/AudioProvider')return {useSoundGate:(_players,local=true,visible=true)=>({current:local&&visible}),useAppAudio:()=>({prefs:{sfxEnabled:true,sfxVolume:.7,voiceEnabled:true},foreground:true,playSfx(){}})};
  if(name==='react-native')return {AccessibilityInfo:{isReduceMotionEnabled:async()=>false},Alert:{alert:(_title,_message,buttons)=>buttons.at(-1).onPress()},AppState:{currentState:'active',addEventListener:()=>({remove(){}})},Animated:{Value:class{setValue(){} interpolate(){return 1;}stopAnimation(){}},View:'AnimatedView',Image:'Image',Text:'Text',sequence:()=>({start(){},stop(){}}),timing:()=>({start(){},stop(){}}),loop:()=>({start(){},stop(){}})},Linking:{openURL:async()=>{}},TextInput:'TextInput',Image:'Image',Modal:'Modal',Pressable:'Pressable',ScrollView:'ScrollView',Text:'Text',View:'View',StyleSheet:{create:s=>s}};
  if(name==='@react-navigation/native')return {useIsFocused:()=>true,useRoute:()=>({params:{}})};
  if(name==='expo-clipboard')return {setStringAsync:async text=>{if(clipboardFails)throw Error('copy failed');copied.push(text);}};
