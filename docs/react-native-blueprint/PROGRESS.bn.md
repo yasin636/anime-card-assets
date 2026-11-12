@@ -444,3 +444,11 @@ Owner confirmed v0.6.1 System reward/claim flow via two Goblin screenshots. Owne
 - Three original ambient DEMOS generated reproducibly + CC0 provenance notice, clearly NOT Dark Aria/Kamado Tanjiro/Suzume recordings. Source/license and owner acceptance of native music alternatives remain open; exact soundtrack/Web Audio/107-keyframe parity NOT claimed complete.
 - v0.12.0/code22 candidate. Local tool/native 97/97, backend87/87 and foundation PASS. Generated Firebase config absent locally; full TS/security/release/signature gates to run in CI.
 - Phone call/headphone/Bluetooth/OS audio focus and actual audio quality require owner physical-device feedback. 7B not started. Checklist apps/mobile/AUDIO-7A-TEST.md.
+
+### 7A signed test APK verified
+- Source `a0dd59bb32a08c8b3dc351106c4d6558aa68e307`, v0.12.0/code22. Android run `43153766165` **SUCCESS**: security/emulator, generated-config full TypeScript, foundation/regressions, release compile, pinned private signature/metadata/embedded JS and artifact upload all passed.
+- Artifact `13915516972`: `AnimeMetaHub-v0.12.0-audio-7A-test`, 37,886,862 bytes; archive SHA256 `6ae6697c4b93d8d89ace48d8e862d69f4a44414f472ba04af29ca95cf3da2889` (archive, not APK; bundled SHA256SUMS gives APK digest).
+- https://github.com/yasin636/anime-card-assets/actions/runs/43153766165/artifacts/13915516972
+- Local tool/native97/97 (8 new audio tests), backend87/87, foundation PASS.
+- Deliver for phone acceptance: Settings → Music & sound; no Render deploy required, no backend/service/credential or Cloudinary change. Update in place without uninstall.
+- Remaining: physical sound quality/interruptions/headphones/Bluetooth/account/background verification and approval of music choices. Three original ambient demos are clearly labeled; reference anime recordings not licensed/approved/bundled. Do NOT call original soundtrack parity complete. Cleanup still pending; video deferred; 7B not started.
