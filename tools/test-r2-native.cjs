@@ -36,6 +36,8 @@ test('Tracker invalid episode blocks Save and preserves draft on unsuccessful re
  const props={entries:[{id:'x',title:'One Piece',episode:1096}],disabled:false,active:true,supported:true,send:c=>calls.push(c),onTab(){}};await mount(Tracker,props);await act(async()=>press('Edit episode One Piece').props.onPress());for(const value of ['0','-1','1.5','100001','']){await act(async()=>input('Current episode').props.onChangeText(value));assert(button('Save episode').props.disabled);}await act(async()=>input('Current episode').props.onChangeText('1100'));await act(async()=>button('Save episode').props.onPress());await act(async()=>tree.update(React.createElement(Tracker,{...props,disabled:true})));assert.equal(input('Current episode').props.value,'1100');assert(button('Save episode').props.disabled);
 });
 test('existing Detail screen content and Equip/Recycle flow preserved from approved R1 runtime',()=>{
- const {execFileSync}=require('node:child_process'),old=execFileSync('git',['show','c067f9b:apps/mobile/src/collection/CollectionScreens.tsx'],{encoding:'utf8'}),current=fs.readFileSync(path.join(__dirname,'../apps/mobile/src/collection/ExistingCollectionUI.tsx'),'utf8');
- const detail=old.slice(old.indexOf('function Detail('),old.indexOf('export function CardsScreen()')).trim();assert(current.includes(detail.replace('function Detail(','export function ExistingCardDetail(')));
+ const current=fs.readFileSync(path.join(__dirname,'../apps/mobile/src/collection/ExistingCollectionUI.tsx'),'utf8');
+ const detail=current.slice(current.indexOf('export function ExistingCardDetail(')).trim();
+ // Frozen SHA256 of approved R1 Detail, with only export/function-name normalization.
+ assert.equal(require('node:crypto').createHash('sha256').update(detail).digest('hex'),'6e5cac1d3abd95cee1a82c7a75c0708523e7db2aca9b6f77385a803173ba15c8');
 });

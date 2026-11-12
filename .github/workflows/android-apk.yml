@@ -6,6 +6,9 @@ on:
     branches: [arena/cd835a4c-anime-card-assets]
     paths:
       - apps/mobile/**
+      - tools/test-r2-native.cjs
+      - tools/test-community-mobile.cjs
+      - tools/validate-mobile-foundation.cjs
       - .github/workflows/android-apk.yml
 
 permissions:
