@@ -20,3 +20,8 @@ test('concurrent mission claim and overflow fail atomically',async()=>{
  const r=await Promise.allSettled([run(uid,c),run(uid,c)]);assert.equal(r.filter(x=>x.status==='fulfilled').length,1);const p=await state(uid);assert.equal(p.xp,20);assert.equal(p.gold,70);assert.equal(p.gems,5);
  await ref('overflow').set({xp:Number.MAX_SAFE_INTEGER});const {read}=await run('overflow',{type:'newsReadStart',articleId:'news-1'});await assert.rejects(run('overflow',{type:'newsReadClaim',sessionId:read.id},110000),e=>e.code==='numeric-overflow');assert.equal((await state('overflow')).daily_read_count,undefined);
 });
+test('direct episode set concurrent replay is isolated to verified owner and preserves rewards/fields',async()=>{
+ const uid='direct-tracker',other='other-tracker';await ref(uid).set({xp:20,gold:42,tracker:[{id:'same',title:'One Piece',episode:1096,legacy:true}]});await ref(other).set({tracker:[{id:'same',title:'Other account',episode:3}]});
+ const cmd={type:'trackerEpisodeSet',trackerId:'same',episode:1150},id='tracker_direct_same_123456789012';const [a,b]=await Promise.all([run(uid,cmd,100000,id),run(uid,cmd,100000,id)]);assert.deepEqual(a,b);assert.equal(a.xpDelta,0);assert.equal((await state(uid)).tracker[0].episode,1150);assert.equal((await state(uid)).tracker[0].legacy,true);assert.equal((await state(uid)).xp,20);assert.equal((await state(uid)).gold,42);assert.equal((await state(other)).tracker[0].episode,3);
+ await assert.rejects(run(uid,{...cmd,episode:0}),e=>e.code==='tracker-episode-invalid');await assert.rejects(run(uid,{...cmd,trackerId:'foreign'}),e=>e.code==='tracker-not-found');
+});

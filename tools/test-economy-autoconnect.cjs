@@ -2,7 +2,7 @@
 // Source-level regression checks; foreground/device behavior still needs phone QA.
 const {test}=require('node:test');const assert=require('node:assert/strict');const {readFileSync}=require('node:fs');
 const provider=readFileSync(require('node:path').join(__dirname,'../apps/mobile/src/collection/EconomyProvider.tsx'),'utf8');
-const ui=readFileSync(require('node:path').join(__dirname,'../apps/mobile/src/collection/CollectionScreens.tsx'),'utf8');
+const ui=readFileSync(require('node:path').join(__dirname,'../apps/mobile/src/collection/ExistingCollectionUI.tsx'),'utf8');
 test('automatic check waits for loaded profile/pending recovery and checks on foreground',()=>{
  assert(provider.includes("if(!ready||profile?.uid!==uid||!uid||!endpoint)return"));
  assert(provider.includes("AppState.addEventListener('change'"));assert(provider.includes("if(state==='active'&&Date.now()-lastCheck.current>60000)void check()"));assert(provider.includes('subscription.remove()'));

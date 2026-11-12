@@ -5,9 +5,10 @@ const {missions,level}=require('./social.cjs');
 const {loadCatalog}=require('./news.cjs');
 const fail=code=>{throw new EconomyError(code);};
 const missionRules={m_news:{key:'newsRead',goal:5,gold:70,xp:20,gems:5},m_posts:{key:'postsCreated',goal:2,gold:50,xp:15,gems:5},m_social:{key:'socialActions',goal:10,gold:50,xp:20,gems:5},m_tracker:{key:'animeAdded',goal:3,gold:90,xp:30,gems:8},m_community:{key:'communityActions',goal:3,gold:250,xp:40,gems:10}};
-const fields={communityView:[],trackerAdd:['title'],trackerEpisode:['trackerId'],trackerRemove:['trackerId'],communityMissionClaim:['missionId'],newsCatalog:[],newsReadStart:['articleId'],newsReadClaim:['sessionId'],newsReadCancel:['sessionId']},types=Object.keys(fields);
+const fields={communityView:[],trackerAdd:['title'],trackerEpisode:['trackerId'],trackerEpisodeSet:['trackerId','episode'],trackerRemove:['trackerId'],communityMissionClaim:['missionId'],newsCatalog:[],newsReadStart:['articleId'],newsReadClaim:['sessionId'],newsReadCancel:['sessionId']},types=Object.keys(fields);
 function validate(c){
  if(!c||!Object.hasOwn(fields,c.type)||Object.keys(c).some(k=>k!=='type'&&!fields[c.type].includes(k))||fields[c.type].some(k=>!Object.hasOwn(c,k)))fail('invalid-command');
+ if(c.type==='trackerEpisodeSet'&&(!Number.isSafeInteger(c.episode)||c.episode<1||c.episode>100000))fail('tracker-episode-invalid');
  if(c.type==='trackerAdd'&&(typeof c.title!=='string'||!c.title.trim()||c.title.length>200))fail('tracker-title-invalid');
  if(fields[c.type].includes('trackerId')&&!((typeof c.trackerId==='number'&&Number.isSafeInteger(c.trackerId))||(typeof c.trackerId==='string'&&c.trackerId.length>0&&c.trackerId.length<=160)))fail('invalid-command-field');
  if(c.type==='communityMissionClaim'&&!Object.hasOwn(missionRules,c.missionId))fail('invalid-command');
@@ -23,7 +24,7 @@ function trackerPlan(p,c,now){
   let id=now;for(const t of tracker)if(typeof t?.id==='number')id=Math.max(id,t.id+1);if(!Number.isSafeInteger(id))fail('numeric-overflow');tracker.unshift({id,title,episode:1});
  }else{
   const matches=tracker.map((t,i)=>t?.id===c.trackerId?i:-1).filter(i=>i>=0);if(matches.length!==1)fail(matches.length?'tracker-id-ambiguous':'tracker-not-found');const i=matches[0];
-  if(c.type==='trackerRemove')tracker.splice(i,1);else{const n=Number(tracker[i].episode||0)+1;if(!Number.isSafeInteger(n)||n<1)fail('numeric-overflow');tracker[i]={...tracker[i],episode:n};}
+  if(c.type==='trackerRemove')tracker.splice(i,1);else{const n=c.type==='trackerEpisodeSet'?c.episode:Number(tracker[i].episode||0)+1;if(!Number.isSafeInteger(n)||n<1)fail('numeric-overflow');tracker[i]={...tracker[i],episode:n};}
  }
  if(Buffer.byteLength(JSON.stringify({...p,tracker}))>850000)fail('profile-too-large');return tracker;
 }
