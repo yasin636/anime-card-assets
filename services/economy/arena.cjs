@@ -61,7 +61,7 @@ function publicFeatured(data){
  }
  return projected;
 }
-function publicBadge(gems){return gems>=2000?'Mythic Meta Hub':gems>=1000?'Diamond Rinnegan':gems>=600?'Golden Shuriken':gems>=300?'Silver Katana':gems>=100?'Copper Kunai':'';}
+function publicBadge(gems){return gems>=2000?'Mythic AniGooD':gems>=1000?'Diamond Rinnegan':gems>=600?'Golden Shuriken':gems>=300?'Silver Katana':gems>=100?'Copper Kunai':'';}
 function sanitizeQuiz(q){return {id:q.id,title:q.title,index:q.index,total:q.questions.length,correct:q.correct,wrong:q.wrong,skipped:q.skipped,status:q.status,question:q.status==='active'?{question:q.questions[q.index].question,hint:q.questions[q.index].hint}:null};}
 const {generateQuiz,judgeQuiz}=require('./quiz-ai.cjs');
 async function executeArena({db,verifiedUid:uid,operationId,command:c,ai}){

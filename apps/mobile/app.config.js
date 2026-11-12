@@ -8,6 +8,6 @@ module.exports = {
   '@react-native-firebase/app',
   '@react-native-google-signin/google-signin',
   ['expo-build-properties',{ios:{useFrameworks:'static'}}],
-  ['expo-image-picker',{photosPermission:'Choose profile and Feed photos for Anime Meta Hub.',cameraPermission:false,microphonePermission:false}],
+  ['expo-image-picker',{photosPermission:'Choose profile and Feed photos for AniGooD.',cameraPermission:false,microphonePermission:false}],
  ],
 };

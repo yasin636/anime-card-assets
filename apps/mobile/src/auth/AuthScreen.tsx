@@ -20,7 +20,7 @@ export function AuthScreen() {
     else void auth.login(address, password);
   };
   return <SafeAreaView style={f.page}><StatusBar style="light" /><KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}><ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[f.content, { flexGrow: 1, justifyContent: 'center' }]}>
-    <Text style={f.eyebrow}>ANIME META HUB · AUTH TEST 0.3.1</Text>
+    <Text style={f.eyebrow}>AniGooD</Text>
     <Text accessibilityRole="header" style={f.title}>{linking ? 'Connect your account.' : mode === 'login' ? 'Welcome back, hunter.' : 'Your story starts here.'}</Text>
     <Text style={f.body}>{linking ? 'একই email-এর existing password দিয়ে login করলে Google credential link করা হবে। আলাদা account merge করা হবে না।' : 'পুরোনো Firebase account দিয়ে login করতে পারবে। নতুন account-এর balance শুরু হবে শূন্য থেকে।'}</Text>
     <View style={f.panel}>

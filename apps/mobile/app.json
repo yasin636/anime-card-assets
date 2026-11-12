@@ -1,16 +1,17 @@
 {
   "expo": {
-    "name": "Anime Meta Hub Test",
+    "name": "AniGooD",
     "slug": "anime-meta-hub",
-    "version": "0.16.0",
+    "version": "0.17.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "android": {
       "package": "com.yasin636.animemetahub",
-      "versionCode": 28,
+      "versionCode": 29,
       "adaptiveIcon": {
-        "backgroundColor": "#030014"
+        "backgroundColor": "#030014",
+        "foregroundImage": "./assets/brand/adaptive-icon.png"
       },
       "permissions": [],
       "blockedPermissions": [
@@ -34,6 +35,12 @@
       "expo-font",
       "expo-build-properties"
     ],
-    "scheme": "animemetahub"
+    "scheme": "animemetahub",
+    "icon": "./assets/brand/icon.png",
+    "splash": {
+      "image": "./assets/brand/logo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#030014"
+    }
   }
 }

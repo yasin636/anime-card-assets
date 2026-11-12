@@ -42,7 +42,7 @@ export function storyPower(profile: Profile) {
   };
 }
 export function badge(gems: number) {
-  return gems >= 2000 ? '🌈 Mythic Meta Hub' : gems >= 1000 ? '💎 Diamond Rinnegan' : gems >= 600 ? '❤️ Golden Shuriken' : gems >= 300 ? '⚔️ Silver Katana' : gems >= 100 ? '🗡️ Copper Kunai' : '';
+  return gems >= 2000 ? '🌈 Mythic AniGooD' : gems >= 1000 ? '💎 Diamond Rinnegan' : gems >= 600 ? '❤️ Golden Shuriken' : gems >= 300 ? '⚔️ Silver Katana' : gems >= 100 ? '🗡️ Copper Kunai' : '';
 }
 export function errorMessage(error: unknown): string {
   const code = (error as { code?: string })?.code || '';

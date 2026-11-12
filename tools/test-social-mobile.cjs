@@ -64,8 +64,8 @@ test('Copy must succeed before share reward command; links use installed-app rou
  const baseline=calls.length;clipboardFails=true;await act(async()=>copy.props.onPress());assert.equal(calls.length,baseline);
  clipboardFails=false;await act(async()=>copy.props.onPress());assert.deepEqual(copied,['animemetahub://post/post-1']);assert.deepEqual(calls.at(-1),{type:'feedShare',postId:post.id});
 });
-test('Missions leave timeline via compact navigation without hidden reward commands',async()=>{
- await mount(result);let opens=0;await act(async()=>tree.update(React.createElement(FeedScreen,{onMissions:()=>opens++})));const trigger=tree.root.findAllByType('Pressable').find(p=>p.findAllByType('Text').some(n=>n.props.children==='Missions ↗'));assert(trigger);await act(async()=>trigger.props.onPress());assert.equal(opens,1);assert(!calls.some(c=>c.type==='socialMissionClaim'));assert(!JSON.stringify(tree.toJSON()).includes('DAILY SOCIAL MISSIONS'));
+test('Daily Missions sit at Feed top without News navigation or hidden reward claims',async()=>{
+ await mount(result);assert(JSON.stringify(tree.toJSON()).includes('Daily Missions'));assert(!JSON.stringify(tree.toJSON()).includes('News ↗'));assert(!calls.some(c=>c.type==='communityMissionClaim'));
 });
 test('Feed merge rejects stale versions and link/relative-time helpers are deterministic',()=>{
  const {mergePost,postLink,relativeTime}=load(path.join(__dirname,'../apps/mobile/src/social/types.ts'));

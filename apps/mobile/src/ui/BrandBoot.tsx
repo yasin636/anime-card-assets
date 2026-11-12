@@ -1,0 +1,9 @@
+import React,{useEffect,useRef,useState} from 'react';
+import {AccessibilityInfo,Animated,AppState,Image,StyleSheet,Text,View} from 'react-native';
+export function BrandBoot(){
+ const pulse=useRef(new Animated.Value(0)).current,[reduced,setReduced]=useState(true),[active,setActive]=useState(AppState.currentState==='active');
+ useEffect(()=>{let alive=true,changed=false;const motion=AccessibilityInfo.addEventListener('reduceMotionChanged',v=>{changed=true;setReduced(v);});const app=AppState.addEventListener('change',v=>setActive(v==='active'));void AccessibilityInfo.isReduceMotionEnabled().then(v=>{if(alive&&!changed)setReduced(v);}).catch(()=>{});return()=>{alive=false;motion.remove();app.remove();};},[]);
+ useEffect(()=>{pulse.setValue(0);if(reduced||!active)return;const loop=Animated.loop(Animated.sequence([Animated.timing(pulse,{toValue:1,duration:1600,useNativeDriver:true,isInteraction:false}),Animated.timing(pulse,{toValue:0,duration:1600,useNativeDriver:true,isInteraction:false})]));loop.start();return()=>loop.stop();},[reduced,active,pulse]);
+ return <View style={s.root}><Animated.View style={{alignItems:'center',gap:20,opacity:pulse.interpolate({inputRange:[0,1],outputRange:[.85,1]}),transform:[{scale:pulse.interpolate({inputRange:[0,1],outputRange:[1,1.025]})}]}}><Image source={require('../../assets/brand/logo.png')} style={s.logo}/><Text accessibilityRole="header" style={s.name}>AniGooD</Text></Animated.View><Text style={s.caption}>তোমার গল্প। তোমার মানুষ। তোমার জগৎ।</Text></View>;
+}
+const s=StyleSheet.create({root:{flex:1,backgroundColor:'#030014',alignItems:'center',justifyContent:'center',gap:18},logo:{width:96,height:96,borderRadius:24},name:{fontSize:34,fontWeight:'700',letterSpacing:1,color:'#eee5ff',textShadowColor:'#ac6cff',textShadowRadius:17,textShadowOffset:{width:0,height:0}},caption:{color:'#b9afd0',fontSize:12}});
