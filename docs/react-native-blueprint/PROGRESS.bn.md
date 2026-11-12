@@ -421,3 +421,9 @@ Owner confirmed v0.6.1 System reward/claim flow via two Goblin screenshots. Owne
 - Local full checks: backend 86/86, tool/native 83/83, foundation PASS.
 - Deliver as owner-test APK. Actual Cloudinary upload/delete and folder permissions are NOT live-verified. Media Library User role still requires explicit folder access bootstrap; do not present this as completed configuration. Agent did not deploy Render or access owner credentials.
 - Owner: deploy latest branch to existing Render service, update APK in place (no uninstall), test profile/Feed photo and existing feature regressions. If permission error appears, report error-only screenshot; do not send secrets, alter billing or auto-promote Master Admin. Video remains deferred, waiting for phone feedback.
+
+### 6D upload failure diagnostics patch v0.11.1/code21
+- Owner screenshot showed generic permission error after direct upload started. Exact cause unconfirmed: previous code conflated HTTP401/403 and did not distinguish credential/signature/folder causes.
+- Added safe allowlisted provider error codes on native direct upload and backend inspect/destroy, plus request stage labels; raw provider error bodies never returned/logged.
+- Added optional owner-run folder Editor grant/revoke tool: default offline dry-run, interactive exact-folder consent, separate local admin credential with hidden secret prompt; never sends secret to agent/backend, never grants global Master Admin or changes billing. Provider role request not live-verified; owner-only action still required if actual folder access is missing. Bengali guide included.
+- Native regression and setup/error tests added; full generated-config TS/security/signed build is CI gate. No real Cloudinary request or Render deploy performed.

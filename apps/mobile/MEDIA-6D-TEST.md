@@ -1,4 +1,4 @@
-# 6D Gallery Photo — v0.11.0 / Android code 20 owner-test candidate
+# 6D Gallery Photo — v0.11.1 / Android code 21 owner-test candidate
 
 Profile Gallery + one Feed photo implemented. Video remains deferred. This is a signed owner-test build, not certification that the owner's Cloudinary key has working permissions.
 
@@ -39,3 +39,7 @@ Profile Gallery + one Feed photo implemented. Video remains deferred. This is a 
 5. Permission denial, offline/retry, oversized image, expired pending and changed account must fail safely. Never expose key/secret in error screenshots.
 6. Delete test post, replace profile photo and verify eventual cleanup with provider permissions (allow for worker delay/Render sleep).
 7. Owner phone acceptance is required before 6E video. No live Cloudinary upload, provider access bootstrap or Render deployment has been performed by the agent.
+
+## Upload error diagnostic patch
+v0.11.0 conflated upload/inspect 401/403 as a folder-permission error. v0.11.1 classifies only allowlisted evidence-specific codes, displays stage (prepare/inspect/upload/discard) and never renders/logs the provider raw error body. Generic 401/403 remain explicitly inconclusive. Backend must also be deployed to obtain updated inspect/destroy errors.
+Owner-only optional folder Editor setup tool and Bengali guide: docs/react-native-blueprint/CLOUDINARY-FOLDER-SETUP.bn.md. No real credentials used or folder changes performed by agent. Default tool is dry-run; actual grant requires explicit local consent and hidden admin-secret input on owner's trusted device. App key remains Media Library User; no global role/billing change. If owner is phone-only, diagnose first and use support assistance rather than asking for secrets.

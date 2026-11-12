@@ -1,0 +1,5 @@
+'use strict';
+const {test}=require('node:test'),assert=require('node:assert/strict');const {providerError}=require('./media-errors.cjs');
+const cases=[[401,'Invalid Signature private-signing-string','media-provider-signature'],[401,'Unknown API key 123','media-provider-key'],[401,'Unauthorized','media-provider-auth'],[403,'Forbidden','media-provider-forbidden'],[403,'Access denied to folder animemetahub','media-provider-folder'],[401,'Stale request timestamp private','media-provider-expired'],[413,'Huge file','media-file-invalid'],[429,'Limit','media-provider-rate-limit'],[400,'Bad parameter','media-provider-request'],[503,'Private credentials must not leak','media-provider-unavailable']];
+test('Cloudinary errors distinguish evidence without exposing raw messages',()=>{for(const [status,message,code]of cases){assert.equal(providerError(status,{error:{message}}),code);assert(!providerError(status,{error:{message}}).includes('private'));}assert.equal(providerError(403,null),'media-provider-forbidden');assert.equal(providerError(401,{error:{message:{unsafe:true}}}),'media-provider-auth');});
+module.exports={cases};
