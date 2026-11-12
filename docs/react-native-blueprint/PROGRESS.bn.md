@@ -427,3 +427,11 @@ Owner confirmed v0.6.1 System reward/claim flow via two Goblin screenshots. Owne
 - Added safe allowlisted provider error codes on native direct upload and backend inspect/destroy, plus request stage labels; raw provider error bodies never returned/logged.
 - Added optional owner-run folder Editor grant/revoke tool: default offline dry-run, interactive exact-folder consent, separate local admin credential with hidden secret prompt; never sends secret to agent/backend, never grants global Master Admin or changes billing. Provider role request not live-verified; owner-only action still required if actual folder access is missing. Bengali guide included.
 - Native regression and setup/error tests added; full generated-config TS/security/signed build is CI gate. No real Cloudinary request or Render deploy performed.
+
+### v0.11.1 diagnostics APK verified
+- Runtime/build source `d5dd997e5c6e86826e688b0cc845d3ede6345551`; Android `43125659015` **SUCCESS**: security/emulator, generated Firebase TS, regressions, compile, pinned signature/metadata/embedded JS checks and artifact upload.
+- Artifact `13902213823` / `AnimeMetaHub-v0.11.1-gallery-photo-6D-test`; archive 36,390,031 bytes, SHA256 `35a2ad8bdfaa0943a6032cff3c0a095c46cb7246c7500844802c576497bc3a68` (archive, not APK).
+- https://github.com/yasin636/anime-card-assets/actions/runs/43125659015/artifacts/13902213823
+- Local backend 87/87; native/tool 89/89; foundation PASS.
+- This fixes misleading error classification, NOT proven live upload failure resolution. Owner still needs backend deploy + APK update and a fresh upload/error-only screenshot. Existing pending sessions may have expired; remove/reselect as needed.
+- Optional folder-scoped setup tool prepared and mock-tested, but not run against owner's Cloudinary. Root credentials remain on owner device; no key privilege change, billing change or live deployment performed by agent.
