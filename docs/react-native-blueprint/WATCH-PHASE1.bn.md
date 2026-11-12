@@ -39,3 +39,4 @@
 - External SRT/ASS import, PiP/downloads/party পরের ধাপের কাজ। Production source approval এখনও unresolved, sample দিয়ে সেটি পূরণ হয়েছে বলা যাবে না।
 - Local 140 tool/mobile tests + 92 backend tests PASS; foundation PASS। Local typecheck only missing CI-generated Firebase client; final generated-config TS/native build status GitHub CI-এ যাচাই করতে হবে।
 - Phone playback acceptance pending; apps/mobile/ANIGOOD-WATCH1-TEST.md অনুসরণ করুন।
+- Owner follow-up: custom JSON/Stremio-style future adapter boundary requested. Added data-only SourceAdapter + bounded 64KiB/50-stream parser and tests; no arbitrary code/headers/torrents, no full Stremio compatibility or marketplace claimed. Current user entry remains HTTPS link input.

@@ -24,3 +24,5 @@ Automated tests/build do not prove actual hardware playback. Owner device checks
 8. Recheck original music playback, private Chat image, Feed share, Sensei, Shop and Adventure after Watch.
 
 If anything fails, send device/Android version, selected sample/link type, exact steps and screenshot. Do not send private signed URLs or keys.
+
+Developer foundation: sources.ts defines a data-only SourceAdapter and bounded JSON `{ "streams": [{ "name": "Own video", "url": "https://…" }] }` parser. It is not exposed as an addon marketplace/UI yet. No manifest fetching, arbitrary code, torrents or provider-auth options. Full Stremio compatibility is not claimed.
