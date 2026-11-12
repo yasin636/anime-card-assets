@@ -40,3 +40,12 @@
 - Local 140 tool/mobile tests + 92 backend tests PASS; foundation PASS। Local typecheck only missing CI-generated Firebase client; final generated-config TS/native build status GitHub CI-এ যাচাই করতে হবে।
 - Phone playback acceptance pending; apps/mobile/ANIGOOD-WATCH1-TEST.md অনুসরণ করুন।
 - Owner follow-up: custom JSON/Stremio-style future adapter boundary requested. Added data-only SourceAdapter + bounded 64KiB/50-stream parser and tests; no arbitrary code/headers/torrents, no full Stremio compatibility or marketplace claimed. Current user entry remains HTTPS link input.
+
+## Signed build delivery
+- Runtime HEAD b8233fe452c436283a829d6ff4a787f505257486; v0.19.0/code31।
+- Local final 141 tool/mobile + 92 backend PASS; foundation PASS।
+- CI 43303421645 failed at validation: new test used repository-relative fixture paths while CI cwd was apps/mobile. Fixed test paths, no gate removed. Full final CI 43304279760 security + generated Firebase TypeScript + native build + pinned private signature + embedded JS checks SUCCESS।
+- Artifact 13983058288, AniGooD-v0.19.0-Watch1, ZIP 39,728,432 bytes। GitHub metadata archive digest sha256:359805e10889ce227d2c8fc276b581a7106b0949d53d5f07d044339146adef31 (not separately downloaded local APK digest)।
+- Download: https://github.com/yasin636/anime-card-assets/actions/runs/43304279760/artifacts/13983058288
+- No new key, billing or server deploy needed for offline fixture/direct authorized HTTPS playback।
+- Phone acceptance and production content source approval still pending. Do not declare complete universal streaming or hardware playback PASS।
