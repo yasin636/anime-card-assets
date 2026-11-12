@@ -1,9 +1,11 @@
 'use strict';
 const {test,afterEach}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),Module=require('node:module');
-const req=Module.createRequire(path.join(__dirname,'../apps/mobile/package.json')),React=req('react'),{act,create}=req('react-test-renderer'),ts=req('typescript');global.IS_REACT_ACT_ENVIRONMENT=true;let tree,finish,signal;
-const ai={ready:true,hasKey:true,enabled:true,model:'selected-model',ask:(_q,s)=>{signal=s;return new Promise(resolve=>{finish=resolve;});}};
+const req=Module.createRequire(path.join(__dirname,'../apps/mobile/package.json')),React=req('react'),{act,create}=req('react-test-renderer'),ts=req('typescript');global.IS_REACT_ACT_ENVIRONMENT=true;let tree,finish,signal,pickResult={canceled:true},askOptions;
+const ai={ready:true,hasKey:true,enabled:true,model:'selected-model',ask:(_q,s,options)=>{askOptions=options;signal=s;return new Promise(resolve=>{finish=resolve;});}};
 const file=path.join(__dirname,'../apps/mobile/src/ai/GeminiScreen.tsx'),m=new Module(file);m.filename=file;m.paths=Module._nodeModulePaths(path.dirname(file));m.require=n=>{
- if(n==='./AIProvider')return {useAI:()=>ai};if(n==='../ui/PresentationProvider')return {usePresentation:()=>({reduced:true})};if(n==='@react-navigation/native')return {useIsFocused:()=>true};if(n==='react-native')return {ActivityIndicator:'Spinner',Alert:{alert(){}},View:'View',ScrollView:'ScrollView',Text:'Text',TextInput:'TextInput',Pressable:'Pressable',StyleSheet:{create:s=>s}};if(n==='../ui/forms')return {f:{},ActionButton:p=>React.createElement('Button',p)};return req(n);
+ if(n==='../chat/ChatProvider')return {useChat:()=>({read:async()=>({})})};
+ if(n==='../collection/EconomyProvider')return {useEconomy:()=>({ready:true,configured:true,busy:false,pending:null})};if(n==='expo-image-picker')return {requestMediaLibraryPermissionsAsync:async()=>({granted:true}),launchImageLibraryAsync:async()=>pickResult};if(n==='expo-image-manipulator')return {SaveFormat:{JPEG:'jpeg'},manipulateAsync:async()=>({uri:'file://compressed.jpg',base64:'YWJj'})};if(n==='@expo/vector-icons')return {Ionicons:'Icon'};
+ if(n==='./AIProvider')return {useAI:()=>ai};if(n==='../ui/PresentationProvider')return {usePresentation:()=>({reduced:true})};if(n==='@react-navigation/native')return {useIsFocused:()=>true};if(n==='react-native')return {Switch:'Switch',Image:'Image',Linking:{openURL:async()=>{}},ActivityIndicator:'Spinner',Alert:{alert(){}},View:'View',ScrollView:'ScrollView',Text:'Text',TextInput:'TextInput',Pressable:'Pressable',StyleSheet:{create:s=>s}};if(n==='../ui/forms')return {f:{},ActionButton:p=>React.createElement('Button',p)};return req(n);
 };m._compile(ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,esModuleInterop:true}}).outputText,file);const Screen=m.exports.GeminiScreen;
 const press=label=>tree.root.findAllByType('Pressable').find(p=>p.props.accessibilityLabel===label);
 afterEach(async()=>{if(tree)await act(async()=>tree.unmount());tree=null;});
@@ -12,4 +14,8 @@ test('Sensei retains selected model/request/Stop behavior and polished own/answe
 });
 test('completed answer uses real response, not preview content; composer remains multiline',async()=>{
  await act(async()=>{tree=create(React.createElement(Screen,{onSettings(){}}));});await act(async()=>tree.root.findByType('TextInput').props.onChangeText('Explain'));await act(async()=>press('Send AI question').props.onPress());await act(async()=>finish('Actual answer'));assert(JSON.stringify(tree.toJSON()).includes('Actual answer'));assert.equal(tree.root.findByType('TextInput').props.multiline,true);assert(press('AI Provider settings'));
+});
+
+test('Sensei gallery sends selected image explicitly and Live Search flag, retains retry payload',async()=>{
+ pickResult={canceled:false,assets:[{uri:'file://image.jpg',width:600,height:400,fileSize:1000}]};await act(async()=>{tree=create(React.createElement(Screen,{onSettings(){}}));});await act(async()=>press('Attach Sensei photo').props.onPress());await act(async()=>tree.root.findByType('Switch').props.onValueChange(true));await act(async()=>press('Send AI question').props.onPress());assert.equal(askOptions.image,'YWJj');assert.equal(askOptions.search,true);await act(async()=>press('Stop AI reply').props.onPress());await act(async()=>finish('ignored'));await act(async()=>tree.root.findAllByType('Pressable').find(p=>p.findAllByType('Text').some(t=>t.props.children==='↻ Retry')).props.onPress());assert.equal(askOptions.image,'YWJj');await act(async()=>finish('Photo answer'));assert(JSON.stringify(tree.toJSON()).includes('Photo answer'));pickResult={canceled:true};
 });

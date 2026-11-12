@@ -13,14 +13,15 @@ async function cleanupMedia({db,cloudinary,now=Date.now(),limit=10}){
     let linked=false;
     if(s.status==='attached'){
      if(s.purpose==='avatar'){const p=await tx.get(actor);linked=p.exists&&p.data().avatarMedia?.uploadId===s.id&&p.data().avatar===s.asset?.url;}
+     else if(s.purpose==='chat'&&typeof s.messagePath==='string'&&/^(direct_chats\/[a-zA-Z0-9_-]+\/messages|global_messages)\/m_[a-f0-9]{40}$/.test(s.messagePath)){const m=await tx.get(db.doc(s.messagePath));linked=m.exists&&m.data().mediaId===s.id&&m.data().senderId===j.uid;}
      else if(s.postId){const p=await tx.get(db.collection('feed_posts').doc(s.postId));linked=p.exists&&p.data().mediaId===s.id;}
     }
     if(linked){tx.delete(job.ref);return null;}
     if(s.expiresAt+3600000>now){tx.update(job.ref,{notBefore:s.expiresAt+3600000});return null;}
-    tx.update(ref,{status:'deleting'});tx.update(job.ref,{leaseUntil:now+120000});return {publicId:s.publicId,ref};
+    tx.update(ref,{status:'deleting'});tx.update(job.ref,{leaseUntil:now+120000});return {publicId:s.publicId,ref,deliveryType:s.purpose==='chat'?'authenticated':'upload'};
    });
    if(!target)continue;
-   await service.destroy(target.publicId);
+   await service.destroy(target.publicId,target.deliveryType);
    await db.runTransaction(async tx=>{const session=await tx.get(target.ref);if(session.exists&&session.data().status==='deleting')tx.update(target.ref,{status:'deleted',deletedAt:now});tx.delete(job.ref);});removed++;
   }catch{failed++;try{await job.ref.update({leaseUntil:0,notBefore:now+600000});}catch{} }
  }

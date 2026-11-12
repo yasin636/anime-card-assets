@@ -69,3 +69,10 @@ test('Chat whole-shell keyboard avoidance covers Sensei composer; gameplay scree
  // Arena/Adventure are intentionally not part of this approved redesign scope.
  for(const file of ['arena/ArenaScreen.tsx','story/StoryScreen.tsx'])assert(fs.existsSync(path.join(__dirname,'../apps/mobile/src',file)));
 });
+test('gallery image send preserves peer scope and uses same durable Chat mutation path',async()=>{
+ await mount();await act(async()=>press('Inbox Bob').props.onPress());await act(async()=>input('Chat message').props.onChangeText('Photo caption'));await act(async()=>press('Attach chat photo').props.onPress());const uploader=tree.root.findByType('PhotoUploader');assert.equal(uploader.props.purpose,'chat');assert.equal(uploader.props.scope,'dm:bob');assert.equal(uploader.props.autoPick,true);await act(async()=>uploader.props.onReady('img_'+'a'.repeat(40)));await act(async()=>button('ছবি যুক্ত করো').props.onPress());await act(async()=>press('Send community message').props.onPress());assert.deepEqual(calls.at(-1),{type:'chatImageSend',peerId:'bob',text:'Photo caption',mediaId:'img_'+'a'.repeat(40)});
+ chat.result={type:'chatImageSend',peerId:'bob',message:{...msg,id:'photo-result',mediaId:'img_'+'a'.repeat(40),senderId:'alice',text:'Photo caption'}};await act(async()=>tree.update(React.createElement(ChatScreen,{onAISettings(){}})));assert.equal(input('Chat message').props.value,'');assert(!JSON.stringify(tree.toJSON()).includes('ছবি যুক্ত আছে'));
+});
+test('post links inside chat dispatch app navigation without external URL launch',async()=>{
+ let opened;await act(async()=>{tree=create(React.createElement(MessageBubble,{message:{...msg,postId:'post-123',text:'animemetahub://post/post-123'},own:false,global:false,disabled:false,onProfile(){},onDelete(){},onReact(){},onPost:id=>opened=id}));});await act(async()=>tree.root.findAllByType('Pressable').find(p=>typeof p.props.onPress==='function'&&p.findAllByType('Text').some(t=>t.props.children==='পোস্টটি খোলো ↗')).props.onPress());assert.equal(opened,'post-123');
+});

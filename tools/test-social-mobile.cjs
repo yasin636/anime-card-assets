@@ -6,6 +6,7 @@ const session={id:'session',version:2,chapterId:2,enemyId:'baran',enemy:{...play
 const audio={pause(){},play(){},replace(){},seekTo:async()=>{}};
 let audioHook=null;let copied=[],clipboardFails=false;
 function load(file=path.join(__dirname,'../apps/mobile/src/social/FeedScreen.tsx')){const m=new Module(file);m.filename=file;m.paths=Module._nodeModulePaths(path.dirname(file));m.require=name=>{
+ if(name==='../chat/ChatProvider')return {useChat:()=>({ready:true,busy:false,pending:null,inbox:[],recent:[],mutate:async c=>{calls.push(c);return {message:{id:'shared'}};},read:async()=>({users:[]})})};
  if(name==='../media/PhotoUploader')return {PhotoUploader:props=>React.createElement('PhotoUploader',props)};
  if(name==='../audio/AudioProvider')return {useSoundGate:(_players,local=true,visible=true)=>({current:local&&visible}),useAppAudio:()=>({prefs:{sfxEnabled:true,sfxVolume:.7,voiceEnabled:true},foreground:true,playSfx(){}})};
  if(name==='react-native')return {useWindowDimensions:()=>({width:400,height:800}),FlatList:props=>React.createElement('FlatList',{testID:'virtual-feed'},props.ListHeaderComponent,...props.data.map(item=>React.createElement(React.Fragment,{key:item.id},props.renderItem({item}))),!props.data.length&&props.ListEmptyComponent,props.ListFooterComponent),Platform:{OS:'android'},KeyboardAvoidingView:'KeyboardAvoidingView',AccessibilityInfo:{isReduceMotionEnabled:async()=>false},Alert:{alert:(_title,_message,buttons)=>{alertCount++;buttons.at(-1).onPress();}},AppState:{currentState:'active',addEventListener:(_event,cb)=>{appStateListener=cb;return {remove(){}}}},Animated:{Value:class{setValue(){} interpolate(){return 1;}stopAnimation(){}},View:'AnimatedView',Image:'Image',Text:'Text',sequence:()=>({start(){},stop(){}}),timing:()=>({start(){},stop(){}}),loop:()=>({start(){},stop(){}})},Linking:{openURL:async()=>{}},TextInput:'TextInput',Image:'Image',Modal:'Modal',Pressable:'Pressable',ScrollView:'ScrollView',Text:'Text',View:'View',StyleSheet:{create:s=>s}};
@@ -61,8 +62,8 @@ test('Comment sends own text, edit uses correct ownership target, author profile
 });
 test('Copy must succeed before share reward command; links use installed-app route not invented web URL',async()=>{
  await mount(result);const copy=tree.root.findAllByType('Pressable').find(p=>p.findAllByType('Text').some(n=>n.props.children==='Share'));
- const baseline=calls.length;clipboardFails=true;await act(async()=>copy.props.onPress());assert.equal(calls.length,baseline);
- clipboardFails=false;await act(async()=>copy.props.onPress());assert.deepEqual(copied,['animemetahub://post/post-1']);assert.deepEqual(calls.at(-1),{type:'feedShare',postId:post.id});
+ const baseline=calls.length;clipboardFails=true;await act(async()=>copy.props.onPress());await act(async()=>button('Copy link').props.onPress());assert.equal(calls.length,baseline);
+ clipboardFails=false;await act(async()=>button('Copy link').props.onPress());assert.deepEqual(copied,['animemetahub://post/post-1']);assert.deepEqual(calls.at(-1),{type:'feedShare',postId:post.id});
 });
 test('Daily Missions sit at Feed top without News navigation or hidden reward claims',async()=>{
  await mount(result);assert(JSON.stringify(tree.toJSON()).includes('Daily Missions'));assert(!JSON.stringify(tree.toJSON()).includes('News ↗'));assert(!calls.some(c=>c.type==='communityMissionClaim'));
@@ -110,4 +111,7 @@ test('Comment bubble uses subtle depth, with name/text inside and reply thread i
  const root={id:'root',uid:'alice',username:'Alice',text:'Root text',createdAtMs:Date.now()},reply={...root,id:'reply',parentId:'root',text:'Nested reply'};
  await mount({...result,posts:[{...post,comments:[root,reply]}]});const open=tree.root.findAllByType('Pressable').find(p=>p.findAllByType('Text').some(t=>t.props.children==='Comment'));await act(async()=>open.props.onPress());
  const bubble=press('Comment actions root');assert.equal(bubble.props.style.backgroundColor,'#303139');assert.equal(bubble.props.style.elevation,1);assert(bubble.findAllByType('Text').some(t=>t.props.children==='Alice'));assert(bubble.findAllByType('Text').some(t=>t.props.children==='Root text'));assert(!bubble.findAllByType('Text').some(t=>t.props.children==='Reply'));assert(press('Reply to comment reply'));assert(tree.root.findAllByType('Text').some(t=>t.props.children==='Nested reply'));
+});
+test('share panel dispatches real Global post command and Sensei routes only selected id',async()=>{
+ await mount(result);let senseiId;await act(async()=>tree.update(React.createElement(FeedScreen,{onSensei:id=>senseiId=id})));const share=()=>tree.root.findAllByType('Pressable').find(p=>p.findAllByType('Text').some(n=>n.props.children==='Share'));await act(async()=>share().props.onPress());await act(async()=>button('Global-এ পাঠাও').props.onPress());assert.deepEqual(calls.at(-1),{type:'chatGlobalPostSend',postId:'post-1'});await act(async()=>share().props.onPress());await act(async()=>button('Sensei-তে আলোচনা করো').props.onPress());assert.equal(senseiId,'post-1');
 });

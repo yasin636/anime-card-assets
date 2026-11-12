@@ -1,4 +1,4 @@
-export type Purpose='avatar'|'feed';
+export type Purpose='avatar'|'feed'|'chat';
 export type Asset={url:string;publicId:string;bytes:number;width:number;height:number;format:string};
 export type Prepared={uploadId:string;purpose:Purpose;maxBytes:number;expiresAt:number;upload:{url:string;apiKey:string;params:Record<string,string|number|boolean>;signature:string}};
 export type Work={uid:string;purpose:Purpose;uri:string;prepareId:string;finalizeId:string;discardId:string;prepared?:Prepared;done?:{uploadId:string;asset:Asset}};

@@ -4,9 +4,9 @@ import { CryptoDigestAlgorithm, digestStringAsync } from 'expo-crypto';
 import { useAuth } from '../auth/AuthProvider';
 import { getAuth } from '@react-native-firebase/auth';
 import {postSavedQuiz,QuizOperation} from './quizTransport';
-import { generate, MODEL_IDS } from './gemini';
+import { generate, MODEL_IDS, Message } from './gemini';
 type Config={model:string;enabled:boolean};
-type Context=Config&{requestQuiz:(operation:QuizOperation,token:string,signal:AbortSignal)=>Promise<Response>;ready:boolean;hasKey:boolean;revision:number;error:string;save:(config:Config,replacementKey:string)=>Promise<void>;remove:()=>Promise<void>;test:(model:string,replacementKey:string,signal:AbortSignal)=>Promise<void>;ask:(text:string,signal:AbortSignal)=>Promise<string>};
+type Context=Config&{requestQuiz:(operation:QuizOperation,token:string,signal:AbortSignal)=>Promise<Response>;ready:boolean;hasKey:boolean;revision:number;error:string;save:(config:Config,replacementKey:string)=>Promise<void>;remove:()=>Promise<void>;test:(model:string,replacementKey:string,signal:AbortSignal)=>Promise<void>;ask:(text:string,signal:AbortSignal,options?:{image?:string;search?:boolean;history?:Message[]})=>Promise<string>};
 const AIContext=createContext<Context|null>(null);
 export function useAI(){const value=useContext(AIContext);if(!value)throw Error('AIProvider missing');return value;}
 export function AIProvider({children}:{children:React.ReactNode}){
@@ -37,12 +37,14 @@ export function AIProvider({children}:{children:React.ReactNode}){
  const test=async(selected:string,replacement:string,signal:AbortSignal)=>{
   if(!ready||!owner())throw Error('AI settings এখন প্রস্তুত নয়।');
   if(!MODEL_IDS.includes(selected))throw Error('তালিকা থেকে model বেছে নাও।');
-  await generate(validateKey(replacement),selected,[{role:'user',parts:[{text:'Reply with OK.'}]}],signal);
+  await generate(validateKey(replacement),selected,[{role:'user',parts:[{text:'Reply with OK.'}]}],signal,{guide:false});
  };
- const ask=async(text:string,signal:AbortSignal)=>{
+ const ask=async(text:string,signal:AbortSignal,options:{image?:string;search?:boolean;history?:Message[]}={})=>{
   if(!ready||!owner())throw Error('AI settings এখন প্রস্তুত নয়।');if(!liveConfig.current.enabled)throw Error('Gemini বন্ধ আছে। Settings → AI Provider থেকে চালু করো।');
-  // Preserve current-question-only requests. Display history is local to chat, not sent to Google.
-  return generate(validateKey(''),liveConfig.current.model,[{role:'user',parts:[{text}]}],signal);
+  // Bound recent text context; selected image is explicit and never persisted with the key.
+  if(options.image&&(!/^[A-Za-z0-9+/=]+$/.test(options.image)||options.image.length>2097152))throw Error('ছবির আকার/format গ্রহণ হয়নি।');
+  const history=(options.history||[]).slice(-6).map(m=>({role:m.role,parts:m.parts.filter((p):p is {text:string}=>'text' in p).map(p=>({text:p.text.slice(0,2500)}))}));
+  return generate(validateKey(''),liveConfig.current.model,[...history,{role:'user',parts:[{text},...(options.image?[{inlineData:{mimeType:'image/jpeg',data:options.image}}]:[])]}],signal,{search:options.search});
  };
  const requestQuiz=(operation:QuizOperation,token:string,signal:AbortSignal)=>postSavedQuiz(operation,token,signal,ready&&liveConfig.current.enabled&&secret.current?{key:validateKey(''),model:liveConfig.current.model}:undefined,owner);
  return <AIContext.Provider value={{ready,hasKey,model,enabled,revision,error,save,remove,test,ask,requestQuiz}}>{children}</AIContext.Provider>;

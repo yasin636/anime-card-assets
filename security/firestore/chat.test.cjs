@@ -53,3 +53,29 @@ test('Global sender presence is bounded public projection with real heartbeat ex
  const read=await run(b,{type:'chatGlobal',before:''});const sender=read.users.find(u=>u.uid===a);assert(sender);assert.equal(sender.online,true);assert(!('email'in sender));assert(!('inventoryCards'in sender));assert(read.users.length<=50);
  await ref(a).update({lastSeenMs:Date.now()-71000});const expired=await run(b,{type:'chatGlobal',before:''});assert.equal(expired.users.find(u=>u.uid===a).online,false);
 });
+
+test('post sharing verifies visibility/deletion; replay creates one DM without draft or XP forgery',async()=>{
+ const a='share-owner',b='share-recipient';await seed(a);await seed(b);const post=db.collection('feed_posts').doc('share-post');await post.set({uid:a,caption:'real',created_at_ms:Date.now(),isAdmin:false});
+ const c={type:'chatPostSend',peerId:b,postId:post.id},op='post_share_replay_123456789012345';const x=await run(a,c,op),y=await run(a,c,op);assert.deepEqual(x,y);assert.equal(x.message.postId,post.id);assert.equal(x.message.text,`animemetahub://post/${post.id}`);assert.equal((await state(a)).xp,100);
+ await post.delete();await assert.rejects(run(a,{...c}),e=>e.code==='social-post-unavailable');await post.set({uid:a,created_at_ms:Date.now()-8*86400000});await assert.rejects(run(a,{type:'chatGlobalPostSend',postId:post.id}),e=>e.code==='social-post-unavailable');
+});
+test('private photo is single-use, participant-only, expiring, deleted message cannot renew access',async()=>{
+ const a='photo-owner',b='photo-recipient',stranger='photo-stranger';await seed(a);await seed(b);await seed(stranger);const uploadId='img_'+'a'.repeat(40),publicId='animemetahub/'+'b'.repeat(32)+'/'+uploadId;
+ process.env.CLOUDINARY_CLOUD_NAME='emulator';process.env.CLOUDINARY_API_KEY='12345';process.env.CLOUDINARY_API_SECRET='emulator-not-a-real-secret';
+ await ref(a).collection('media_uploads').doc(uploadId).set({id:uploadId,uid:a,purpose:'chat',status:'ready',publicId,expiresAt:Date.now()+3600000,asset:{format:'jpg',url:'https://unused/authenticated'}});
+ const c={type:'chatImageSend',peerId:b,text:'',mediaId:uploadId},op='photo_send_same_123456789012345';const x=await run(a,c,op),y=await run(a,c,op);assert.deepEqual(x,y);assert(!JSON.stringify(x).includes('https://unused'));assert.equal((await state(a)).xp,100);await assert.rejects(run(a,c),e=>e.code==='media-upload-not-ready');
+ const r=await run(b,{type:'chatImage',peerId:a,messageId:x.message.id});assert(r.expiresAt>Date.now());assert(r.expiresAt<=Date.now()+60000);assert(r.imageUrl.includes('signature='));assert(r.imageUrl.includes('type=authenticated'));await assert.rejects(run(stranger,{type:'chatImage',peerId:a,messageId:x.message.id}),e=>e.code==='chat-not-participant');
+ await assert.rejects(run(b,{type:'chatDelete',peerId:a,messageId:x.message.id}),e=>e.code==='chat-not-owner');await run(a,{type:'chatDelete',peerId:b,messageId:x.message.id});await assert.rejects(run(b,{type:'chatImage',peerId:a,messageId:x.message.id}),e=>e.code==='chat-message-unavailable');assert((await db.collection('media_cleanup_jobs').doc(uploadId).get()).exists);
+});
+test('public feed upload cannot be sent as a private chat attachment',async()=>{
+ const a='photo-purpose',b='photo-purpose-peer';await seed(a);await seed(b);const id='img_'+'f'.repeat(40);await ref(a).collection('media_uploads').doc(id).set({uid:a,purpose:'feed',status:'ready',expiresAt:Date.now()+3600000,asset:{url:'https://public'}});await assert.rejects(run(a,{type:'chatImageSend',peerId:b,text:'hi',mediaId:id}),e=>e.code==='media-upload-not-ready');
+});
+test('Global photo visible only after attach, concurrent attach single-use, cleanup preserves live authenticated image',async()=>{
+ const a='global-photo-owner',b='global-photo-reader';await seed(a);await seed(b);const id='img_'+'c'.repeat(40),publicId='animemetahub/'+'d'.repeat(32)+'/'+id;
+ await ref(a).collection('media_uploads').doc(id).set({id,uid:a,purpose:'chat',status:'ready',publicId,expiresAt:Date.now()+3600000,asset:{format:'jpg'}});
+ const results=await Promise.allSettled([run(a,{type:'chatGlobalImageSend',mediaId:id,text:'photo'}),run(a,{type:'chatGlobalImageSend',mediaId:id,text:'photo'})]);assert.equal(results.filter(x=>x.status==='fulfilled').length,1);const sent=results.find(x=>x.status==='fulfilled').value;
+ const r=await run(b,{type:'chatImage',peerId:'',messageId:sent.message.id});assert(r.imageUrl.includes('expires_at='));
+ const job=db.collection('media_cleanup_jobs').doc(id);await job.set({uid:a,uploadId:id,publicId,notBefore:Date.now()-1});const {cleanupMedia}=require('../../services/economy/media-cleanup.cjs');let destroyed=false;await cleanupMedia({db,now:Date.now()+8000000,cloudinary:{destroy:async target=>{if(target===publicId)destroyed=true;}}});assert.equal(destroyed,false);assert(!(await job.get()).exists);
+ await run(a,{type:'chatGlobalDelete',messageId:sent.message.id});let delivery;await cleanupMedia({db,now:Date.now()+8000000,cloudinary:{destroy:async(target,type)=>{if(target===publicId)delivery=type;}}});assert.equal(delivery,'authenticated');await assert.rejects(run(b,{type:'chatImage',peerId:'',messageId:sent.message.id}),e=>e.code==='chat-message-unavailable');
+});
+test('Sensei shared-post preview revalidates server visibility, never returns private profile fields',async()=>{const a='sensei-share';await seed(a);const post=db.collection('feed_posts').doc('sensei-post');await post.set({uid:a,username:'Reader',caption:'Discuss',created_at_ms:Date.now(),privateField:'SECRET'});const r=await run(a,{type:'chatPostPreview',postId:post.id});assert.deepEqual(r.sharedPost,{id:post.id,username:'Reader',caption:'Discuss'});assert(!JSON.stringify(r).includes('SECRET'));await post.delete();await assert.rejects(run(a,{type:'chatPostPreview',postId:post.id}),e=>e.code==='social-post-unavailable');});
