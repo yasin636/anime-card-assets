@@ -501,3 +501,17 @@ Owner reported Cards/Tracker navigation inert in downloaded HTML. Reproduced act
 Corrected runtime `b22c049af98087adb4f01136daf8dca48272e821`.
 **Use this instead of original broken ZIP:** https://github.com/yasin636/anime-card-assets/actions/runs/43211459564/artifacts/13941476892
 `AnimeMetaHub-R2-Edition01-Fixed-Preview`, ZIP1,763,635 bytes, SHA256 `3be8af4eee5a5d702faf81da01497af1d2d3eeb9e27ee4bb512fd4d3fc67c7ca`. Open `AnimeMetaHub-R2-Edition01-Fixed.html` (2,365,275 bytes); no APK/Render deploy. Owner phone retest pending.
+
+### R2 native implementation — owner-approved preview + card-details exception
+Owner approved R2 Edition01-Fixed and explicitly retained the existing full-screen card Details/Equip/Recycle UI (Itachi screenshot), not preview's bottom sheet. Native R2 v0.15.0/code27 implemented on active branch. Implementation `4c20be0d4bd0fbc20f48f31c2ca2e68dbfa9c7ad`; CI-independent regression follow-up `3bd9cbf7c6e3d26d41c8d42a2a352f0765f1551f`.
+- Shop: animated summon chamber, actual Gold/pity, only server-confirmed reveal, same-operation pending recovery; reduced motion/foreground/focus cleanup. Seven real aura previews, explicit Owned/Equipped, separate buy/equip.
+- Cards: virtualized two-column collection, query/rarity/sort, duplicates retain instance IDs; six-slot compact management and original legacy preparation/catalog. Original Detail extracted to ExistingCollectionUI with body unchanged; frozen SHA256 regression protects owner requirement. No gameplay slot/recycle reward policy change.
+- Tracker: direct episode1–100000 Save with strict `trackerEpisodeSet`, search/sort + FlatList12initial/12batch/window7; no enclosing ScrollView. Failed/pending saves retain editor; only matching returned tracker closes it. News/mission/read timer safeguards preserved; unnecessary tracker-mode1s rerenders removed.
+- Backend tests: strict fields/bounds, typed legacy IDs/metadata and owner isolation, duplicate ID rejection, corrections downward, idempotent/no-XP semantics. New Firestore emulator concurrent set/replay/owner case.
+Local120 app/tool +91 backend tests PASS, foundation PASS. Local TS only missing ignored generated Firebase client; CI generates. Initial CI43221051457 passed generated TypeScript/emulator but failed at regression validation: preserved-Details check used git show old commit unavailable to shallow checkout. Replaced git-history dependency with frozen approved source hash; exact CI test sequence passes locally. Rebuild43221796958 in progress at this entry.
+**Render deployment required** from active branch runtime above before direct episode Save; agent has NOT deployed. Preserve owner-only enable/allowlist and existing env. No Rules/Cloudinary/billing changes. Phone QA required; no native-device certification or measured-performance claim. R3/Step8 deferred.
+
+#### R2 signed APK delivery
+CI **43221796958 SUCCESS**: Firestore emulator, generated Firebase TypeScript, all app/backend validation, standalone compilation, private signature/package/version/embedded-JS verification and upload passed.
+https://github.com/yasin636/anime-card-assets/actions/runs/43221796958/artifacts/13944989813
+Artifact `AnimeMetaHub-v0.15.0-redesign-R2-test`, ZIP37,912,180 bytes, SHA256 `8edf665b1bba05e448265cd6c690336e80542e306993ee92371d52f7c35d3cac`. Runtime/backend deploy commit `3bd9cbf7c6e3d26d41c8d42a2a352f0765f1551f`. Install in-place code27; no uninstall/clear. Render still NOT deployed by agent; owner deploy required before testing episode Save. R2 phone acceptance pending.
