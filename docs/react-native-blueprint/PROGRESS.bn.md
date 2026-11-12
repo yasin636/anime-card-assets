@@ -452,3 +452,15 @@ Owner confirmed v0.6.1 System reward/claim flow via two Goblin screenshots. Owne
 - Local tool/native97/97 (8 new audio tests), backend87/87, foundation PASS.
 - Deliver for phone acceptance: Settings → Music & sound; no Render deploy required, no backend/service/credential or Cloudinary change. Update in place without uninstall.
 - Remaining: physical sound quality/interruptions/headphones/Bluetooth/account/background verification and approval of music choices. Three original ambient demos are clearly labeled; reference anime recordings not licensed/approved/bundled. Do NOT call original soundtrack parity complete. Cleanup still pending; video deferred; 7B not started.
+
+## Step 7B — signed delivery; phone acceptance pending
+
+Owner explicitly authorized 7B plus restoration of the original three-song playlist before 7A phone acceptance. Runtime source `6cd5a1dd3eaab1835832b16998814668d01cc13f`, v0.13.0 / Android code23. Exact source URLs for Dark Aria, Kamado Tanjiro and Suzume are restored as external streaming defaults, not copied recordings. Offline demos remain explicit opt-in, never automatic fallback. Source reachability/recording identity/usage permission were not independently verified in this environment.
+
+Account-scoped effective OS/user Reduce Motion, foreground/focus theme gating, Story/Arena/navigation reduced presentation, keyboard resize/avoidance, More/About scrolling, small-width padding/currency wrapping, button/form accessibility metadata and avatar URI fallback reset implemented. See `apps/mobile/POLISH-7B-TEST.md` for phone steps and limits. No claim of complete visual/accessibility parity or physical-device acceptance.
+
+Validation: 102/102 tool/native tests, 87/87 backend tests, foundation checks. Signed CI run **43158252628** SUCCESS on unchanged rerun: first security emulator attempt failed with `Transaction is invalid or closed`; no security checks bypassed. Generated Firebase TypeScript, security emulator, release build and pinned private signature/embedded-JS checks passed. Artifact **13917337438**, `AnimeMetaHub-v0.13.0-polish-7B-test`, 37,891,984 bytes; ZIP digest `dbed1850d1302ff2c3abe146e479e07276d48e23eb64457669d806a33fedcf56` (APK hash is separately in bundled SHA256SUMS).
+
+Download: https://github.com/yasin636/anime-card-assets/actions/runs/43158252628/artifacts/13917337438
+
+Install in place, do not uninstall/clear data. Phone tests of original streaming, settings, reduced effects, keyboard/font-size/rotation/TalkBack and update/data preservation remain pending. No Render deployment or Cloudinary changes needed. Cleanup provider deletion still unverified; video remains deferred. Wait for owner feedback before another feature step.
