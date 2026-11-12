@@ -1,0 +1,1 @@
+{"name":"amh-r1-design-preview","version":"1.0.0","private":true,"description":"Interactive sample-only visual direction; not the native app","scripts":{"test":"node --test preview.test.cjs"},"devDependencies":{"jsdom":"^26.1.0"}}
