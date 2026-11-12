@@ -464,3 +464,15 @@ Validation: 102/102 tool/native tests, 87/87 backend tests, foundation checks. S
 Download: https://github.com/yasin636/anime-card-assets/actions/runs/43158252628/artifacts/13917337438
 
 Install in place, do not uninstall/clear data. Phone tests of original streaming, settings, reduced effects, keyboard/font-size/rotation/TalkBack and update/data preservation remain pending. No Render deployment or Cloudinary changes needed. Cleanup provider deletion still unverified; video remains deferred. Wait for owner feedback before another feature step.
+
+## R1 — native Profile/Feed redesign delivered; owner phone acceptance pending
+
+Owner postponed Step8 and requested redesign in R1–R3. R1 Edition02 visual preview reviewed on owner's phone; owner then authorized native implementation, including full-width feed media/tall screenshot viewer. R2/R3, video and Step8 are not started by this delivery.
+
+Native source `4a4a8bdc346ac6681e89b3f9a510932d3719485f`, version **0.14.0 / Android code24**. New neutral shell/vector nav, actual account identity/avatar/equipped-card horizontal showcase, edit/photo/account/power sheets; ordinary screen step/build/connection/UID success clutter removed. Diagnostics stays in Settings. Feed virtualized, compact composer, comments sheet, long-press reactions and accessible menu, owner Edit/Delete. Ordinary media measured full width; very tall screenshots bounded with full image and explicit zoom viewer. Secure upload/drafts/operation-ID retry paths preserved. Memory-only server-confirmed UID-scoped feed cache60s; rapid foreground check throttled60s; established availability maintained during read-only revalidation, explicit server denial revokes it. No claim of zero Render Free cold-start latency or measured scroll performance; server authorization is unchanged.
+
+Validation: **109/109 app/tool tests**, **87/87 backend tests**, foundation validation. Signed Android workflow **43184286606 SUCCESS**: security/emulator, generated Firebase TypeScript, release compile, pinned private signature/embedded-JS checks and upload passed. Artifact **13927827836**, `AnimeMetaHub-v0.14.0-redesign-R1-test`, **37,898,607 bytes**. ZIP SHA256 `3b082d02a231a5a41c5083f9423ef557957b01552a47f0c826a32ee043d44c30`; APK SHA256 separately inside SHA256SUMS.
+
+Download: https://github.com/yasin636/anime-card-assets/actions/runs/43184286606/artifacts/13927827836
+
+Phone checklist: `apps/mobile/REDESIGN-R1-TEST.md`. Install in-place; do not uninstall/clear data. Actual phone layout/keyboard/scroll/media zoom, upload/consumption, account isolation, pending recovery and prior feature regression need owner acceptance. Native design intentionally uses real equipped cards, not sample signature-three ownership or fake handles/verified/Follow/Save controls. Profile/Feed suppress global backdrop so text remains clear; theme ownership is not removed. No Render/Cloudinary permission/billing changes. Cleanup deletion still pending independent verification, video deferred. Wait for feedback before R2.
