@@ -23,3 +23,7 @@ Visual: obsidian #101113, lilac #beadfa, restrained acid #dcfa89; editorial anim
 ## Next / approval gate
 
 Owner review of visual direction first. Then port to real RN components; preserve existing identity, account isolation, pending-command receipts, rewards, media validation and read permissions. No paid hosting, no video, no Step8, no new feature-step approval assumed.
+
+## Edition 02 — owner-requested refinement
+
+Profile now opens first: atmospheric hunter identity, visible character head, custom monogram avatar placeholder, rank crest, integrated level journey, compact balances, swipeable signature cards and combat detail sheet. Cover mood can be changed locally. No large slogan/expanded account-photo panels. Gentle ambient glow respects Reduce Motion. Feed retains its structure with smaller type, consistent inline SVG icons, tighter header/composer, and discussion filter. Fake Follow/Save/verified star removed; no unsupported social persistence implied. Profile cards/sample identity remain explicitly illustrative. Native account mapping and secure media flows are unchanged, pending approval. Six DOM tests, not a rendered-device certification. Downloadable GitHub artifact now named AnimeMetaHub-R1-Edition02-Preview.

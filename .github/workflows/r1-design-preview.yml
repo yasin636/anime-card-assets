@@ -16,14 +16,14 @@ jobs:
           node-version: '22'
       - run: npm ci --prefix design/r1 --no-audit --no-fund
       - run: npm --prefix design/r1 test
-      - run: node design/r1/bundle.cjs /tmp/r1-preview/AnimeMetaHub-R1-Preview.html
+      - run: node design/r1/bundle.cjs /tmp/r1-preview/AnimeMetaHub-R1-Edition02.html
       - name: Add phone instructions
         run: |
-          printf '%s\n' 'R1 design preview only. Sample data, no real account actions.' 'Extract this ZIP, then open AnimeMetaHub-R1-Preview.html in Chrome or an HTML viewer.' 'No server or internet needed after download. Profile/Feed tabs are at the bottom.' > /tmp/r1-preview/READ-ME.txt
-          cd /tmp/r1-preview && sha256sum AnimeMetaHub-R1-Preview.html > SHA256SUMS.txt
+          printf '%s\n' 'R1 design preview only. Sample data, no real account actions.' 'Extract this ZIP, then open AnimeMetaHub-R1-Edition02.html in Chrome or an HTML viewer.' 'No server or internet needed after download. Profile/Feed tabs are at the bottom.' > /tmp/r1-preview/READ-ME.txt
+          cd /tmp/r1-preview && sha256sum AnimeMetaHub-R1-Edition02.html > SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: AnimeMetaHub-R1-Design-Preview
+          name: AnimeMetaHub-R1-Edition02-Preview
           path: /tmp/r1-preview/
           retention-days: 14
           if-no-files-found: error
