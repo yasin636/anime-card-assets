@@ -23,3 +23,6 @@ Obsidian shell consistent with approved R1; restrained lilac ritual chamber and 
 `npm ci --prefix design/r1 --no-audit --no-fund` installs the shared jsdom test dependency.
 `node --test design/r2/preview.test.cjs` — navigation, single sample debit/reveal, retry/error, aura ownership, rarity slots, six-slot management, 124-entry search, direct episode validation and escaped input/focus.
 `node design/r2/bundle.cjs /home/user/output/AnimeMetaHub-R2-Edition01.html` builds a standalone offline HTML, inlining all CSS, JS and artwork. GitHub Actions supplies a downloadable ZIP for mobile; no sandbox preview access required.
+
+## Distribution fix
+The initial standalone bundler passed script text as a String.replace replacement string. JavaScript `$$` was interpreted as replacement syntax and collapsed to `$`, causing a duplicate-identifier SyntaxError at startup. Source-only tests missed it. Use callback replacements to preserve script bytes. An additional integration test builds and executes the actual standalone HTML, checks zero script errors, navigates Cards/Tracker/Aura, saves an episode and completes a sample summon. Corrected artifact/HTML uses `Edition01-Fixed` to distinguish from the broken download. No visual direction or native/backend changes.

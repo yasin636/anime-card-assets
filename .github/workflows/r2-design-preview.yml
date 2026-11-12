@@ -16,14 +16,14 @@ jobs:
           node-version: '22'
       - run: npm ci --prefix design/r1 --no-audit --no-fund
       - run: node --test design/r2/preview.test.cjs
-      - run: node design/r2/bundle.cjs /tmp/r2-preview/AnimeMetaHub-R2-Edition01.html
+      - run: node design/r2/bundle.cjs /tmp/r2-preview/AnimeMetaHub-R2-Edition01-Fixed.html
       - name: Add phone instructions and checksum
         run: |
-          printf '%s\n' 'R2 Shop / Cards / Tracker — interactive design preview only.' 'Sample data: no real purchases, account access, server calls or persistence. Reload resets the demo.' 'Extract this ZIP, then open AnimeMetaHub-R2-Edition01.html in Chrome or an HTML viewer. All artwork/scripts are offline.' 'Bottom navigation: Shop, Cards, Tracker. Shop tabs: Summon chamber / Aura studio.' 'Try: Summon, aura buy/equip, card filter/showcase, Tracker search and direct episode Save.' 'Know your odds includes simulated connection interruption; change Preview flow to success before retrying.' 'Native implementation begins after visual approval. No APK or Render deploy needed for this preview.' > /tmp/r2-preview/READ-ME.txt
-          cd /tmp/r2-preview && sha256sum AnimeMetaHub-R2-Edition01.html > SHA256SUMS.txt
+          printf '%s\n' 'R2 Shop / Cards / Tracker — interactive design preview only.' 'Sample data: no real purchases, account access, server calls or persistence. Reload resets the demo.' 'Extract this ZIP, then open AnimeMetaHub-R2-Edition01-Fixed.html in Chrome or an HTML viewer. All artwork/scripts are offline.' 'Bottom navigation: Shop, Cards, Tracker. Shop tabs: Summon chamber / Aura studio.' 'Try: Summon, aura buy/equip, card filter/showcase, Tracker search and direct episode Save.' 'Know your odds includes simulated connection interruption; change Preview flow to success before retrying.' 'Native implementation begins after visual approval. No APK or Render deploy needed for this preview.' > /tmp/r2-preview/READ-ME.txt
+          cd /tmp/r2-preview && sha256sum AnimeMetaHub-R2-Edition01-Fixed.html > SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: AnimeMetaHub-R2-Edition01-Preview
+          name: AnimeMetaHub-R2-Edition01-Fixed-Preview
           path: /tmp/r2-preview/
           retention-days: 14
           if-no-files-found: error
