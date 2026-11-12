@@ -45,8 +45,8 @@ test('DM inbox shows unread, opens only peer route, persists draft and sends exa
  chat.result={type:'chatSend',peerId:'bob',message:{...msg,senderId:'alice',text:'বাংলা DM'}};await act(async()=>tree.update(React.createElement(ChatScreen,{onAISettings(){}})));assert.equal(input('Chat message').props.value,'');
 });
 test('Global channel allows independent multiple reactions and community mission claim, Sensei retained separately',async()=>{
- await mount();await act(async()=>textPress('Global').props.onPress());assert(calls.some(c=>c.type==='chatGlobal'));assert(button('Claim Community mission'));await act(async()=>button('Claim Community mission').props.onPress());assert.deepEqual(calls.at(-1),{type:'chatMissionClaim'});
- await act(async()=>press('Reactions msg-1').props.onPress());await act(async()=>press('Toggle global ❤️').props.onPress());assert.deepEqual(calls.at(-1),{type:'chatGlobalReact',messageId:'msg-1',emoji:'❤️'});
+ await mount();await act(async()=>textPress('Global lounge').props.onPress());assert(calls.some(c=>c.type==='chatGlobal'));assert.equal(button('Claim Community mission'),undefined);await act(async()=>press('Community mission').props.onPress());assert(button('Claim Community mission'));await act(async()=>button('Claim Community mission').props.onPress());assert.deepEqual(calls.at(-1),{type:'chatMissionClaim'});
+ await act(async()=>press('Close sheet').props.onPress());await act(async()=>press('Options msg-1').props.onPress());await act(async()=>press('Toggle global ❤️').props.onPress());assert.deepEqual(calls.at(-1),{type:'chatGlobalReact',messageId:'msg-1',emoji:'❤️'});
  await act(async()=>textPress('✦ Sensei').props.onPress());assert.equal(tree.root.findAllByType('Sensei').length,1);assert(!calls.some(c=>c.type?.startsWith('quiz')));
 });
 test('Global/DM send retains draft while pending and prevents duplicate send; search filters on server',async()=>{
@@ -55,4 +55,17 @@ test('Global/DM send retains draft while pending and prevents duplicate send; se
 });
 test('Message merge reconciles deleted latest items without discarding loaded older history',()=>{
  const {mergeMessages}=load(path.join(__dirname,'../apps/mobile/src/chat/types.ts'));const old=[{...msg,id:'old',createdAtMs:1},{...msg,id:'removed',createdAtMs:3}],latest=[{...msg,id:'new',createdAtMs:2}];assert.deepEqual(mergeMessages(old,latest,true).map(m=>m.id),['old','new']);assert.deepEqual(mergeMessages(old,[],true),[]);
+});
+test('presence dot sits at avatar corner and expires; unknown/offline are never shown active',async()=>{
+ const {isActiveUser,PresenceAvatar}=load(path.join(__dirname,'../apps/mobile/src/chat/PresenceAvatar.tsx'));const now=Date.now();assert(isActiveUser({...bob,lastSeenMs:now},now));assert(!isActiveUser({...bob,lastSeenMs:now-70000},now));assert(!isActiveUser({...bob,online:false,lastSeenMs:now},now));assert(!isActiveUser({...bob,lastSeenMs:now+100000},now));
+ await act(async()=>{tree=create(React.createElement(PresenceAvatar,{uri:'',online:true}));});const dot=tree.root.findAllByType('View').find(p=>p.props.accessibilityLabel==='Active now');assert(dot);assert.equal(dot.props.style[0].right,-1);assert.equal(dot.props.style[0].bottom,-1);await act(async()=>tree.update(React.createElement(PresenceAvatar,{uri:'',online:false})));assert(!tree.root.findAllByType('View').some(p=>p.props.accessibilityLabel==='Active now'));
+});
+test('own message Copy/Delete are contextual, other message cannot show Delete',async()=>{
+ const command=[];await act(async()=>{tree=create(React.createElement(MessageBubble,{message:msg,own:false,global:false,disabled:false,onProfile(){},onDelete:id=>command.push(id),onReact(){}}));});assert.equal(button('Delete my message'),undefined);await act(async()=>press('Options msg-1').props.onPress());assert(button('Copy message'));assert.equal(button('Delete my message'),undefined);await act(async()=>button('Copy message').props.onPress());assert.equal(copied.at(-1),msg.text);
+ await act(async()=>tree.update(React.createElement(MessageBubble,{message:msg,own:true,global:false,disabled:false,onProfile(){},onDelete:id=>command.push(id),onReact(){}})));await act(async()=>press('Options msg-1').props.onPress());await act(async()=>button('Delete my message').props.onPress());assert.deepEqual(command,['msg-1']);
+});
+test('Chat whole-shell keyboard avoidance covers Sensei composer; gameplay screens untouched',()=>{
+ const app=fs.readFileSync(path.join(__dirname,'../apps/mobile/App.tsx'),'utf8');assert(app.includes("behavior={route.name==='Chat'?(Platform.OS==='ios'?'padding':'height'):undefined}"));assert(app.includes("keyboardVerticalOffset={route.name==='Chat'?insets.top:0}"));
+ // Arena/Adventure are intentionally not part of this approved redesign scope.
+ for(const file of ['arena/ArenaScreen.tsx','story/StoryScreen.tsx'])assert(fs.existsSync(path.join(__dirname,'../apps/mobile/src',file)));
 });

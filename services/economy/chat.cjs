@@ -28,7 +28,12 @@ async function executeChat({db,verifiedUid:uid,verifiedAdmin=false,operationId,c
  if(c.peerId===uid)fail('chat-self');
  if(['chatInbox','chatSearch','chatGlobal'].includes(c.type)){
   const mine=await meRef.get();if(!mine.exists)fail('profile-not-found');
-  if(c.type==='chatGlobal')return {...base,...page(await pageQuery(global,c.before).get(),uid),missionData:missions(mine.data(),new Date(now).toISOString().slice(0,10))};
+  if(c.type==='chatGlobal'){
+   const batch=page(await pageQuery(global,c.before).get(),uid),ids=[...new Set(batch.messages.map(m=>m.senderId))].filter(idOK);
+   // Bounded public sender projection for real, expiring presence dots; never infer activity from messages.
+   const profiles=await Promise.all(ids.map(id=>users.doc(id).get()));
+   return {...base,...batch,users:profiles.filter(d=>d.exists).map(d=>user(d.data(),d.id,now)),missionData:missions(mine.data(),new Date(now).toISOString().slice(0,10))};
+  }
   if(c.type==='chatSearch'){
    let q=users.orderBy(require('firebase-admin/firestore').FieldPath.documentId()).limit(100);if(c.cursor)q=q.startAfter(c.cursor);const snap=await q.get(),needle=c.query.trim().normalize('NFKC').toLowerCase();
    return {...base,users:snap.docs.filter(d=>d.id!==uid&&String(d.data().username||'').normalize('NFKC').toLowerCase().includes(needle)).map(d=>user(d.data(),d.id,now)),nextSearchCursor:snap.docs.length===100?snap.docs.at(-1).id:'',query:c.query};

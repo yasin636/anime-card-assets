@@ -46,3 +46,10 @@ test('Injected commit failure leaves no DM, unread, mission or receipt side effe
  const a='chat-rollback-a',b='chat-rollback-b';await seed(a);await seed(b);const operationId='chat_rollback_1234567890123456',failing={collection:db.collection.bind(db),runTransaction:fn=>db.runTransaction(async tx=>{await fn(tx);throw Error('injected-before-commit');})};
  await assert.rejects(execute({db:failing,verifiedUid:a,operationId,command:{type:'chatSend',peerId:b,text:'rollback'}}),/injected-before-commit/);assert.equal((await parent(a,b).get()).exists,false);assert.equal((await ref(a).collection('economy_receipts').doc(operationId).get()).exists,false);assert.deepEqual((await state(b)).recentChats,[]);
 });
+
+test('Global sender presence is bounded public projection with real heartbeat expiry',async()=>{
+ const a='global-presence-sender',b='global-presence-reader';await seed(a,{online:true,lastSeenMs:Date.now(),email:'DO_NOT_EXPOSE',inventoryCards:['SECRET_CARD']});await seed(b);
+ await run(a,{type:'chatGlobalSend',text:'Presence sample'});
+ const read=await run(b,{type:'chatGlobal',before:''});const sender=read.users.find(u=>u.uid===a);assert(sender);assert.equal(sender.online,true);assert(!('email'in sender));assert(!('inventoryCards'in sender));assert(read.users.length<=50);
+ await ref(a).update({lastSeenMs:Date.now()-71000});const expired=await run(b,{type:'chatGlobal',before:''});assert.equal(expired.users.find(u=>u.uid===a).online,false);
+});

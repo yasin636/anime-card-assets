@@ -1,12 +1,12 @@
 'use strict';
 const {test,afterEach}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),Module=require('node:module');
 const req=Module.createRequire(path.join(__dirname,'../apps/mobile/package.json')),React=req('react'),{create,act}=req('react-test-renderer'),ts=req('typescript');global.IS_REACT_ACT_ENVIRONMENT=true;
-let tree,calls=[],focused=true,lists=[];const cards=[{id:'gojo',instanceId:'g1',rarity:'legendary'},{id:'deku',instanceId:'r1',rarity:'rare'},{id:'gojo',instanceId:'g2',rarity:'legendary'}];
+let motionAllowed=false,animationConfigs=[],loopStarts=0;let tree,calls=[],focused=true,lists=[];const cards=[{id:'gojo',instanceId:'g1',rarity:'legendary'},{id:'deku',instanceId:'r1',rarity:'rare'},{id:'gojo',instanceId:'g2',rarity:'legendary'}];
 let auth={profile:{username:'Real hunter',gold:5748,gems:0,pityRare:6,pityLegendary:14,themes:['onepiece'],equippedTheme:'onepiece',inventoryCards:cards,equippedSlots:{'legendary-1':cards[0]}}},e;
 function load(file){const m=new Module(file);m.filename=file;m.paths=Module._nodeModulePaths(path.dirname(file));m.require=n=>{
- if(n==='react-native')return {FlatList:p=>{lists.push(p);return React.createElement('FlatList',{testID:p.testID},p.ListHeaderComponent,...p.data.map((item,index)=>React.createElement(React.Fragment,{key:index},p.renderItem({item,index}))),!p.data.length&&p.ListEmptyComponent,p.ListFooterComponent);},Platform:{OS:'android'},KeyboardAvoidingView:'KeyboardAvoidingView',Image:'Image',ScrollView:'ScrollView',Text:'Text',TextInput:'TextInput',View:'View',Modal:'Modal',Pressable:'Pressable',StyleSheet:{create:s=>s,absoluteFill:{}},Alert:{alert:(_t,_m,buttons)=>buttons.at(-1)?.onPress?.()},Animated:{View:'AnimatedView',Value:class{setValue(){} interpolate(){return 0;}},loop:()=>({start(){},stop(){}}),sequence:()=>({}),timing:()=>({})}};
+ if(n==='react-native')return {FlatList:p=>{lists.push(p);return React.createElement('FlatList',{testID:p.testID},p.ListHeaderComponent,...p.data.map((item,index)=>React.createElement(React.Fragment,{key:index},p.renderItem({item,index}))),!p.data.length&&p.ListEmptyComponent,p.ListFooterComponent);},Platform:{OS:'android'},KeyboardAvoidingView:'KeyboardAvoidingView',Image:'Image',ScrollView:'ScrollView',Text:'Text',TextInput:'TextInput',View:'View',Modal:'Modal',Pressable:'Pressable',StyleSheet:{create:s=>s,absoluteFill:{}},Alert:{alert:(_t,_m,buttons)=>buttons.at(-1)?.onPress?.()},Animated:{View:'AnimatedView',Value:class{setValue(){} interpolate(){return 0;}},loop:()=>({start(){loopStarts++;},stop(){}}),sequence:()=>({}),timing:(_v,config)=>{animationConfigs.push(config);return {start(){},stop(){}};}}};
  if(n==='../auth/AuthProvider')return {useAuth:()=>auth};if(n==='./EconomyProvider')return {useEconomy:()=>e};if(n==='./ExistingCollectionUI'||n==='../collection/CollectionScreens')return {EconomyStatus:()=>React.createElement('Status'),ExistingCardDetail:p=>React.createElement('ExistingDetail',p)};
- if(n==='@react-navigation/native')return {useIsFocused:()=>focused};if(n==='../ui/PresentationProvider')return {usePresentation:()=>({reduced:true,foreground:true})};if(n==='react-native-safe-area-context')return {SafeAreaView:'SafeAreaView'};
+ if(n==='@react-navigation/native')return {useIsFocused:()=>focused};if(n==='../ui/PresentationProvider')return {usePresentation:()=>({reduced:!motionAllowed,foreground:true})};if(n==='react-native-safe-area-context')return {SafeAreaView:'SafeAreaView'};
  if(n==='expo-linear-gradient')return {LinearGradient:'LinearGradient'};if(n==='@expo/vector-icons')return {Ionicons:'Icon'};if(n==='../ui/forms')return {f:{},ActionButton:p=>React.createElement('Button',p)};
  if(/\.(jpg|png)$/.test(n))return n;
  if(n.startsWith('.')){const f=path.resolve(path.dirname(file),n);for(const ext of ['.tsx','.ts'])if(fs.existsSync(f+ext))return load(f+ext);return req(f);}return req(n);
@@ -14,7 +14,7 @@ function load(file){const m=new Module(file);m.filename=file;m.paths=Module._nod
 const {R2ShopScreen:Shop,R2CardsScreen:Cards}=load(path.join(__dirname,'../apps/mobile/src/collection/R2Screens.tsx')),Tracker=load(path.join(__dirname,'../apps/mobile/src/community/TrackerList.tsx')).TrackerList;
 const button=title=>tree.root.findAllByType('Button').find(p=>p.props.title===title),press=label=>tree.root.findAllByType('Pressable').find(p=>p.props.accessibilityLabel===label),input=label=>tree.root.findAllByType('TextInput').find(p=>p.props.accessibilityLabel===label);
 async function mount(Screen,props={}){calls=[];lists=[];focused=true;e={configured:true,ready:true,busy:false,pending:null,result:null,run:async c=>calls.push(c)};await act(async()=>{tree=create(React.createElement(Screen,props));});}
-afterEach(async()=>{if(tree)await act(async()=>tree.unmount());tree=null;});
+afterEach(async()=>{if(tree)await act(async()=>tree.unmount());tree=null;motionAllowed=false;animationConfigs=[];loopStarts=0;});
 test('Shop never reveals on animation/start/failed outcome; only new server-confirmed summon result',async()=>{
  await mount(Shop);assert.equal(tree.root.findAllByType('Image').length,0);await act(async()=>button('Summon a character · 500 Gold').props.onPress());assert.deepEqual(calls,[{type:'summon'}]);assert.equal(tree.root.findAllByType('Image').length,0);
  e.error='network';await act(async()=>tree.update(React.createElement(Shop)));assert.equal(tree.root.findAllByType('Image').length,0);
@@ -40,4 +40,9 @@ test('existing Detail screen content and Equip/Recycle flow preserved from appro
  const detail=current.slice(current.indexOf('export function ExistingCardDetail(')).trim();
  // Frozen SHA256 of approved R1 Detail, with only export/function-name normalization.
  assert.equal(require('node:crypto').createHash('sha256').update(detail).digest('hex'),'6e5cac1d3abd95cee1a82c7a75c0708523e7db2aca9b6f77385a803173ba15c8');
+});
+
+test('motion-enabled chamber starts floating loop and summon starts fast shaking loop',async()=>{
+ motionAllowed=true;await mount(Shop);assert(loopStarts>0);assert(animationConfigs.some(c=>c.duration===1800&&c.useNativeDriver===true&&c.isInteraction===false));
+ await act(async()=>button('Summon a character · 500 Gold').props.onPress());assert(animationConfigs.some(c=>c.duration===120));assert(button('Summon a character · 500 Gold').props.disabled);assert.equal(tree.root.findAllByType('Image').length,0);
 });
