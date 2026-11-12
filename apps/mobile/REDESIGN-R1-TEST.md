@@ -22,3 +22,10 @@ Signed in-place update over the private-signed app. Do NOT uninstall/clear data.
 9. Arena/Shop/Cards/Chat/Story আগের action চলে কি না দেখো; এগুলোর redesign R2/R3-এ।
 
 Evidence: 109 tool/native tests +87 backend tests locally; foundation passes. Local TS needs ignored generated Firebase client (CI generates it). Mocked React tests are not physical-device certification. Signed CI status/artifact recorded separately after completion. No performance benchmark or production latency claim.
+
+## R1 owner-feedback patch — 0.14.1 / code 25
+- Feed composer remains mounted during gallery AppState background transitions. PhotoUploader already guards gallery selection from background abort; previously the parent unmounted it anyway, invoking cleanup. Secure prepare/upload/finalize/retry logic unchanged.
+- Reactions are an anchored floating pill above Like. Like/Comment group left; Share uses flexible left margin.
+- Comments emphasize author and text, with Copy and owner Edit/Delete in contextual options. Existing server ownership and deletion XP confirmation preserved. Sending stays in a non-scrolling footer; full-modal KeyboardAvoidingView uses Android height avoidance.
+- Automated regression coverage: composer/uploader instance survives background→active and submits verified mediaId; contextual comments and Android avoidance; existing distinct Like/reaction commands.
+- Required phone acceptance: gallery photo in Feed (including cancel/retry), long-press reaction placement, multiline typing with keyboard, comment options/deletion confirmation. Mock rendering cannot certify native keyboard geometry.
