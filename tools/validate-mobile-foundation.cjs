@@ -27,14 +27,14 @@ function visit(node) {
 visit(source);
 assert(pages && ts.isObjectLiteralExpression(pages));
 assert.deepEqual(pages.properties.map(p => p.name.getText(source)), ['Profile', 'Arena', 'Feed', 'Shop', 'Cards', 'Tracker', 'Chat', 'Adventure', 'Settings', 'AIProvider']);
-assert.equal(app.version, '0.13.0');
-assert.equal(app.android.versionCode, 23);
+assert.equal(app.version, '0.14.0');
+assert.equal(app.android.versionCode, 24);
 assert.equal(app.android.package, 'com.yasin636.animemetahub');
 assert.equal(app.ios.bundleIdentifier, app.android.package);
 assert.equal(app.updates.enabled, false);
 assert.equal(pkg.dependencies.expo, '54.0.38');
 assert.equal(pkg.dependencies['react-native'], '0.81.5');
-assert(code.includes('STEP 07B / POLISH'));
+assert(code.includes('metahub'));assert(!code.includes('STEP 07B / POLISH'));assert(code.includes("route.name==='Feed'"));
 assert(code.includes('<AuthProvider>'));
 assert(code.includes('<EconomyProvider'));
 assert(code.includes('<AIProvider'));

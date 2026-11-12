@@ -8,7 +8,7 @@ let audioHook=null;let copied=[],clipboardFails=false;
 function load(file=path.join(__dirname,'../apps/mobile/src/social/FeedScreen.tsx')){const m=new Module(file);m.filename=file;m.paths=Module._nodeModulePaths(path.dirname(file));m.require=name=>{
  if(name==='../media/PhotoUploader')return {PhotoUploader:props=>React.createElement('PhotoUploader',props)};
  if(name==='../audio/AudioProvider')return {useSoundGate:(_players,local=true,visible=true)=>({current:local&&visible}),useAppAudio:()=>({prefs:{sfxEnabled:true,sfxVolume:.7,voiceEnabled:true},foreground:true,playSfx(){}})};
- if(name==='react-native')return {Platform:{OS:'android'},KeyboardAvoidingView:'KeyboardAvoidingView',AccessibilityInfo:{isReduceMotionEnabled:async()=>false},Alert:{alert:(_title,_message,buttons)=>buttons.at(-1).onPress()},AppState:{currentState:'active',addEventListener:()=>({remove(){}})},Animated:{Value:class{setValue(){} interpolate(){return 1;}stopAnimation(){}},View:'AnimatedView',Image:'Image',Text:'Text',sequence:()=>({start(){},stop(){}}),timing:()=>({start(){},stop(){}}),loop:()=>({start(){},stop(){}})},Linking:{openURL:async()=>{}},TextInput:'TextInput',Image:'Image',Modal:'Modal',Pressable:'Pressable',ScrollView:'ScrollView',Text:'Text',View:'View',StyleSheet:{create:s=>s}};
+ if(name==='react-native')return {FlatList:props=>React.createElement('FlatList',{testID:'virtual-feed'},props.ListHeaderComponent,...props.data.map(item=>React.createElement(React.Fragment,{key:item.id},props.renderItem({item}))),!props.data.length&&props.ListEmptyComponent,props.ListFooterComponent),Platform:{OS:'android'},KeyboardAvoidingView:'KeyboardAvoidingView',AccessibilityInfo:{isReduceMotionEnabled:async()=>false},Alert:{alert:(_title,_message,buttons)=>buttons.at(-1).onPress()},AppState:{currentState:'active',addEventListener:()=>({remove(){}})},Animated:{Value:class{setValue(){} interpolate(){return 1;}stopAnimation(){}},View:'AnimatedView',Image:'Image',Text:'Text',sequence:()=>({start(){},stop(){}}),timing:()=>({start(){},stop(){}}),loop:()=>({start(){},stop(){}})},Linking:{openURL:async()=>{}},TextInput:'TextInput',Image:'Image',Modal:'Modal',Pressable:'Pressable',ScrollView:'ScrollView',Text:'Text',View:'View',StyleSheet:{create:s=>s}};
  if(name==='@react-navigation/native')return {useIsFocused:()=>true,useRoute:()=>({params:{}})};
  if(name==='expo-clipboard')return {setStringAsync:async text=>{if(clipboardFails)throw Error('copy failed');copied.push(text);}};
  if(name==='../arena/ArenaVisuals')return {PublicProfileSheet:()=>React.createElement('PublicProfileSheet')};
@@ -39,35 +39,38 @@ const press=label=>tree.root.findAllByType('Pressable').find(b=>b.props.accessib
 const result={type:'feedView',socialCapability:'social-v1',posts:[post],missionData:mission,dailyPosts:1};
 test('Feed loads real data, scoped draft and exact create command without client XP/admin',async()=>{
  prefs.clear();await mount(result);assert(calls.some(c=>c.type==='feedView'));assert(JSON.stringify(tree.toJSON()).includes(post.caption));
+ await act(async()=>press('Create a post').props.onPress());
  await act(async()=>input('Post caption').props.onChangeText('আমার নতুন post'));
  assert.equal(JSON.parse(prefs.get('feed.draft.v1.alice')).caption,'আমার নতুন post');
- await act(async()=>button('Publish post · +15 XP').props.onPress());assert.deepEqual(calls.at(-1),{type:'feedCreate',caption:'আমার নতুন post',linkUrl:''});
+ await act(async()=>button('Publish moment').props.onPress());assert.deepEqual(calls.at(-1),{type:'feedCreate',caption:'আমার নতুন post',linkUrl:''});
  // Unknown outcome retains draft; server success clears only matching draft.
  assert.equal(input('Post caption').props.value,'আমার নতুন post');econ.result={type:'feedCreate',socialCapability:'social-v1',post:{...post,id:'new',caption:'আমার নতুন post'},xpDelta:15};
- await act(async()=>tree.update(React.createElement(FeedScreen)));assert.equal(input('Post caption').props.value,'');
+ await act(async()=>tree.update(React.createElement(FeedScreen)));assert.equal(input('Post caption'),undefined);await act(async()=>press('Create a post').props.onPress());assert.equal(input('Post caption').props.value,'');
 });
 test('Like and emoji are distinct commands and pending disables feed mutations',async()=>{
  await mount(result);await act(async()=>press('Like post').props.onPress());assert.deepEqual(calls.at(-1),{type:'feedLike',postId:post.id,liked:true});
- await act(async()=>press('React ❤️').props.onPress());assert.deepEqual(calls.at(-1),{type:'feedReact',postId:post.id,emoji:'❤️'});
- econ.pending={operationId:'existing',command:{type:'feedLike'}};await act(async()=>tree.update(React.createElement(FeedScreen)));assert.equal(press('Like post').props.disabled,true);assert.equal(button('Publish post · +15 XP').props.disabled,true);
+ assert.equal(press('React ❤️'),undefined);await act(async()=>press('Like post').props.onLongPress());await act(async()=>press('React ❤️').props.onPress());assert.deepEqual(calls.at(-1),{type:'feedReact',postId:post.id,emoji:'❤️'});
+ econ.pending={operationId:'existing',command:{type:'feedLike'}};await act(async()=>tree.update(React.createElement(FeedScreen)));assert.equal(press('Like post').props.disabled,true);await act(async()=>press('Create a post').props.onPress());assert.equal(button('Publish moment').props.disabled,true);
 });
 test('Comment sends own text, edit uses correct ownership target, author profile fetches public projection',async()=>{
  await mount(result);const textButton=t=>tree.root.findAllByType('Pressable').find(p=>p.findAllByType('Text').some(n=>n.props.children===t));
  await act(async()=>textButton('Comment').props.onPress());await act(async()=>input('Write comment').props.onChangeText('দারুণ'));
- await act(async()=>button('Send comment · +10 XP').props.onPress());assert.deepEqual(calls.at(-1),{type:'feedComment',postId:post.id,text:'দারুণ'});
- await act(async()=>textButton('Edit post').props.onPress());await act(async()=>input('Edit text').props.onChangeText('এডিট করা post'));await act(async()=>button('Save edit · 0 XP').props.onPress());assert.deepEqual(calls.at(-1),{type:'feedEdit',postId:post.id,caption:'এডিট করা post'});
+ await act(async()=>button('Send comment').props.onPress());assert.deepEqual(calls.at(-1),{type:'feedComment',postId:post.id,text:'দারুণ'});
+ await act(async()=>press('Post options').props.onPress());await act(async()=>textButton('Edit post').props.onPress());await act(async()=>input('Edit text').props.onChangeText('এডিট করা post'));await act(async()=>button('Save changes').props.onPress());assert.deepEqual(calls.at(-1),{type:'feedEdit',postId:post.id,caption:'এডিট করা post'});
  await act(async()=>press('Profile Alice').props.onPress());assert.deepEqual(calls.at(-1),{type:'publicProfile',uid:'alice'});
 });
 test('Copy must succeed before share reward command; links use installed-app route not invented web URL',async()=>{
- await mount(result);const copy=tree.root.findAllByType('Pressable').find(p=>p.findAllByType('Text').some(n=>n.props.children==='Copy link'));
+ await mount(result);const copy=tree.root.findAllByType('Pressable').find(p=>p.findAllByType('Text').some(n=>n.props.children==='Share'));
  const baseline=calls.length;clipboardFails=true;await act(async()=>copy.props.onPress());assert.equal(calls.length,baseline);
  clipboardFails=false;await act(async()=>copy.props.onPress());assert.deepEqual(copied,['animemetahub://post/post-1']);assert.deepEqual(calls.at(-1),{type:'feedShare',postId:post.id});
 });
-test('Mission ready/claimed gating uses server progress and commands contain only mission ID',async()=>{
- await mount(result);assert.equal(button('Claim · 50 Gold / 15 XP / 5 Gems').props.disabled,false);assert.equal(button('Claim · 50 Gold / 20 XP / 5 Gems').props.disabled,true);
- await act(async()=>button('Claim · 50 Gold / 15 XP / 5 Gems').props.onPress());assert.deepEqual(calls.at(-1),{type:'socialMissionClaim',missionId:'m_posts'});
+test('Missions leave timeline via compact navigation without hidden reward commands',async()=>{
+ await mount(result);let opens=0;await act(async()=>tree.update(React.createElement(FeedScreen,{onMissions:()=>opens++})));const trigger=tree.root.findAllByType('Pressable').find(p=>p.findAllByType('Text').some(n=>n.props.children==='Missions ↗'));assert(trigger);await act(async()=>trigger.props.onPress());assert.equal(opens,1);assert(!calls.some(c=>c.type==='socialMissionClaim'));assert(!JSON.stringify(tree.toJSON()).includes('DAILY SOCIAL MISSIONS'));
 });
 test('Feed merge rejects stale versions and link/relative-time helpers are deterministic',()=>{
  const {mergePost,postLink,relativeTime}=load(path.join(__dirname,'../apps/mobile/src/social/types.ts'));
  assert.equal(mergePost([{...post,version:5}],{...post,version:2})[0].version,5);assert.equal(postLink('post-1'),'animemetahub://post/post-1');assert.equal(relativeTime(0,120000),'2 মিনিট আগে');
+});
+test('R1 fresh scoped feed cache renders immediately without read; explicit Refresh bypasses it',async()=>{
+ calls=[];econ={configured:true,ready:true,busy:false,pending:null,result:null,feedCache:{posts:[post],at:Date.now(),missionData:mission},run:async c=>calls.push(c)};await act(async()=>{tree=create(React.createElement(FeedScreen));});assert.equal(calls.length,0);assert(tree.root.findAllByType('Text').some(n=>n.props.children===post.caption));await act(async()=>press('Refresh feed').props.onPress());assert.deepEqual(calls,[{type:'feedView'}]);
 });

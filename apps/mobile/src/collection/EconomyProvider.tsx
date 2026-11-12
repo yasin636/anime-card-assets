@@ -1,3 +1,4 @@
+import {mergePost,FeedPost,SocialMissions} from '../social/types';
 import {useOptionalAudio} from '../audio/AudioProvider';
 import type {CommunityCommand,CommunityResult} from '../community/types';
 import type {SocialCommand,SocialResult} from '../social/types';
@@ -19,7 +20,8 @@ export type Quiz={id:string;title:string;index:number;total:number;correct:numbe
 export type BoardRow={uid:string;rank:number;username:string;avatar:string;xp:number;equippedTheme:string};
 export type PublicProfile=Omit<BoardRow,'rank'>&{Bio:string;badge?:string;featuredSlots?:Record<string,import('../arena/presentation').DisplayCard>};
 type Result=CommunityResult & SocialResult & {type:string;story?:StorySession|null;storyCapability?:string;chronicleCapability?:string;shadows?:Shadow[];cleared?:string[];storyPower?:{hp:number;atk:number;def:number};storyEligible?:boolean;firstClear?:boolean;index?:number;label?:string;xpDelta?:number;freeSpins?:number;publicProfile?:PublicProfile;leaderboard?:BoardRow[];week?:string;battle?:Battle|null;quiz?:Quiz|null;quizAvailable?:boolean;quizCredentialMode?:string;weeklyClaimed?:boolean;reward?:{gold:number;gems:number;xp:number};feedback?:{correct:boolean;answer:string;explanation:string;xpDelta:number;fallback:boolean};gems?:number;card?:Card;gold?:number;xp?:number;duplicate?:boolean};
-type Context={configured:boolean;endpointAvailable:boolean;checking:boolean;connection:string;check:()=>Promise<void>;ready:boolean;busy:boolean;pending:Pending|null;error:string;result:Result|null;run:(command?:Command)=>Promise<void>};
+type FeedCache={posts:FeedPost[];at:number;missionData?:SocialMissions;dailyPosts?:number;admin?:boolean;serverNow?:number};
+type Context={feedCache:FeedCache|null;configured:boolean;endpointAvailable:boolean;checking:boolean;connection:string;check:()=>Promise<void>;ready:boolean;busy:boolean;pending:Pending|null;error:string;result:Result|null;run:(command?:Command)=>Promise<void>};
 const Context=createContext<Context|null>(null);
 export function useEconomy(){const c=useContext(Context);if(!c)throw Error('EconomyProvider missing');return c;}
 const raw=process.env.EXPO_PUBLIC_ECONOMY_API_URL || process.env.EXPO_PUBLIC_ECONOMY_OWNER_TEST_URL || '';
@@ -41,23 +43,23 @@ export function EconomyProvider({children}:{children:React.ReactNode}){
  const ai=useAI();const {user,profile}=useAuth();const uid=user?.uid || '';const key=`economy.pending.v1.${uid}`;
  const [ready,setReady]=useState(false),[busy,setBusy]=useState(false),[pending,setPending]=useState<Pending|null>(null),[error,setError]=useState(''),[result,setResult]=useState<Result|null>(null);
  const [checking,setChecking]=useState(false),[connection,setConnection]=useState('Server-এর সঙ্গে সংযোগ হচ্ছে…'),[allowed,setAllowed]=useState(false);
- const checkLock=useRef(false);
+ const checkLock=useRef(false),lastCheck=useRef(0);const [feedCache,setFeedCache]=useState<FeedCache|null>(null);
  const lock=useRef(false),active=useRef(true),pendingRef=useRef<Pending|null>(null);
  useEffect(()=>{active.current=true;let alive=true;AsyncStorage.getItem(key).then(value=>{
   if(!alive)return;if(value){const saved=JSON.parse(value) as Pending;if(typeof saved.operationId!=='string'||!saved.command?.type)throw Error('invalid pending');pendingRef.current=saved;setPending(saved);}setReady(true);
  }).catch(()=>{if(alive)setError('Pending command পড়া যায়নি। নিরাপত্তার জন্য নতুন spend বন্ধ আছে।');});return()=>{alive=false;active.current=false;};},[key]);
  const check=useCallback(async()=>{
   if(checkLock.current||lock.current||!endpoint||!uid||!active.current)return;
-  checkLock.current=true;setChecking(true);setAllowed(false);setConnection('Server যাচাই হচ্ছে… Free server জাগতে এক মিনিটের বেশি লাগতে পারে।');
+  checkLock.current=true;setChecking(true);setConnection('Server যাচাই হচ্ছে… Free server জাগতে এক মিনিটের বেশি লাগতে পারে।');
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),90000);
   try{
    const current=getAuth().currentUser;if(current?.uid!==uid)return;
    const token=await current.getIdToken();
    if(!active.current||getAuth().currentUser?.uid!==uid)return;
    const response=await fetch(`${endpoint}/v1/economy/status`,{headers:{Authorization:`Bearer ${token}`},signal:controller.signal});
-   if(!response.ok)throw Error(`Server check ব্যর্থ (${response.status})। Backend update/permission পরীক্ষা প্রয়োজন।`);
+   if(!response.ok){if((response.status===401||response.status===403)&&active.current&&getAuth().currentUser?.uid===uid)setAllowed(false);throw Error(`Server check ব্যর্থ (${response.status})। Backend update/permission পরীক্ষা প্রয়োজন।`);}
    const data=await response.json();if(data.profileReadable!==true||typeof data.mutationsAllowed!=='boolean')throw Error('Server status যাচাই হয়নি।');
-   if(active.current&&getAuth().currentUser?.uid===uid){setAllowed(data.mutationsAllowed);setConnection(data.mutationsAllowed?'Connection verified · এই account-এ economy অনুমোদিত। কোনো Gold/card বদলানো হয়নি।':'Auth + own Firestore read verified · spending বন্ধ আছে। কোনো Gold/card বদলানো হয়নি।');}
+   if(active.current&&getAuth().currentUser?.uid===uid){lastCheck.current=Date.now();setAllowed(data.mutationsAllowed);setConnection(data.mutationsAllowed?'Connection verified · এই account-এ economy অনুমোদিত। কোনো Gold/card বদলানো হয়নি।':'Auth + own Firestore read verified · spending বন্ধ আছে। কোনো Gold/card বদলানো হয়নি।');}
   }catch(e){if(active.current&&getAuth().currentUser?.uid===uid)setConnection(e instanceof Error&&e.name!=='AbortError'?e.message:'সংযোগে সময় বেশি লাগছে। Retry connection চাপো।');}
   finally{clearTimeout(timer);checkLock.current=false;if(active.current)setChecking(false);}
  },[uid]);
@@ -65,7 +67,7 @@ export function EconomyProvider({children}:{children:React.ReactNode}){
   if(!ready||profile?.uid!==uid||!uid||!endpoint)return;
   void check();
   const subscription=AppState.addEventListener('change',state=>{
-   if(state==='active')void check();
+   if(state==='active'&&Date.now()-lastCheck.current>60000)void check();
   });
   return()=>subscription.remove();
  },[ready,profile?.uid,uid,check]);
@@ -94,9 +96,9 @@ export function EconomyProvider({children}:{children:React.ReactNode}){
    }
    if(!payload.result||payload.result.type!==operation.command.type)throw Error('Server result যাচাই হয়নি। একই কাজ Retry করো।');
    await AsyncStorage.removeItem(key);pendingRef.current=null;
-   if(active.current&&getAuth().currentUser?.uid===uid){setPending(null);setResult(payload.result);if(!heard.current.has(operation.operationId)){heard.current.add(operation.operationId);if(heard.current.size>200)heard.current.delete(heard.current.values().next().value!);if(operation.command.type==='summon')audio?.playSfx('summon');else if((payload.result.xpDelta||payload.result.xp||payload.result.reward?.xp||0)>0&&operation.command.type!=='wheelSpin')audio?.playSfx('reward');}}
+   if(active.current&&getAuth().currentUser?.uid===uid){setPending(null);setResult(payload.result);const r=payload.result as Result;if(r.type==='feedView'&&r.posts)setFeedCache({posts:r.posts,at:Date.now(),missionData:r.missionData,dailyPosts:r.dailyPosts,admin:r.admin,serverNow:r.serverNow});else if(r.type.startsWith('feed')||r.type==='socialMissionClaim')setFeedCache(old=>old?{...old,posts:r.deleted?old.posts.filter(p=>p.id!==r.postId):r.post?mergePost(old.posts,r.post):old.posts,missionData:r.missionData||old.missionData,dailyPosts:r.dailyPosts??old.dailyPosts,admin:r.admin??old.admin}:old);if(!heard.current.has(operation.operationId)){heard.current.add(operation.operationId);if(heard.current.size>200)heard.current.delete(heard.current.values().next().value!);if(operation.command.type==='summon')audio?.playSfx('summon');else if((payload.result.xpDelta||payload.result.xp||payload.result.reward?.xp||0)>0&&operation.command.type!=='wheelSpin')audio?.playSfx('reward');}}
   }catch(e){if(active.current)setError(e instanceof Error&&e.message&&!e.message.includes('Network request')&&e.name!=='AbortError'?e.message:'সংযোগ বিচ্ছিন্ন বা সময় শেষ। ফল নিশ্চিত নয়—Retry pending চাপো; নতুন করে Gold খরচ হবে না।');}
   finally{if(timer)clearTimeout(timer);lock.current=false;if(active.current)setBusy(false);}
  };
- return <Context.Provider value={{configured:!!endpoint&&allowed,endpointAvailable:!!endpoint,checking,connection,check,ready,busy,pending,error,result,run}}>{children}</Context.Provider>;
+ return <Context.Provider value={{feedCache,configured:!!endpoint&&allowed,endpointAvailable:!!endpoint,checking,connection,check,ready,busy,pending,error,result,run}}>{children}</Context.Provider>;
 }

@@ -13,6 +13,7 @@ function load(){
  const code=ts.transpileModule(fs.readFileSync(filename,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,esModuleInterop:true}}).outputText;
  const mod=new Module(filename);mod.filename=filename;mod.paths=Module._nodeModulePaths(path.dirname(filename));
  mod.require=name=>{
+  if(name==='../social/types'){const file=path.join(__dirname,'../apps/mobile/src/social/types.ts'),m=new Module(file);m._compile(ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS}}).outputText,file);return m.exports;}
   if(name==='../audio/AudioProvider')return {useOptionalAudio:()=>null};
   if(name==='react-native')return {AppState:{addEventListener:(_,fn)=>{listener=fn;return {remove:()=>{listener=null;}};}}};
   if(name==='@react-native-async-storage/async-storage')return storage;
@@ -40,7 +41,7 @@ beforeEach(()=>{
 afterEach(async()=>{await unmount();global.fetch=originalFetch;delete process.env.EXPO_PUBLIC_ECONOMY_OWNER_TEST_URL;});
 test('cold launch and foreground auto-check only GET; no persisted authority or spending',async()=>{
  await mount('alice');assert.equal(view.configured,true);assert(requests.every(r=>!r.opts.method));assert.equal(store.size,0);
- await act(async()=>{listener('active');await settle();});assert.equal(requests.length,2);assert.equal(store.size,0);
+ await act(async()=>{listener('active');await settle();});assert.equal(requests.length,1,'rapid foreground reuses fresh session check');assert.equal(store.size,0);await act(async()=>view.check());assert.equal(requests.length,2);
  await unmount();send=async()=>ok({profileReadable:true,mutationsAllowed:false});await mount('alice');assert.equal(view.configured,false);assert.equal(store.size,0);
 });
 test('failed response retains operation before request; cold relaunch retries identical id once',async()=>{
@@ -90,4 +91,10 @@ test('Story ARISE/claim uses no AI credential and retries exact persisted sessio
   send=async(url,opts)=>{assert.deepEqual(JSON.parse(opts.body),operation);return ok({result:{type:command.type,story:{id:command.sessionId,version:command.version+1}}});};
   await act(async()=>view.run());assert.equal(view.pending,null);assert.equal(view.result.story.version,command.version+1);await unmount();
  }
+});
+test('R1 revalidation preserves available UI until explicit revocation, never bypasses server authorization',async()=>{
+ await mount('alice');let resolve;send=()=>new Promise(r=>resolve=r);let checking;await act(async()=>{checking=view.check();await settle();});assert(view.checking);assert(view.configured,'previous session remains usable during read-only revalidation');await act(async()=>{resolve(ok({error:'owner-test-only'},403));await checking;});assert.equal(view.configured,false);const n=requests.length;await act(async()=>view.run({type:'summon'}));assert.equal(requests.length,n,'revoked session cannot start mutation');
+});
+test('R1 feed cache contains only server results, merges newer versions and resets with account scope',async()=>{
+ await mount('alice');const post={id:'p',uid:'alice',version:3,created_at_ms:1};send=async(_u,opt)=>ok({result:{type:JSON.parse(opt.body).command.type,socialCapability:'social-v1',posts:[post]}});await act(async()=>view.run({type:'feedView'}));assert.equal(view.feedCache.posts[0].version,3);assert(view.feedCache.at>0);send=async()=>ok({result:{type:'feedLike',post:{...post,version:2}}});await act(async()=>view.run({type:'feedLike',postId:'p',liked:true}));assert.equal(view.feedCache.posts[0].version,3);assert.equal(store.size,0);await unmount();send=async()=>ok({profileReadable:true,mutationsAllowed:true});await mount('bob');assert.equal(view.feedCache,null);
 });

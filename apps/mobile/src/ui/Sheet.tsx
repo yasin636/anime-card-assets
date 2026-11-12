@@ -1,0 +1,9 @@
+import React from 'react';
+import {Modal,View,Text,Pressable,ScrollView,KeyboardAvoidingView,Platform,StyleSheet} from 'react-native';
+import {SafeAreaView} from 'react-native-safe-area-context';
+import {Ionicons} from '@expo/vector-icons';
+export function Sheet({visible,title,onClose,children}:{visible:boolean;title:string;onClose:()=>void;children:React.ReactNode}){
+ if(!visible)return null;
+ return <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}><SafeAreaView style={s.frame} edges={['top','bottom']}><Pressable accessibilityRole="button" accessibilityLabel="Close dialog" onPress={onClose} style={StyleSheet.absoluteFill}/><KeyboardAvoidingView behavior={Platform.OS==='ios'?'padding':undefined} style={s.sheet}><View style={s.handle}/><View style={s.header}><Text accessibilityRole="header" style={s.title}>{title}</Text><Pressable accessibilityRole="button" accessibilityLabel="Close sheet" onPress={onClose} style={s.close}><Ionicons name="close" size={24} color="#eae6f0"/></Pressable></View><ScrollView keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" contentContainerStyle={s.body}>{children}</ScrollView></KeyboardAvoidingView></SafeAreaView></Modal>;
+}
+const s=StyleSheet.create({frame:{flex:1,backgroundColor:'#000000aa',justifyContent:'flex-end'},sheet:{maxHeight:'92%',width:'100%',maxWidth:600,alignSelf:'center',backgroundColor:'#1b1d23',borderColor:'#45404d',borderWidth:1,borderTopLeftRadius:25,borderTopRightRadius:25,overflow:'hidden'},handle:{height:4,width:32,backgroundColor:'#59545f',borderRadius:8,alignSelf:'center',marginTop:10},header:{paddingLeft:22,paddingRight:10,flexDirection:'row',alignItems:'center',justifyContent:'space-between',gap:10},title:{color:'#f4f2ed',fontSize:22,fontWeight:'600',flex:1,paddingVertical:16},close:{padding:12,minWidth:48,minHeight:48},body:{paddingHorizontal:22,paddingBottom:35,gap:15}});
