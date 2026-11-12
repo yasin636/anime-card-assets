@@ -3,6 +3,7 @@ module.exports = {
  ...expo,
  android: {...expo.android, googleServicesFile:'./google-services.json'},
  plugins: [
+  ['expo-video',{supportsBackgroundPlayback:false,supportsPictureInPicture:false}],
   'expo-font',
   ['expo-secure-store',{configureAndroidBackup:true}],
   '@react-native-firebase/app',

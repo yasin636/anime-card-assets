@@ -69,7 +69,7 @@ jobs:
         run: |
           node ../../tools/validate-mobile-foundation.cjs
           node ../../tools/test-mobile-profile.cjs
-          node --test ../../tools/test-gemini.cjs ../../tools/test-economy-autoconnect.cjs ../../tools/test-arena-presentation.cjs
+          node --test ../../tools/test-watch.cjs ../../tools/test-gemini.cjs ../../tools/test-economy-autoconnect.cjs ../../tools/test-arena-presentation.cjs
           NODE_ENV=test node --test ../../tools/test-economy-provider.cjs ../../tools/test-arena-visuals.cjs ../../tools/test-ai-quiz-broker.cjs ../../tools/test-story-mobile.cjs ../../tools/test-social-mobile.cjs ../../tools/test-chat-provider.cjs ../../tools/test-chat-mobile.cjs ../../tools/test-community-mobile.cjs ../../tools/test-media-mobile.cjs ../../tools/test-audio-7a.cjs ../../tools/test-presentation-7b.cjs ../../tools/test-r1-native.cjs ../../tools/test-r2-native.cjs ../../tools/test-sensei-ui.cjs ../../tools/test-anigood-step1.cjs ../../tools/test-anigood-step2.cjs ../../tools/test-cloudinary-folder-setup.cjs
           node --test ../../services/economy/*.test.cjs
       - name: Generate Android project
@@ -134,20 +134,20 @@ jobs:
           sed -n '1,40p' apk-metadata.txt
           unzip -l "$APK" | grep 'assets/index.android.bundle'
           mkdir -p apk-output
-          cp "$APK" apk-output/AniGooD-v0.18.0-Step2.apk
+          cp "$APK" apk-output/AniGooD-v0.19.0-Watch1.apk
           cd apk-output
           sha256sum *.apk > SHA256SUMS.txt
-          cp ../ANIGOOD-STEP2-TEST.md README.txt
+          cp ../ANIGOOD-WATCH1-TEST.md README.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: AniGooD-v0.18.0-Step2
+          name: AniGooD-v0.19.0-Watch1
           path: apps/mobile/apk-output/
           retention-days: 14
           if-no-files-found: error
       - name: Build summary
         run: |
           {
-            echo '## AniGooD Step2 test APK v0.18.0'
+            echo '## AniGooD Watch phase1 test APK v0.19.0'
             echo 'Standalone Android APK, ARM64 + ARMv7. Android 7.0+ (API 24+) expected; see APK metadata for the actual minimum.'
             echo 'Auth/profile/owned inventory are live. Collection/Shop commands require configured trusted backend; absent URL disables actions. Gemini BYOK in Settings/AI Provider; Sensei in Chat, key stored in device SecureStore; Quiz uses authorized transient HTTPS headers to trusted backend. Gallery deferred. Not a completed production economy deployment.'
             echo 'Signed with the verified PRIVATE internal-test certificate. Private v0.2.0 can update in place. Uninstall public-key sample v0.1.0 only.'
