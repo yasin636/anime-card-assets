@@ -495,3 +495,9 @@ Owner accepted remaining R1 behavior and authorized **R2 Shop + Cards + Tracker*
 10 DOM tests PASS; CI43203686701 SUCCESS. Offline HTML `/home/user/output/AnimeMetaHub-R2-Edition01.html`, 2,365,256 bytes. ZIP 1,763,602 bytes, SHA256 `7f874bbce19039eeffdc56b0e5e04fedbcd922b6d060f5d9266f3e9fccb56e81`.
 Download: https://github.com/yasin636/anime-card-assets/actions/runs/43203686701/artifacts/13936646454
 Artifact `AnimeMetaHub-R2-Edition01-Preview`. Extract ZIP and open HTML in browser/HTML viewer, offline. No APK install/Render deploy needed for this design preview. Owner visual review pending; DOM tests are not rendered/native-device certification.
+
+### R2 preview distribution bug fixed (owner phone report)
+Owner reported Cards/Tracker navigation inert in downloaded HTML. Reproduced actual bundle startup SyntaxError: `Identifier '$' has already been declared`. String.replace replacement-string expansion collapsed literal JS `$$` into `$`; source-script DOM tests had missed the distribution failure. Callback replacements now preserve script bytes. Added standalone artifact execution test: zero JS errors, Cards navigation/images, Tracker navigation/direct episode Save, aura tab, summon/reveal. 11/11 tests PASS; CI43211459564 SUCCESS. No native/backend changes; R2 approval remains pending.
+Corrected runtime `b22c049af98087adb4f01136daf8dca48272e821`.
+**Use this instead of original broken ZIP:** https://github.com/yasin636/anime-card-assets/actions/runs/43211459564/artifacts/13941476892
+`AnimeMetaHub-R2-Edition01-Fixed-Preview`, ZIP1,763,635 bytes, SHA256 `3be8af4eee5a5d702faf81da01497af1d2d3eeb9e27ee4bb512fd4d3fc67c7ca`. Open `AnimeMetaHub-R2-Edition01-Fixed.html` (2,365,275 bytes); no APK/Render deploy. Owner phone retest pending.
