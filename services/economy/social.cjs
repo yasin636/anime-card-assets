@@ -3,8 +3,8 @@ const {createHash}=require('node:crypto');
 const {EconomyError}=require('./domain.cjs');
 const fail=c=>{throw new EconomyError(c);};
 const emojis=['👍','❤️','😂','😮','😢','🔥'];
-const types=['feedView','feedPostView','feedCreate','feedEdit','feedDelete','feedLike','feedReact','feedComment','feedCommentEdit','feedCommentDelete','feedShare','socialMissionClaim'];
-const fields={feedView:[],feedPostView:['postId'],feedCreate:['caption','linkUrl'],feedEdit:['postId','caption'],feedDelete:['postId'],feedLike:['postId','liked'],feedReact:['postId','emoji'],feedComment:['postId','text'],feedCommentEdit:['postId','commentId','text'],feedCommentDelete:['postId','commentId'],feedShare:['postId'],socialMissionClaim:['missionId']};
+const types=['feedView','feedPostView','feedCreate','feedEdit','feedDelete','feedLike','feedReact','feedComment','feedCommentEdit','feedCommentDelete','feedCommentReply','feedCommentReact','feedShare','socialMissionClaim'];
+const fields={feedView:[],feedPostView:['postId'],feedCreate:['caption','linkUrl'],feedEdit:['postId','caption'],feedDelete:['postId'],feedLike:['postId','liked'],feedReact:['postId','emoji'],feedComment:['postId','text'],feedCommentEdit:['postId','commentId','text'],feedCommentDelete:['postId','commentId'],feedCommentReply:['postId','commentId','text'],feedCommentReact:['postId','commentId','emoji'],feedShare:['postId'],socialMissionClaim:['missionId']};
 function validate(c){
  if(!c||!Object.hasOwn(fields,c.type)||Object.keys(c).some(k=>k!=='type'&&!fields[c.type].includes(k)&&!(c.type==='feedCreate'&&k==='mediaId'))||fields[c.type].some(k=>!Object.hasOwn(c,k)))fail('invalid-command');
  for(const key of ['postId','commentId'])if(fields[c.type].includes(key)&&(typeof c[key]!=='string'||!/^[a-zA-Z0-9_-]{1,160}$/.test(c[key])))fail('invalid-command-field');
@@ -12,7 +12,7 @@ function validate(c){
  if(c.type==='feedCreate'&&(typeof c.linkUrl!=='string'||c.linkUrl.length>2000||(c.linkUrl&&!safeLink(c.linkUrl))))fail('social-link-invalid');
  if(c.type==='feedCreate'&&c.mediaId!==undefined&&(typeof c.mediaId!=='string'||!/^img_[a-f0-9]{40}$/.test(c.mediaId)))fail('invalid-command-field');
  if(c.type==='feedLike'&&typeof c.liked!=='boolean')fail('invalid-command');
- if(c.type==='feedReact'&&!emojis.includes(c.emoji))fail('invalid-command');
+ if((c.type==='feedReact'||c.type==='feedCommentReact')&&!emojis.includes(c.emoji))fail('invalid-command');
  if(c.type==='socialMissionClaim'&&!['m_posts','m_social'].includes(c.missionId))fail('invalid-command');
 }
 function safeLink(s){try{const u=new URL(s);return ['https:','http:'].includes(u.protocol)&&!u.username&&!u.password;}catch{return false;}}
@@ -26,7 +26,7 @@ function identity(p,uid){return {uid,username:String(p.username||'Hunter').slice
 // Strict public projection: never return private user data, full liker UID maps or other clients' operation receipts.
 function view(p,id,uid){
  const comments=Array.isArray(p.comments)?p.comments:[],reactions=p.reactions||{};
- return {id,...(typeof p.mediaId==='string'&&/^img_[a-f0-9]{40}$/.test(p.mediaId)?{mediaId:p.mediaId}:{}),...identity(p,p.uid),gems:Number(p.gems)||0,equippedTheme:String(p.equippedTheme||''),caption:String(p.caption||p.text||''),linkUrl:safeLink(p.linkUrl)?p.linkUrl:'',mediaUrl:typeof p.mediaUrl==='string'&&(safeLink(p.mediaUrl)||(/^data:image\//.test(p.mediaUrl)&&p.mediaUrl.length<260000))?p.mediaUrl:'',mediaType:String(p.mediaType||''),hasLegacyMedia:!!p.mediaUrl,created_at_ms:Number(p.created_at_ms)||0,isAdmin:p.isAdmin===true,edited:!!p.edited,version:Number(p.socialVersion)||0,likesCount:Number(p.likesCount)||0,liked:!!p.likedBy?.[uid],shareCount:Number(p.shareCount)||0,reaction:emojis.find(e=>Array.isArray(reactions[e])&&reactions[e].includes(uid))||'',reactions:Object.fromEntries(emojis.map(e=>[e,Array.isArray(reactions[e])?reactions[e].length:0])),comments:comments.map(c=>({id:String(c.id),...identity(c,c.uid),text:String(c.text||''),createdAtMs:Number(c.createdAtMs)||0,edited:!!c.edited}))};
+ return {id,...(typeof p.mediaId==='string'&&/^img_[a-f0-9]{40}$/.test(p.mediaId)?{mediaId:p.mediaId}:{}),...identity(p,p.uid),gems:Number(p.gems)||0,equippedTheme:String(p.equippedTheme||''),caption:String(p.caption||p.text||''),linkUrl:safeLink(p.linkUrl)?p.linkUrl:'',mediaUrl:typeof p.mediaUrl==='string'&&(safeLink(p.mediaUrl)||(/^data:image\//.test(p.mediaUrl)&&p.mediaUrl.length<260000))?p.mediaUrl:'',mediaType:String(p.mediaType||''),hasLegacyMedia:!!p.mediaUrl,created_at_ms:Number(p.created_at_ms)||0,isAdmin:p.isAdmin===true,edited:!!p.edited,version:Number(p.socialVersion)||0,likesCount:Number(p.likesCount)||0,liked:!!p.likedBy?.[uid],shareCount:Number(p.shareCount)||0,reaction:emojis.find(e=>Array.isArray(reactions[e])&&reactions[e].includes(uid))||'',reactions:Object.fromEntries(emojis.map(e=>[e,Array.isArray(reactions[e])?reactions[e].length:0])),comments:comments.map(c=>({id:String(c.id),...identity(c,c.uid),text:String(c.text||''),createdAtMs:Number(c.createdAtMs)||0,edited:!!c.edited,parentId:typeof c.parentId==='string'?c.parentId:'',reaction:emojis.find(e=>Array.isArray(c.reactions?.[e])&&c.reactions[e].includes(uid))||'',reactions:Object.fromEntries(emojis.map(e=>[e,Array.isArray(c.reactions?.[e])?c.reactions[e].length:0]))}))};
 }
 async function executeSocial({db,verifiedUid:uid,verifiedAdmin=false,operationId,command:c,now=Date.now()}){
  validate(c);const users=db.collection('user_meta'),actor=users.doc(uid),posts=db.collection('feed_posts'),date=new Date(now).toISOString().slice(0,10);
@@ -59,11 +59,16 @@ async function executeSocial({db,verifiedUid:uid,verifiedAdmin=false,operationId
     const likedBy={...(post.likedBy||{})},was=!!likedBy[uid];if(was!==c.liked){if(c.liked)likedBy[uid]=true;else delete likedBy[uid];post.likesCount=Math.max(0,(Number(post.likesCount)||0)+(c.liked?1:-1));post.likedBy=likedBy;if(!own){actorDelta=c.liked?5:-5;if(c.liked)creatorDelta=1;}if(c.liked)progress(m,'socialActions');}
    }else if(c.type==='feedReact'){
     const r={...(post.reactions||{})},was=emojis.find(e=>r[e]?.includes(uid));for(const e of emojis)if(Array.isArray(r[e]))r[e]=r[e].filter(u=>u!==uid);if(was!==c.emoji)r[c.emoji]=[...(r[c.emoji]||[]),uid];post.reactions=r;
-   }else if(c.type==='feedComment'){
-    post.comments=[...(post.comments||[]),{id,...identity(p,uid),text:c.text.trim(),createdAtMs:now}];actorDelta=10;if(!own)creatorDelta=3;progress(m,'socialActions');
+   }else if(c.type==='feedCommentReact'){
+    const comment=(post.comments||[]).find(v=>v.id===c.commentId);if(!comment)fail('social-comment-unavailable');
+    const r={...(comment.reactions||{})},was=emojis.find(e=>r[e]?.includes(uid));for(const e of emojis)if(Array.isArray(r[e]))r[e]=r[e].filter(u=>u!==uid);if(was!==c.emoji)r[c.emoji]=[...(r[c.emoji]||[]),uid];comment.reactions=r;
+   }else if(c.type==='feedComment'||c.type==='feedCommentReply'){
+    let parentId='';if(c.type==='feedCommentReply'){const parent=(post.comments||[]).find(v=>v.id===c.commentId);if(!parent)fail('social-comment-unavailable');parentId=parent.parentId||parent.id;}
+
+    post.comments=[...(post.comments||[]),{id,...identity(p,uid),text:c.text.trim(),createdAtMs:now,parentId,reactions:{}}];actorDelta=10;if(!own)creatorDelta=3;progress(m,'socialActions');
    }else if(c.type==='feedCommentEdit'||c.type==='feedCommentDelete'){
     const index=(post.comments||[]).findIndex(v=>v.id===c.commentId);if(index<0)fail('social-comment-unavailable');if(post.comments[index].uid!==uid)fail('social-not-owner');
-    if(c.type==='feedCommentDelete'){post.comments.splice(index,1);actorDelta=-10;}else post.comments[index]={...post.comments[index],text:c.text.trim(),edited:true};
+    if(c.type==='feedCommentDelete'){post.comments.splice(index,1);for(const reply of post.comments)if(reply.parentId===c.commentId)reply.parentId='';actorDelta=-10;}else post.comments[index]={...post.comments[index],text:c.text.trim(),edited:true};
    }else if(c.type==='feedShare'){post.shareCount=(Number(post.shareCount)||0)+1;actorDelta=5;if(!own)creatorDelta=5;}
    post.socialVersion=(Number(post.socialVersion)||0)+1;post.updated_at=new Date(now);
   }

@@ -1,14 +1,14 @@
 'use strict';
 const {test,afterEach}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),Module=require('node:module');
 const req=Module.createRequire(path.join(__dirname,'../apps/mobile/package.json')),React=req('react'),{create,act}=req('react-test-renderer'),ts=req('typescript');global.IS_REACT_ACT_ENVIRONMENT=true;
-let appStateListener;let calls=[],econ,tree,prefs=new Map();const player={hp:100,atk:30,def:20,maxHp:100,maxDef:20};const army=[{id:'goblin',name:'Goblin Scout',hp:170,atk:350,def:310}];
+let alertCount=0;let appStateListener;let calls=[],econ,tree,prefs=new Map();const player={hp:100,atk:30,def:20,maxHp:100,maxDef:20};const army=[{id:'goblin',name:'Goblin Scout',hp:170,atk:350,def:310}];
 const session={id:'session',version:2,chapterId:2,enemyId:'baran',enemy:{...player,id:'baran',name:'Baran'},player,playerName:'Hunter',phase:'fight',first:'player',dialogue:[],dialogueIndex:0,events:[],log:[],shadowIds:[],ariseBonus:{hp:0,atk:0,def:0},ariseUsed:false,heavyCooldown:0,turn:0};
 const audio={pause(){},play(){},replace(){},seekTo:async()=>{}};
 let audioHook=null;let copied=[],clipboardFails=false;
 function load(file=path.join(__dirname,'../apps/mobile/src/social/FeedScreen.tsx')){const m=new Module(file);m.filename=file;m.paths=Module._nodeModulePaths(path.dirname(file));m.require=name=>{
  if(name==='../media/PhotoUploader')return {PhotoUploader:props=>React.createElement('PhotoUploader',props)};
  if(name==='../audio/AudioProvider')return {useSoundGate:(_players,local=true,visible=true)=>({current:local&&visible}),useAppAudio:()=>({prefs:{sfxEnabled:true,sfxVolume:.7,voiceEnabled:true},foreground:true,playSfx(){}})};
- if(name==='react-native')return {useWindowDimensions:()=>({width:400,height:800}),FlatList:props=>React.createElement('FlatList',{testID:'virtual-feed'},props.ListHeaderComponent,...props.data.map(item=>React.createElement(React.Fragment,{key:item.id},props.renderItem({item}))),!props.data.length&&props.ListEmptyComponent,props.ListFooterComponent),Platform:{OS:'android'},KeyboardAvoidingView:'KeyboardAvoidingView',AccessibilityInfo:{isReduceMotionEnabled:async()=>false},Alert:{alert:(_title,_message,buttons)=>buttons.at(-1).onPress()},AppState:{currentState:'active',addEventListener:(_event,cb)=>{appStateListener=cb;return {remove(){}}}},Animated:{Value:class{setValue(){} interpolate(){return 1;}stopAnimation(){}},View:'AnimatedView',Image:'Image',Text:'Text',sequence:()=>({start(){},stop(){}}),timing:()=>({start(){},stop(){}}),loop:()=>({start(){},stop(){}})},Linking:{openURL:async()=>{}},TextInput:'TextInput',Image:'Image',Modal:'Modal',Pressable:'Pressable',ScrollView:'ScrollView',Text:'Text',View:'View',StyleSheet:{create:s=>s}};
+ if(name==='react-native')return {useWindowDimensions:()=>({width:400,height:800}),FlatList:props=>React.createElement('FlatList',{testID:'virtual-feed'},props.ListHeaderComponent,...props.data.map(item=>React.createElement(React.Fragment,{key:item.id},props.renderItem({item}))),!props.data.length&&props.ListEmptyComponent,props.ListFooterComponent),Platform:{OS:'android'},KeyboardAvoidingView:'KeyboardAvoidingView',AccessibilityInfo:{isReduceMotionEnabled:async()=>false},Alert:{alert:(_title,_message,buttons)=>{alertCount++;buttons.at(-1).onPress();}},AppState:{currentState:'active',addEventListener:(_event,cb)=>{appStateListener=cb;return {remove(){}}}},Animated:{Value:class{setValue(){} interpolate(){return 1;}stopAnimation(){}},View:'AnimatedView',Image:'Image',Text:'Text',sequence:()=>({start(){},stop(){}}),timing:()=>({start(){},stop(){}}),loop:()=>({start(){},stop(){}})},Linking:{openURL:async()=>{}},TextInput:'TextInput',Image:'Image',Modal:'Modal',Pressable:'Pressable',ScrollView:'ScrollView',Text:'Text',View:'View',StyleSheet:{create:s=>s}};
  if(name==='@react-navigation/native')return {useIsFocused:()=>true,useRoute:()=>({params:{}})};
  if(name==='expo-clipboard')return {setStringAsync:async text=>{if(clipboardFails)throw Error('copy failed');copied.push(text);}};
  if(name==='../arena/ArenaVisuals')return {PublicProfileSheet:()=>React.createElement('PublicProfileSheet')};
@@ -95,4 +95,19 @@ test('Comments use sticky Android keyboard-safe footer and contextual owner menu
  assert(tree.root.findAllByType('Text').some(t=>t.props.children==='Content first'));
  await act(async()=>press('Comment options c1').props.onPress());
  assert(press('Edit comment'));assert(press('Delete comment'));assert(press('Copy comment'));
+});
+test('Comment reply/react send real commands; lower Delete directly submits without second confirmation',async()=>{
+ const c={id:'root',uid:'alice',username:'Alice',text:'Bubble',createdAtMs:Date.now(),reactions:{},parentId:''};
+ await mount({...result,posts:[{...post,comments:[c]}]});
+ const open=tree.root.findAllByType('Pressable').find(p=>p.findAllByType('Text').some(t=>t.props.children==='Comment'));
+ await act(async()=>open.props.onPress());
+ await act(async()=>press('Reply to comment root').props.onPress());await act(async()=>input('Write comment').props.onChangeText('My reply'));await act(async()=>press('Send comment').props.onPress());assert.deepEqual(calls.at(-1),{type:'feedCommentReply',postId:post.id,commentId:'root',text:'My reply'});
+ await act(async()=>press('Cancel reply').props.onPress());
+ await act(async()=>press('React to comment root').props.onPress());await act(async()=>press('React ❤️ comment root').props.onPress());assert.deepEqual(calls.at(-1),{type:'feedCommentReact',postId:post.id,commentId:'root',emoji:'❤️'});
+ await act(async()=>press('Comment options root').props.onPress());const before=calls.length,alerts=alertCount;await act(async()=>press('Delete comment').props.onPress());assert.equal(alertCount,alerts);assert.equal(calls.length,before+1);assert.deepEqual(calls.at(-1),{type:'feedCommentDelete',postId:post.id,commentId:'root'});
+});
+test('Comment bubble uses subtle depth, with name/text inside and reply thread indented',async()=>{
+ const root={id:'root',uid:'alice',username:'Alice',text:'Root text',createdAtMs:Date.now()},reply={...root,id:'reply',parentId:'root',text:'Nested reply'};
+ await mount({...result,posts:[{...post,comments:[root,reply]}]});const open=tree.root.findAllByType('Pressable').find(p=>p.findAllByType('Text').some(t=>t.props.children==='Comment'));await act(async()=>open.props.onPress());
+ const bubble=press('Comment actions root');assert.equal(bubble.props.style.backgroundColor,'#303139');assert.equal(bubble.props.style.elevation,1);assert(bubble.findAllByType('Text').some(t=>t.props.children==='Alice'));assert(bubble.findAllByType('Text').some(t=>t.props.children==='Root text'));assert(!bubble.findAllByType('Text').some(t=>t.props.children==='Reply'));assert(press('Reply to comment reply'));assert(tree.root.findAllByType('Text').some(t=>t.props.children==='Nested reply'));
 });

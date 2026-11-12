@@ -48,3 +48,15 @@ test('Social preserves legacy fields/timestamps, filtered read projection and hi
  await post(id).update({created_at_ms:Date.now()});const result=await run(uid,{type:'feedEdit',postId:id,caption:'নতুন caption'});assert.equal(result.xpDelta,0);const stored=(await post(id).get()).data();assert.equal(stored.legacyUnknown,'KEEP');assert.equal(typeof stored.created_at.toMillis,'function');
  const view=await run(uid,{type:'feedPostView',postId:id});assert.equal(view.posts[0].caption,'নতুন caption');assert(!JSON.stringify(view).includes('private@example.com'));
 });
+
+test('comment reply/reaction concurrent receipt retry, privacy and deletion preserve replies',async()=>{
+ const owner='thread-owner',reader='thread-reader';await seed(owner);await seed(reader);const {postId}=await create(owner);
+ const rootResult=await run(owner,{type:'feedComment',postId,text:'Root'}),root=rootResult.post.comments.at(-1).id;
+ const replyCmd={type:'feedCommentReply',postId,commentId:root,text:'Reply'},replyOp='thread_reply_same_123456789012345';
+ const [a,b]=await Promise.all([run(reader,replyCmd,replyOp),run(reader,replyCmd,replyOp)]);assert.deepEqual(a,b);const reply=a.post.comments.at(-1);assert.equal(reply.parentId,root);assert.equal(a.xpDelta,10);
+ const react={type:'feedCommentReact',postId,commentId:reply.id,emoji:'❤️'},reactOp='thread_react_same_123456789012345';
+ const [x,y]=await Promise.all([run(owner,react,reactOp),run(owner,react,reactOp)]);assert.deepEqual(x,y);assert.equal(x.xpDelta,0);const projected=x.post.comments.find(c=>c.id===reply.id);assert.equal(projected.reaction,'❤️');assert.equal(projected.reactions['❤️'],1);assert(!JSON.stringify(projected.reactions).includes(owner));
+ await assert.rejects(run(owner,{type:'feedCommentDelete',postId,commentId:reply.id}),e=>e.code==='social-not-owner');
+ await assert.rejects(run(reader,{...replyCmd,commentId:'missing'}),e=>e.code==='social-comment-unavailable');
+ const deleted=await run(owner,{type:'feedCommentDelete',postId,commentId:root});assert.equal(deleted.post.comments.length,1);assert.equal(deleted.post.comments[0].id,reply.id);assert.equal(deleted.post.comments[0].parentId,'');
+});

@@ -29,3 +29,11 @@ Evidence: 109 tool/native tests +87 backend tests locally; foundation passes. Lo
 - Comments emphasize author and text, with Copy and owner Edit/Delete in contextual options. Existing server ownership and deletion XP confirmation preserved. Sending stays in a non-scrolling footer; full-modal KeyboardAvoidingView uses Android height avoidance.
 - Automated regression coverage: composer/uploader instance survives background→active and submits verified mediaId; contextual comments and Android avoidance; existing distinct Like/reaction commands.
 - Required phone acceptance: gallery photo in Feed (including cancel/retry), long-press reaction placement, multiline typing with keyboard, comment options/deletion confirmation. Mock rendering cannot certify native keyboard geometry.
+
+## R1 comment threads — 0.14.2 / code 26
+- Facebook reference hierarchy: understated raised rounded bubble (1dp depth), author/text inside; avatar outside, time/Like/Reply below. No heavy border or large shadow.
+- Comment Like toggles; long press/React chooses six emoji. Counts and own selection come from server, not optimistic XP. Reactions award no XP.
+- Replies are real server comments with root parentId, shown indented beneath parent. Replying to a reply remains in the same root thread. Existing comment XP semantics (+10/delete -10, floor zero) apply to replies; no new reaction XP. Parent deletion retains replies as top-level comments rather than deleting other users' content.
+- Lower Delete comment sends the existing owner-only command directly; XP warning is inline, no second Alert confirmation. Post deletion confirmation unchanged.
+- New backend commands require Render deployment from this branch's runtime commit before testing React/Reply. No Firebase Rules, Cloudinary or billing changes. Old app/legacy comments remain compatible.
+- Owner phone acceptance still required: subtle bubble appearance, reaction toggle/change/retry, root+reply layout, multiline reply keyboard, direct delete and XP warning. CI adds actual Firestore concurrent-receipt/ownership/projection coverage.
