@@ -1,3 +1,4 @@
+import {usePresentation} from '../ui/PresentationProvider';
 import {useAppAudio,useSoundGate} from '../audio/AudioProvider';
 import {SignatureMoment,BossCue,bossSignatures} from './SignatureMoments';
 import {NarrativeLayer} from './narrative/NarrativeLayer';
@@ -38,12 +39,14 @@ export function StoryScreen(){
  const [bossCue,setBossCue]=useState<BossCue|null>(null),[chronicleAvailable,setChronicleAvailable]=useState(false),[monarchChoice,setMonarchChoice]=useState<string|null>(null);
  const [plannedEnemy,setPlannedEnemy]=useState<string|null>(null),[narrativeOpen,setNarrativeOpen]=useState(false),[skipDialogue,setSkipDialogue]=useState(false);
  const {profile,user}=useAuth(),e=useEconomy();
- const [reduced,setReduced]=useState(false),[haptic,setHaptic]=useState(true),[effects,setEffects]=useState(false),[diagnostics,setDiagnostics]=useState(false),[notice,setNotice]=useState<SystemNotice|null>(null),[fxBusy,setFxBusy]=useState(false),[prefsReady,setPrefsReady]=useState(false);
+ const presentation=usePresentation();
+ const [localReduced,setReduced]=useState(false),[haptic,setHaptic]=useState(true),[effects,setEffects]=useState(false),[diagnostics,setDiagnostics]=useState(false),[notice,setNotice]=useState<SystemNotice|null>(null),[fxBusy,setFxBusy]=useState(false),[prefsReady,setPrefsReady]=useState(false);
+ const reduced=localReduced||presentation.reduced;
  const preferenceKey=`story.presentation.v1.${user?.uid||profile?.uid||''}`;
  const fxTimer=useRef<ReturnType<typeof setTimeout>|null>(null),hydrated=useRef(false);
  const [chapter,setChapter]=useState(1),[session,setSession]=useState<StorySession|null>(null),[army,setArmy]=useState<Shadow[]>([]),[cleared,setCleared]=useState<string[]>([]),[supported,setSupported]=useState(false),[rules,setRules]=useState(false),[showArmy,setShowArmy]=useState(false),[arise,setArise]=useState(false),[chosen,setChosen]=useState<string[]>([]),[burst,setBurst]=useState<string[]|null>(null),[sound,setSound]=useState(true),[log,setLog]=useState(false),[foreground,setForeground]=useState(AppState.currentState==='active');
- useEffect(()=>{let alive=true;void Promise.all([AsyncStorage.getItem(preferenceKey),AccessibilityInfo.isReduceMotionEnabled()]).then(([raw,systemReduced])=>{if(!alive)return;const saved=raw?JSON.parse(raw):{};setReduced(systemReduced||saved.reduced===true);setHaptic(saved.haptic!==false);setSound(saved.sound!==false);}).catch(()=>{}).finally(()=>{if(alive)setPrefsReady(true);});return()=>{alive=false;};},[preferenceKey]);
- useEffect(()=>{if(prefsReady)void AsyncStorage.setItem(preferenceKey,JSON.stringify({reduced,haptic,sound})).catch(()=>{});},[prefsReady,reduced,haptic,sound,preferenceKey]);
+ useEffect(()=>{let alive=true;void Promise.all([AsyncStorage.getItem(preferenceKey),AccessibilityInfo.isReduceMotionEnabled()]).then(([raw,systemReduced])=>{if(!alive)return;const saved=raw?JSON.parse(raw):{};setReduced(saved.reduced===true);setHaptic(saved.haptic!==false);setSound(saved.sound!==false);}).catch(()=>{}).finally(()=>{if(alive)setPrefsReady(true);});return()=>{alive=false;};},[preferenceKey]);
+ useEffect(()=>{if(prefsReady)void AsyncStorage.setItem(preferenceKey,JSON.stringify({reduced:localReduced,haptic,sound})).catch(()=>{});},[prefsReady,localReduced,haptic,sound,preferenceKey]);
  const loaded=useRef(false),last=useRef<unknown>(null),scheduled=useRef(''),seenEvent=useRef('');
  const hit=useAudioPlayer(require('../../assets/audio/duel-impact.wav')),slash=useAudioPlayer(require('../../assets/audio/story-slash.wav')),zing=useAudioPlayer(require('../../assets/audio/story-zing.wav')),pulse=useAudioPlayer(require('../../assets/audio/story-pulse.wav'));
  const shake=useRef(new Animated.Value(0)).current,coin=useRef(new Animated.Value(0)).current;

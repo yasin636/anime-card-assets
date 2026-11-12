@@ -6,7 +6,8 @@ global.IS_REACT_ACT_ENVIRONMENT=true;
 const renderModule=file=>{
  const m=new Module(file);m.filename=file;m.paths=Module._nodeModulePaths(path.dirname(file));
  m.require=name=>{
-  if(name==='../audio/AudioProvider')return {useSoundGate:(_players,local=true,visible=true)=>({current:local&&visible}),useAppAudio:()=>({prefs:{sfxEnabled:true,sfxVolume:.7,voiceEnabled:true},foreground:true,playSfx(){}})};
+  if(name==='../ui/PresentationProvider')return {usePresentation:()=>({ready:true,reduced:false,foreground:true})};
+ if(name==='../audio/AudioProvider')return {useSoundGate:(_players,local=true,visible=true)=>({current:local&&visible}),useAppAudio:()=>({prefs:{sfxEnabled:true,sfxVolume:.7,voiceEnabled:true},foreground:true,playSfx(){}})};
  if(name==='react-native')return {Animated:{Value:class {setValue(){} interpolate(){return 1;}},View:'AnimatedView',sequence:()=>({start(){},stop(){}}),timing:()=>({}),delay:()=>({})},Image:'Image',Modal:'Modal',Pressable:'Pressable',ScrollView:'ScrollView',Text:'Text',View:'View',StyleSheet:{create:v=>v,absoluteFill:{},absoluteFillObject:{}}};
   if(name==='react-native-safe-area-context')return {SafeAreaView:'SafeAreaView'};
   if(name==='expo-linear-gradient')return {LinearGradient:'LinearGradient'};

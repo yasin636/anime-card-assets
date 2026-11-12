@@ -1,3 +1,4 @@
+import {usePresentation} from '../ui/PresentationProvider';
 import React,{useEffect,useState} from 'react';
 import {Animated,Image,Modal,Pressable,ScrollView,StyleSheet,Text,View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
@@ -26,8 +27,8 @@ export function TradingCard({card,selected=false,order,onPress,onLongPress,disab
  </Pressable>;
 }
 export function CardDetail({card,onClose}:{card:DisplayCard|null;onClose:()=>void}){
- if(!card)return null;const c=displayCard(card),color=rarityColors[c.rarity||'unknown'];
- return <Modal visible transparent animationType="fade" onRequestClose={onClose}><Pressable style={v.scrim} onPress={onClose}><Pressable onPress={e=>e.stopPropagation()} style={[v.detail,{borderColor:`${color}66`}]}><Pressable accessibilityRole="button" accessibilityLabel="Close card details" onPress={onClose} style={v.close}><Ionicons name="close" size={22} color="white"/></Pressable><View style={{width:'72%',alignSelf:'center'}}><TradingCard card={c}/></View><Text style={v.sheetTitle}>{c.name}</Text><View style={v.metrics}><Metric label="RAW HP" value={c.hp??'—'} color="#f59db3"/><Metric label="RAW ATK" value={c.atk??'—'} color={palette.gold}/><Metric label="RAW DEF" value={c.def??'—'} color="#8ccfff"/></View><Text style={v.description}>Battle strike {c.atk?Math.round(c.atk*.5):'—'} · HP contribution {c.hp?c.hp*2:'—'}{`\n`}Raw stats shown on card. Rarity follows the game catalog.</Text></Pressable></Pressable></Modal>;
+ const presentation=usePresentation();if(!card)return null;const c=displayCard(card),color=rarityColors[c.rarity||'unknown'];
+ return <Modal visible transparent animationType={presentation.reduced?'none':'fade'} onRequestClose={onClose}><Pressable style={v.scrim} onPress={onClose}><Pressable onPress={e=>e.stopPropagation()} style={[v.detail,{borderColor:`${color}66`}]}><Pressable accessibilityRole="button" accessibilityLabel="Close card details" onPress={onClose} style={v.close}><Ionicons name="close" size={22} color="white"/></Pressable><View style={{width:'72%',alignSelf:'center'}}><TradingCard card={c}/></View><Text style={v.sheetTitle}>{c.name}</Text><View style={v.metrics}><Metric label="RAW HP" value={c.hp??'—'} color="#f59db3"/><Metric label="RAW ATK" value={c.atk??'—'} color={palette.gold}/><Metric label="RAW DEF" value={c.def??'—'} color="#8ccfff"/></View><Text style={v.description}>Battle strike {c.atk?Math.round(c.atk*.5):'—'} · HP contribution {c.hp?c.hp*2:'—'}{`\n`}Raw stats shown on card. Rarity follows the game catalog.</Text></Pressable></Pressable></Modal>;
 }
 export function BoardIdentity({row,own,onPress,disabled}:{row:BoardRow;own:boolean;onPress:()=>void;disabled:boolean}){
  return <Pressable accessibilityRole="button" accessibilityLabel={`Rank ${row.rank}, ${row.username}, view public profile`} disabled={disabled} onPress={onPress} style={({pressed})=>[v.boardRow,own&&{backgroundColor:'#7c5dd41c',borderColor:'#9a80ff66'},pressed&&{opacity:.7}]}>
@@ -63,12 +64,13 @@ export const v=StyleSheet.create({
 
 export type DuelEvent={id:string;player?:DisplayCard;enemy?:DisplayCard;playerDamage:number;enemyDamage:number;shieldBreak:boolean};
 export function DuelFeedback({event,onClose}:{event:DuelEvent|null;onClose:()=>void}){
+ const presentation=usePresentation();
  const progress=React.useRef(new Animated.Value(0)).current;
  useEffect(()=>{
-  if(!event)return;progress.setValue(0);
+  if(!event)return;if(presentation.reduced){progress.setValue(1);return;}progress.setValue(0);
   const animation=Animated.sequence([Animated.timing(progress,{toValue:1,duration:240,useNativeDriver:true}),Animated.delay(1050),Animated.timing(progress,{toValue:0,duration:240,useNativeDriver:true})]);
   animation.start(({finished})=>{if(finished)onClose();});return()=>animation.stop();
- },[event?.id,progress]);
+ },[event?.id,progress,presentation.reduced]);
  if(!event)return null;
  return <Modal visible transparent animationType="none" onRequestClose={onClose}><Pressable accessibilityRole="button" accessibilityLabel="Dismiss server-confirmed duel result" onPress={onClose} style={v.scrim}><Animated.View style={{opacity:progress,transform:[{scale:progress.interpolate({inputRange:[0,1],outputRange:[.94,1]})}],gap:20}}><Text style={[v.kicker,{textAlign:'center'}]}>SERVER-CONFIRMED EXCHANGE</Text><View style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between',gap:10}}><View style={{width:'40%',gap:12}}>{event.player&&<TradingCard card={{...event.player,used:false}}/>}<Text style={{color:'#f598b1',textAlign:'center',fontSize:20,fontWeight:'900'}}>−{event.playerDamage} HP</Text><Text style={[v.caption,{textAlign:'center'}]}>YOUR SQUAD</Text></View><Ionicons name="flash" size={32} color={palette.gold}/><View style={{width:'40%',gap:12}}>{event.enemy&&<TradingCard card={{...event.enemy,used:false}}/>}<Text style={{color:palette.cyan,textAlign:'center',fontSize:20,fontWeight:'900'}}>−{event.enemyDamage} HP</Text><Text style={[v.caption,{textAlign:'center'}]}>AI SQUAD</Text></View></View>{event.shieldBreak&&<Text style={{color:palette.gold,fontWeight:'900',fontSize:19,textAlign:'center',letterSpacing:2}}>SHIELD BREAK</Text>}<Text style={[v.description,{textAlign:'center'}]}>Tap to continue · battle state already saved</Text></Animated.View></Pressable></Modal>;
 }
