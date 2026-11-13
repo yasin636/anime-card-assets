@@ -16,4 +16,8 @@ Owner accepted all v0.22.2 Phase4A phone checks and authorized this phase withou
 - CI download suite is now a required APK gate; artifact includes dedicated phone checklist and sample SRT.
 
 ## Acceptance
-Pending signed CI and phone checks. See apps/mobile/ANIGOOD-WATCH-DOWNLOADS-TEST.md. Automated fake-stream tests do not prove Android streaming/FileHandle behavior, native offline decoder playback, storage performance or airplane-mode caption display. Do not call Phase4B accepted until owner reports these.
+Signed CI SUCCESS: https://github.com/yasin636/anime-card-assets/actions/runs/43418963514 (runtime 7e7571f773ded1017124f7079669f5c318ab14ad). Security/rules/transactions, generated real Firebase config, full TypeScript, required tests, native release compile, pinned private certificate/package metadata/embedded JavaScript verification and artifact upload all PASS.
+
+Artifact: https://github.com/yasin636/anime-card-assets/actions/runs/43418963514/artifacts/14033119069 — AniGooD-v0.23.0-Watch4B, 39,836,982 bytes. GitHub archive metadata digest sha256:51d7e831817874f496c360b9b032933928c8bd5e795f3092cde47ff852a750da (archive, not independently downloaded APK hash). APK-specific SHA256SUMS.txt and phone checklist are inside ZIP. Direct log retrieval was blocked by restricted outbound access to the Actions log storage host; step outcomes verified via gh run watch.
+
+Pending owner phone checks. See apps/mobile/ANIGOOD-WATCH-DOWNLOADS-TEST.md. Automated fake-stream tests do not prove Android streaming/FileHandle behavior, native offline decoder playback, storage performance or airplane-mode caption display. Do not call Phase4B accepted until owner reports these.
