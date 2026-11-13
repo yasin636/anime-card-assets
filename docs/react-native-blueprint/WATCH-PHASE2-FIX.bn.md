@@ -1,0 +1,6 @@
+# Watch2 correction — v0.20.1/code33
+Owner phone evidence: TMDB Movies/Drama/Animation work; Anime Jikan fails; browser api.jikan.moe times out while docs load. User supplied shutdown notice, independently retrieved Ervie/jikan.net README announcing public API discontinuation Oct1,2026. Initial Jikan choice did not validate current availability; no further user DNS changes requested.
+
+Changes: no public Jikan requests; default Anime TMDB Japanese-language Animation Series plus Films, optional Kitsu public JSON:API; distinct typed provider keys, legacy Jikan snapshots preserved with no refresh and no relabeling. Existing Tracker untouched. Provider/HTTP/network/timeout redacted diagnostics. Existing credentials/storage namespace/signing maintained.
+
+Kitsu review: official api-docs openapi3 schemas GET/filter/pagination, kitsu-web the-future current domain config and markdown/terms.md (2016). Documented public API does not imply unrestricted commercial content redistribution. Current live terms/commercial permission not confirmed; Kitsu optional experimental, UI links terms, TMDB default. See apps/mobile/ANIGOOD-WATCH2-FIX-TEST.md. No live endpoint test from sandbox allowed outbound hosts; no claim of 100% availability.
