@@ -1,3 +1,5 @@
+import {WatchLibraryProvider} from './src/watch/useWatchLibrary';
+import {WatchPlaybackProvider} from './src/watch/WatchPlaybackProvider';
 import {WatchHub as WatchScreen} from './src/watch/WatchHub';
 import {HeaderBalances} from './src/ui/HeaderBalances';
 import {SystemAlertHost} from './src/ui/SystemAlert';
@@ -86,7 +88,7 @@ function AppRoot() {
   useEffect(() => { const id = setTimeout(() => setBooting(false), 1100); return () => clearTimeout(id); }, []);
   if (booting || !auth.ready) return <BrandBoot/>;
   if (!auth.user || auth.pendingEmail) return <AuthScreen />;
-  return <PresentationProvider key={auth.user.uid} uid={auth.user.uid}><AudioProvider key={auth.user.uid} uid={auth.user.uid}><AIProvider key={auth.user.uid}><EconomyProvider key={auth.user.uid}><ChatProvider key={auth.user.uid}><AppNavigation uid={auth.user.uid}/></ChatProvider></EconomyProvider></AIProvider></AudioProvider></PresentationProvider>;
+  return <PresentationProvider key={auth.user.uid} uid={auth.user.uid}><AudioProvider key={auth.user.uid} uid={auth.user.uid}><AIProvider key={auth.user.uid}><EconomyProvider key={auth.user.uid}><ChatProvider key={auth.user.uid}><WatchLibraryProvider uid={auth.user.uid}><WatchPlaybackProvider onWatch={()=>go('Watch')}><AppNavigation uid={auth.user.uid}/></WatchPlaybackProvider></WatchLibraryProvider></ChatProvider></EconomyProvider></AIProvider></AudioProvider></PresentationProvider>;
 }
 function AccountAlerts(){const auth=useAuth();return <SystemAlertHost key={auth.user?.uid||'signed-out'}/>;}
 export default function App() { return <SafeAreaProvider><AuthProvider><AppRoot /><AccountAlerts/></AuthProvider></SafeAreaProvider>; }
