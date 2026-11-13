@@ -1,4 +1,4 @@
-import {WatchScreen} from './src/watch/WatchScreen';
+import {WatchHub as WatchScreen} from './src/watch/WatchHub';
 import {HeaderBalances} from './src/ui/HeaderBalances';
 import {SystemAlertHost} from './src/ui/SystemAlert';
 import {BrandBoot} from './src/ui/BrandBoot';
