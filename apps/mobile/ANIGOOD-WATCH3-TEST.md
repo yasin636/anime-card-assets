@@ -18,3 +18,12 @@ Install signed APK **over the existing app**. Do not uninstall/clear data. Packa
 10. Interrupt network/background: no unrestricted background audio; explicit Play/Reload after return. Error/reload releases old player and retains last offset when same duration/source. Unsupported codecs/DRM/private links are not guaranteed.
 
 Skip Intro intentionally absent without verified episode/edition timestamp data. Phone validation is required for PiP, gestures, codecs, orientation, system Back and actual-video resume; automated source/model tests are not native runtime proof.
+
+## Signed delivery
+- Runtime commit: `98c0fddd6a351ac2c31e833ebfaf1de5ee31cee5`.
+- CI run: https://github.com/yasin636/anime-card-assets/actions/runs/43372064925 — full SUCCESS on attempt 2. First attempt encountered unchanged Firestore-emulator `Transaction is invalid or closed` in rare-duplicate recycle test; rerun retained every gate/assertion and passed.
+- APK ZIP: https://github.com/yasin636/anime-card-assets/actions/runs/43372064925/artifacts/14013198297
+- Artifact: `AniGooD-v0.21.0-Watch3`, 39,790,236 bytes; GitHub archive metadata digest `sha256:38659aef1a0fc9bb2288a026f8a39b653b39ca4782003873864e19b0327a72a1` (not separately downloaded APK hash). ZIP includes APK and SHA256SUMS.
+- TypeScript, tests, native release build, unchanged private-certificate signature, package/version metadata and embedded JavaScript checks passed in CI. Phone checklist above remains unverified until owner testing.
+- Initial build `43371612771` found React `act` unavailable under production NODE_ENV. Fixed test-command environment (not app behavior or assertions); React lifecycle tests now execute alongside existing NODE_ENV=test integration tests.
+- Shared account-root library keeps mini-player progress persistence alive across Watch navigation; logout unmounts both playback/library providers.
