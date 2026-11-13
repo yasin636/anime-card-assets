@@ -1,8 +1,9 @@
 import React,{createContext,useContext,useRef,useState} from 'react';
 import {View} from 'react-native';
+import type {RemoteSubtitle} from './sourceIntegration';
 import type {VideoSource} from 'expo-video';
 import {AdvancedPlayer} from './AdvancedPlayer';
-export type PlaybackSession={source:VideoSource;title:string;resume:number;report?:(position:number,duration:number)=>void;previous?:()=>void;next?:()=>void};
+export type PlaybackSession={source:VideoSource;title:string;resume:number;remoteSubtitles?:RemoteSubtitle[];report?:(position:number,duration:number)=>void;previous?:()=>void;next?:()=>void};
 type State={open:(session:PlaybackSession)=>void;close:()=>void;expand:()=>void;active:boolean};
 const Context=createContext<State|null>(null);
 export function useWatchPlayback(){const c=useContext(Context);if(!c)throw Error('WatchPlaybackProvider missing');return c;}

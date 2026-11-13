@@ -44,3 +44,22 @@ async function tmdbRequest(path:string,params:Record<string,string>,credential:s
  return request(u.toString(),{headers},signal);
 }
 async function request(url:string,init:RequestInit,signal:AbortSignal){let r:Response;try{r=await fetch(url,{...init,signal,redirect:'error'});}catch{throw new CatalogError(signal.aborted?'timeout':'network');}if(!r.ok)throw new CatalogError('http',r.status);try{const d=await r.json();if(d.errors)throw new CatalogError('response');return d;}catch{throw new CatalogError(signal.aborted?'timeout':'response');}}
+
+/** Explicit provider mappings only. Kitsu season/episode equivalence is NOT inferred from a
+ * series-level IMDb/MAL mapping: caller must confirm season/episode before using that mapping. */
+export type SourceIdentity={id:string;origin:'native'|'external';requiresEpisodeConfirmation:boolean};
+export async function sourceIdentities(t:Title,credential:string,signal:AbortSignal):Promise<SourceIdentity[]>{
+ const result:SourceIdentity[]=[];
+ if(t.provider==='tmdb'){
+  result.push({id:`tmdb:${t.id}`,origin:'native',requiresEpisodeConfirmation:false});
+  const d=await tmdbRequest(`/${t.kind}/${t.id}/external_ids`,{},credential,signal);
+  if(typeof d.imdb_id==='string'&&/^tt\d{5,12}$/.test(d.imdb_id))result.push({id:d.imdb_id,origin:'external',requiresEpisodeConfirmation:false});
+ }else if(t.provider==='kitsu'){
+  result.push({id:`kitsu:${t.id}`,origin:'native',requiresEpisodeConfirmation:false});
+  // Fixed trusted origin; never follow response pagination/related URLs to arbitrary hosts.
+  const d=await request(`https://kitsu.app/api/edge/anime/${t.id}/mappings?page[limit]=20`,{headers:{Accept:'application/vnd.api+json'}},signal);
+  if(!Array.isArray(d.data))throw new CatalogError('response');
+  for(const row of d.data.slice(0,20)){const a=row?.attributes;if(row?.type!=='mappings'||!a)continue;let id='';if(a.externalSite==='imdb'&&/^tt\d{5,12}$/.test(String(a.externalId)))id=String(a.externalId);else if(a.externalSite==='myanimelist/anime'&&/^[1-9]\d{0,11}$/.test(String(a.externalId)))id=`mal:${a.externalId}`;if(id&&!result.some(r=>r.id===id))result.push({id,origin:'external',requiresEpisodeConfirmation:true});}
+ }
+ return result;
+}

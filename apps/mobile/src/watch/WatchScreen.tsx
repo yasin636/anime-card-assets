@@ -2,14 +2,21 @@ import React,{useCallback,useRef,useState} from 'react';
 import {Pressable,ScrollView,StyleSheet,Text,TextInput,View} from 'react-native';
 import {useFocusEffect} from '@react-navigation/native';
 import {useAppAudio} from '../audio/AudioProvider';
+import {useAuth} from '../auth/AuthProvider';
+import {Title} from './catalog';
+import {SourceBrowser} from './SourceBrowser';
+import {IntegratedStream} from './sourceIntegration';
 import {mediaUrl} from './model';
 import {useWatchPlayback} from './WatchPlaybackProvider';
 const sample=require('../../assets/watch/track-check.mp4');
-export function WatchScreen({onLink,onPrevious,onNext}:{onLink?:(url:string)=>Promise<{resume:number;report:(position:number,duration:number)=>void}>;onPrevious?:()=>void;onNext?:()=>void}={}){
+export function WatchScreen({onLink,onPrevious,onNext,selection,credential}:{selection?:{title:Title;season:number;episode:number};credential?:string;onLink?:(url:string)=>Promise<{resume:number;report:(position:number,duration:number)=>void}>;onPrevious?:()=>void;onNext?:()=>void}={}){
+ const {user}=useAuth();
  const music=useAppAudio(),playback=useWatchPlayback();const [url,setUrl]=useState(''),[message,setMessage]=useState(''),[loading,setLoading]=useState(false);const epoch=useRef(0);
  useFocusEffect(useCallback(()=>{music.pause();return()=>{epoch.current++;};},[]));
  const load=async(local:boolean)=>{const request=++epoch.current;setLoading(true);try{const uri=local?'':mediaUrl(url);const context=!local&&onLink?await onLink(uri):undefined;if(request!==epoch.current)return;music.pause();setMessage('');playback.open({source:local?sample:{uri},title:local?'AniGooD · Offline playback sample':'AniGooD · Your video',resume:context?.resume||0,report:context?.report,previous:local?undefined:onPrevious,next:local?undefined:onNext});}catch{if(request===epoch.current)setMessage('Valid public HTTPS video link দাও। Link load/setup সফল হয়নি।');}finally{if(request===epoch.current)setLoading(false);}};
+ const playStream=async(stream:IntegratedStream)=>{const request=++epoch.current;const context=onLink?await onLink(stream.url):undefined;if(request!==epoch.current)return;music.pause();playback.open({source:{uri:stream.url,headers:stream.headers},title:selection?`${selection.title.name} · ${stream.name}`:stream.name,resume:context?.resume||0,report:context?.report,remoteSubtitles:stream.subtitles,previous:onPrevious,next:onNext});};
  return <ScrollView contentContainerStyle={s.page} keyboardShouldPersistTaps="handled"><Text style={s.eyebrow}>ANIGOOD WATCH</Text><Text style={s.title}>Ready for the story.</Text><Text style={s.body}>নিজের বা অনুমতিপ্রাপ্ত ভিডিও চালাও। Source-এ পাওয়া audio/subtitle track-ই দেখানো হবে।</Text>{playback.active&&<Button text="Open active player" onPress={playback.expand}/>}
+ {selection&&user&&<SourceBrowser uid={user.uid} title={selection.title} season={selection.season} episode={selection.episode} credential={credential||''} onPlay={playStream}/>}
  <View style={s.card}><Text style={s.heading}>Open your video</Text><Text style={s.body}>Public HTTPS MP4 / HLS / DASH · Link save হয় না। Provider তোমার IP পায়।</Text><TextInput accessibilityLabel="HTTPS video URL" value={url} onChangeText={setUrl} autoCapitalize="none" autoCorrect={false} keyboardType="url" placeholder="https://…" placeholderTextColor="#8f88a6" style={s.input}/><Button text={loading?'Preparing…':'Open video'} disabled={loading} onPress={()=>void load(false)}/></View>
  <View style={s.card}><Text style={s.heading}>Offline playback check</Text><Text style={s.body}>১২ সেকেন্ডের test pattern · দুইটি tone ও English subtitle। বাস্তব dub/movie নয়। Volume কম রাখো।</Text><Button text="Play offline sample" disabled={loading} onPress={()=>void load(true)}/></View>
  {!!message&&<Text accessibilityRole="alert" style={s.error}>{message}</Text>}
