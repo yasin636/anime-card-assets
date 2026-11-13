@@ -27,3 +27,13 @@ Skip Intro intentionally absent without verified episode/edition timestamp data.
 - TypeScript, tests, native release build, unchanged private-certificate signature, package/version metadata and embedded JavaScript checks passed in CI. Phone checklist above remains unverified until owner testing.
 - Initial build `43371612771` found React `act` unavailable under production NODE_ENV. Fixed test-command environment (not app behavior or assertions); React lifecycle tests now execute alongside existing NODE_ENV=test integration tests.
 - Shared account-root library keeps mini-player progress persistence alive across Watch navigation; logout unmounts both playback/library providers.
+
+## Owner feedback and v0.21.1 / 35 correction
+Owner phone confirmed sample, play/pause/timeline/seek, actual audio/embedded subtitle/Off, landscape/Back, mini-player, PiP and collapsible source explanation. Imported subtitle not tested (no file available). Speed changed rate but also pitch; brightness/volume gestures did not work.
+
+Corrections:
+- Explicit `preservesPitch=true` at player initialization and every speed change. Installed expo-video Android implementation defaults its internal flag to false despite API doc default true, which explains owner pitch feedback. Speech pitch still needs recheck with an actual spoken video (sample audio is only tones).
+- Gesture responder moved from one sibling surface to parent video stage, with vertical-move capture so controls/Pressable responders cannot swallow swipes. Stable memoized responder survives hint/time updates, measured stage bounds determine left/right in portrait and landscape, brightness baseline is not asynchronously changed mid-drag.
+- Re-test swipes with controls both visible/hidden. Player volume, not Android master volume. Begin by swiping DOWN on right: initial volume is already 100%, so up alone may sound unchanged.
+- Provided original four-cue `assets/watch/phase3-check.srt`, times match 12-second sample. Save file to phone Downloads, then Audio & subtitles → Import SRT / VTT. Check FIRST/SECOND/THIRD/FOURTH, Size +/−, ±0.5s and Reset. No third-party subtitle download needed.
+- Automated 158 tool/mobile tests + foundation PASS. Native runtime fixes are not phone-confirmed yet; previous PASS results are preserved as baseline, not assumed revalidated.

@@ -1,0 +1,15 @@
+1
+00:00:00,500 --> 00:00:03,000
+AniGooD subtitle test: FIRST
+
+2
+00:00:03,000 --> 00:00:06,000
+SECOND: Try Size + and Size -
+
+3
+00:00:06,000 --> 00:00:09,000
+THIRD: Positive delay = later
+
+4
+00:00:09,000 --> 00:00:11,800
+FOURTH: Subtitle test complete

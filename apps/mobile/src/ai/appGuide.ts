@@ -1,7 +1,7 @@
 import {chapters} from '../story/catalog.json';
 import themes from '../domain/themes.json';
 import {communityMissions} from '../community/types';
-export const APP_GUIDE_VERSION='AniGooD-0.21.0-Watch3';
+export const APP_GUIDE_VERSION='AniGooD-0.21.1-Watch3';
 // Release-bundled authoritative help. Update this module and its release test on every APK feature/rule change.
 export const APP_GUIDE=`APP HELP VERSION: ${APP_GUIDE_VERSION}
 AniGooD is an anime community/card/adventure Android app, not a payment service. This guide describes shipped features, not the user's private state. Never invent their balances, wins, inventory, chat messages or profile; ask them to open the relevant screen. You cannot perform account/game actions. Explain steps, never pretend to execute them.
