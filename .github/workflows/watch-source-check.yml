@@ -1,6 +1,9 @@
 name: Watch public media diagnostics
 on:
   workflow_dispatch:
+  push:
+    branches: [arena/cd835a4c-anime-card-assets]
+    paths: [.github/workflows/watch-source-check.yml]
 permissions:
   contents: read
 jobs:
