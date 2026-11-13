@@ -25,8 +25,16 @@ jobs:
           assert data[4:8] == b'ftyp', 'Not an MP4 ftyp header'
           print('PASS public MP4 byte probe:', len(data), 'bytes, brand', repr(data[8:12]))
           PY
-          if command -v ffprobe >/dev/null; then
-            timeout 90 ffprobe -v error -show_entries format=duration:stream=codec_name,codec_type,width,height -of json "$URL"
-          else
-            echo 'ffprobe unavailable: byte probe only, no codec/native playback claim.'
+          echo '::notice title=MP4 byte check::PASS public Range response has MP4 ftyp header.'
+          if ! command -v ffprobe >/dev/null; then
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq ffmpeg
           fi
+          timeout 90 ffprobe -v error -show_entries format=duration:stream=codec_name,codec_type,width,height -of json "$URL" > "$RUNNER_TEMP/probe.json"
+          python3 - "$RUNNER_TEMP/probe.json" <<'PY'
+          import json,sys
+          d=json.load(open(sys.argv[1]));duration=float(d['format']['duration']);streams=d['streams']
+          assert duration>500, 'Not the full short film'
+          assert any(s.get('codec_name')=='h264' for s in streams), 'Expected H264 video'
+          print('::notice title=Media codec check::PASS '+json.dumps(d,separators=(',',':')))
+          PY
