@@ -15,7 +15,7 @@ function tmdb(m:any,kind:'movie'|'tv'):Title{return {key:`tmdb:${kind}:${m.id}`,
 export function validateCredential(v:string){const s=v.trim();if(s.length<16||s.length>4096||!/^[a-zA-Z0-9._-]+$/.test(s))throw Error('TMDB API key বা API Read Access Token সঠিকভাবে দাও।');return s;}
 export async function catalogRequest(section:Section,query:string,page:number,filter:CatalogFilter,credential:string,signal:AbortSignal,animeSource:AnimeSource='kitsu'):Promise<{items:Title[];more:boolean}>{
  if(section==='anime'&&animeSource==='kitsu'){
-  const params=new URLSearchParams({'page[limit]':'24','page[offset]':String((page-1)*24),sort:'popularityRank'});
+  const params=new URLSearchParams({'page[limit]':'20','page[offset]':String((page-1)*20),sort:'popularityRank'});
   if(query.trim())params.set('filter[text]',query.trim());
   if(filter.genre)params.set('filter[categories]',filter.genre==='Sci-Fi'?'science-fiction':filter.genre.toLowerCase());
   if(/^\d{4}$/.test(filter.year))params.set('filter[year]',filter.year);
