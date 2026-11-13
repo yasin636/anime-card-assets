@@ -18,6 +18,7 @@ test('Watch Hub renders catalog, persists Watchlist, opens details and never off
  }
  const {WatchHub}=mod(path.join(root,'apps/mobile/src/watch/WatchHub.tsx'));let tree;
  await act(async()=>{tree=create(React.createElement(WatchHub));});
+ const sourceOptions=tree.root.findAllByType('Pressable').find(p=>p.findAllByType('Text').some(t=>t.props.children==='Catalog source options'));await act(async()=>sourceOptions.props.onPress());
  const kitsuButton=tree.root.findAllByType('Pressable').find(p=>p.findAllByType('Text').some(t=>t.props.children==='Kitsu · Anime'));await act(async()=>kitsuButton.props.onPress());
  const poster=tree.root.findAllByType('Pressable').find(p=>p.props.accessibilityLabel==='Details: Test Anime');assert(poster);
  await act(async()=>poster.props.onPress());
