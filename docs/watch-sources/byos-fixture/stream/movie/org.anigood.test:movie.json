@@ -1,0 +1,16 @@
+{
+  "streams": [
+    {
+      "name": "TEST ONLY \u00b7 Shaka Angel One",
+      "description": "Contract fixture, not a movie/anime episode",
+      "url": "https://storage.googleapis.com/shaka-demo-assets/angel-one-hls/hls.m3u8",
+      "subtitles": [
+        {
+          "id": "fixture-caption",
+          "lang": "en-test",
+          "url": "https://raw.githubusercontent.com/yasin636/anime-card-assets/arena/cd835a4c-anime-card-assets/docs/watch-sources/byos-fixture/captions.vtt"
+        }
+      ]
+    }
+  ]
+}

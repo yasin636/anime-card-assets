@@ -1,0 +1,1 @@
+{"id":"org.anigood.byosfixture","version":"1.0.0","name":"AniGooD BYOS HTTP Fixture — TEST ONLY","types":["movie","series"],"resources":[{"name":"stream","types":["movie","series"],"idPrefixes":["org.anigood.test:","kitsu:"]}],"idPrefixes":["org.anigood.test:","kitsu:"]}

@@ -9,8 +9,11 @@ permissions:
 jobs:
   check:
     runs-on: ubuntu-24.04
-    timeout-minutes: 6
+    timeout-minutes: 8
     steps:
+      - uses: actions/checkout@v4
+      - name: Verify public BYOS fixture and HLS test media
+        run: python3 tools/check-watch-lab-media.py
       - name: Check public open-film media bytes and codecs (no credentials)
         shell: bash
         run: |
