@@ -20,4 +20,4 @@ Live public fixture/media CI https://github.com/yasin636/anime-card-assets/actio
 Runtime fc6a1a7a7579d3d664bc5228520ccc3d7896b8ed.
 ZIP https://github.com/yasin636/anime-card-assets/actions/runs/43408480817/artifacts/14028682812
 AniGooD-v0.22.2-Watch4A,39,823,532bytes. GitHub archive metadata SHA256 3f2e7fd24dd3e91353b22dd6608225a649bace8490edb41f3c9e0ffc8f7019ef (not independently downloaded APK hash).
-ZIP includes APK/SHA256SUMS/current BYOS device checklist/original sample subtitle. Update in place, no uninstall/data-clear. Device checklist apps/mobile/ANIGOOD-WATCH-BYOS-TEST.md. Await owner phone acceptance; do not claim it already passed.
+ZIP includes APK/SHA256SUMS/current BYOS device checklist/original sample subtitle. Update in place, no uninstall/data-clear. Device checklist apps/mobile/ANIGOOD-WATCH-BYOS-TEST.md. Owner subsequently installed v0.22.2/code38 and explicitly reported ALL phone tests PASS: in-place update/data retention, MP4 caption size/delay, remote VTT, Shaka audio switching, Apple HLS, one-URL source save/playback. Phase4A COMPLETE; owner authorized Phase4B Offline Downloads immediately.

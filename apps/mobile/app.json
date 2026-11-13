@@ -2,13 +2,13 @@
   "expo": {
     "name": "AniGooD",
     "slug": "anime-meta-hub",
-    "version": "0.22.2",
+    "version": "0.23.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "android": {
       "package": "com.yasin636.animemetahub",
-      "versionCode": 38,
+      "versionCode": 39,
       "adaptiveIcon": {
         "backgroundColor": "#030014",
         "foregroundImage": "./assets/brand/adaptive-icon.png"
