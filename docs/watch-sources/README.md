@@ -27,3 +27,13 @@ License primary source: https://peach.blender.org/about/ — CC BY3.0, including
 
 ## Evidence and verification limits
 Inspected live manifest/error responses with web fetch tool; repository code via authenticated GitHub API. Runtime shell has outbound access restricted to GitHub/npm/PyPI, so cannot directly ffprobe or Range-read external media hosts. Browser fetch of a movie is not native-player playback proof. Source JSON is validated using the actual Phase4A parser. Need owner's phone to confirm CDN access/decoding and actual playback. Do not mark Phase4A phone PASS or start4B from these checks.
+
+## Owner playback failure and follow-up
+Owner screenshots confirmed enabled source, explicit IMDb tt1254207, stream list and handoff to player. Player then showed 00:00/00:00 and load error. External fetch of both commondatastorage.googleapis.com and storage.googleapis.com sample/BigBuckBunny.mp4 returned AccessDenied XML, so old media URL is not a valid public playback link now. Do NOT blame owner Wi-Fi or call this a codec failure based on screenshot alone.
+
+Archive metadata https://archive.org/metadata/BigBuckBunny_328 lists BigBuckBunny_512kb.mp4:43,315,070bytes,596.41seconds,427x240. File metadata is not byte/codec proof. New manual/push GitHub diagnostic tests real Range bytes and ffprobe from CI network; no credentials, paid service or media binary committed. Native phone playback remains a separate check.
+
+### Corrected source v1.0.1
+Public media diagnostics https://github.com/yasin636/anime-card-assets/actions/runs/43396594295 SUCCESS. Actual HTTP Range bytes validated MP4 ftyp; ffprobe against exact Archive playback URL confirmed H.264 video416x240, AAC audio, duration596.416667s. Archive catalog metadata width427 differs from actual codec width416; label uses actual probe result. Source URL replaced with https://archive.org/download/BigBuckBunny_328/BigBuckBunny_512kb.mp4 and row now says 'Big Buck Bunny — Archive 240p'. The first byte-only run43396516157 also succeeded but ffprobe was unavailable; later run explicitly installed ffmpeg and required codec/duration assertions. No native phone success claim yet.
+
+Existing installed v0.22.0 APK and saved manifest URL unchanged: close errored player → Find streams again → choose newly labelled Archive240p row → Play. Reload video on old player would retry old denied URL; must re-resolve source first. If raw GitHub response cached, allow cache expiry and re-resolve. No reinstall, settings reset, data clear, mobile-data change or Render deployment.
