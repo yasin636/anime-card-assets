@@ -137,7 +137,8 @@ jobs:
           cp "$APK" apk-output/AniGooD-v0.21.1-Watch3.apk
           cd apk-output
           sha256sum *.apk > SHA256SUMS.txt
-          cp ../ANIGOOD-WATCH2-FIX-TEST.md README.txt
+          cp ../ANIGOOD-WATCH3-TEST.md README.txt
+          cp ../assets/watch/phase3-check.srt AniGooD-subtitle-test.srt
       - uses: actions/upload-artifact@v4
         with:
           name: AniGooD-v0.21.1-Watch3
