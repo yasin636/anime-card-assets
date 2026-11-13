@@ -1,0 +1,10 @@
+{
+  "id": "org.anigood.openanimation",
+  "version": "1.0.0",
+  "name": "Open Animation — Big Buck Bunny",
+  "description": "One openly licensed Blender Foundation film, not a Japanese anime provider. CC BY 3.0. https://peach.blender.org/about/ . Keep full ending credits. Playback availability depends on external hosting.",
+  "resources": [{"name":"stream","types":["movie"],"idPrefixes":["tt1254207"]}],
+  "types": ["movie"],
+  "idPrefixes": ["tt1254207"],
+  "catalogs": []
+}
