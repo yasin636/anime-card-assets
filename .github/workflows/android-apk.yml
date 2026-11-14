@@ -73,9 +73,9 @@ jobs:
           NODE_ENV=test node --test ../../tools/test-watch-downloads.cjs ../../tools/test-watch-byos.cjs ../../tools/test-watch-simple-play.cjs ../../tools/test-watch-sources.cjs ../../tools/test-watch-player.cjs ../../tools/test-watch-hub.cjs ../../tools/test-economy-provider.cjs ../../tools/test-arena-visuals.cjs ../../tools/test-ai-quiz-broker.cjs ../../tools/test-story-mobile.cjs ../../tools/test-social-mobile.cjs ../../tools/test-chat-provider.cjs ../../tools/test-chat-mobile.cjs ../../tools/test-community-mobile.cjs ../../tools/test-media-mobile.cjs ../../tools/test-audio-7a.cjs ../../tools/test-presentation-7b.cjs ../../tools/test-r1-native.cjs ../../tools/test-r2-native.cjs ../../tools/test-sensei-ui.cjs ../../tools/test-anigood-step1.cjs ../../tools/test-anigood-step2.cjs ../../tools/test-cloudinary-folder-setup.cjs 2>&1 | tee -a validate.log
           node --test ../../services/economy/*.test.cjs 2>&1 | tee -a validate.log
       - name: Generate Android project
-        run: npx expo prebuild --platform android --no-install 2>&1 | tee prebuild.log
+        run: set -euo pipefail; npx expo prebuild --platform android --no-install 2>&1 | tee prebuild.log
       - name: Configure verified private test signing (no public-key fallback)
-        run: node scripts/configure-private-signing.cjs 2>&1 | tee signing.log
+        run: set -euo pipefail; node scripts/configure-private-signing.cjs 2>&1 | tee signing.log
       - name: Allow slow first-time Gradle downloads
         run: |
           sed -i 's/networkTimeout=10000/networkTimeout=120000/' android/gradle/wrapper/gradle-wrapper.properties
