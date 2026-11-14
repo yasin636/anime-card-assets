@@ -64,14 +64,14 @@ jobs:
       - name: Generate client-only Firebase configuration
         run: npm run prepare:firebase
       - name: TypeScript validation
-        run: npm run typecheck
+        run: npm run typecheck 2>&1 | tee typecheck.log
       - name: Validate navigation, profile rules and Android autolinking
         run: |
-          node ../../tools/validate-mobile-foundation.cjs
-          node ../../tools/test-mobile-profile.cjs
-          node --test ../../tools/test-watch.cjs ../../tools/test-gemini.cjs ../../tools/test-economy-autoconnect.cjs ../../tools/test-arena-presentation.cjs
-          NODE_ENV=test node --test ../../tools/test-watch-downloads.cjs ../../tools/test-watch-byos.cjs ../../tools/test-watch-simple-play.cjs ../../tools/test-watch-sources.cjs ../../tools/test-watch-player.cjs ../../tools/test-watch-hub.cjs ../../tools/test-economy-provider.cjs ../../tools/test-arena-visuals.cjs ../../tools/test-ai-quiz-broker.cjs ../../tools/test-story-mobile.cjs ../../tools/test-social-mobile.cjs ../../tools/test-chat-provider.cjs ../../tools/test-chat-mobile.cjs ../../tools/test-community-mobile.cjs ../../tools/test-media-mobile.cjs ../../tools/test-audio-7a.cjs ../../tools/test-presentation-7b.cjs ../../tools/test-r1-native.cjs ../../tools/test-r2-native.cjs ../../tools/test-sensei-ui.cjs ../../tools/test-anigood-step1.cjs ../../tools/test-anigood-step2.cjs ../../tools/test-cloudinary-folder-setup.cjs
-          node --test ../../services/economy/*.test.cjs
+          node ../../tools/validate-mobile-foundation.cjs 2>&1 | tee validate.log
+          node ../../tools/test-mobile-profile.cjs 2>&1 | tee -a validate.log
+          node --test ../../tools/test-watch.cjs ../../tools/test-gemini.cjs ../../tools/test-economy-autoconnect.cjs ../../tools/test-arena-presentation.cjs 2>&1 | tee -a validate.log
+          NODE_ENV=test node --test ../../tools/test-watch-downloads.cjs ../../tools/test-watch-byos.cjs ../../tools/test-watch-simple-play.cjs ../../tools/test-watch-sources.cjs ../../tools/test-watch-player.cjs ../../tools/test-watch-hub.cjs ../../tools/test-economy-provider.cjs ../../tools/test-arena-visuals.cjs ../../tools/test-ai-quiz-broker.cjs ../../tools/test-story-mobile.cjs ../../tools/test-social-mobile.cjs ../../tools/test-chat-provider.cjs ../../tools/test-chat-mobile.cjs ../../tools/test-community-mobile.cjs ../../tools/test-media-mobile.cjs ../../tools/test-audio-7a.cjs ../../tools/test-presentation-7b.cjs ../../tools/test-r1-native.cjs ../../tools/test-r2-native.cjs ../../tools/test-sensei-ui.cjs ../../tools/test-anigood-step1.cjs ../../tools/test-anigood-step2.cjs ../../tools/test-cloudinary-folder-setup.cjs 2>&1 | tee -a validate.log
+          node --test ../../services/economy/*.test.cjs 2>&1 | tee -a validate.log
       - name: Generate Android project
         run: npx expo prebuild --platform android --no-install 2>&1 | tee prebuild.log
       - name: Configure verified private test signing (no public-key fallback)
@@ -106,7 +106,9 @@ jobs:
         with:
           name: build-failure-log
           path: |
-            prebuild.log
+            apps/mobile/typecheck.log
+            apps/mobile/validate.log
+            apps/mobile/prebuild.log
             apps/mobile/gradle-build.log
           if-no-files-found: ignore
           retention-days: 14
