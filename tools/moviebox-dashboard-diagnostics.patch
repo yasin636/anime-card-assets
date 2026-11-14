@@ -1,0 +1,43 @@
+--- a/api.py
++++ b/api.py
+@@ -1002,14 +1002,38 @@
+             }
+         }
+ 
++        let playbackDiagAttached = false;
++        let currentPlayback = null;
++
+         function play(encoded) {
+             const stream = JSON.parse(decodeURIComponent(encoded));
+             const player = document.getElementById("player");
+             const container = document.getElementById("playerContainer");
+             container.style.display = "flex";
+-            document.getElementById("playerStatus").textContent = `Playing: ${stream.quality} ${stream.format}`;
++            currentPlayback = { quality: stream.quality, format: stream.format };
++            document.getElementById("playerStatus").textContent = `Starting: ${stream.quality} ${stream.format}`;
++            if (!playbackDiagAttached) {
++                playbackDiagAttached = true;
++                player.addEventListener("error", () => {
++                    const err = player.error;
++                    const code = err ? err.code : "none";
++                    const msg = err && err.message ? err.message : "(no message)";
++                    document.getElementById("playerStatus").textContent =
++                        `Media error: code=${code} message=${msg} networkState=${player.networkState} readyState=${player.readyState}`;
++                });
++                player.addEventListener("playing", () => {
++                    if (currentPlayback) {
++                        document.getElementById("playerStatus").textContent =
++                            `Playing: ${currentPlayback.quality} ${currentPlayback.format}`;
++                    }
++                });
++            }
+             player.src = stream.url;
+-            player.play().catch(() => {});
++            player.play().catch((rej) => {
++                const name = rej && rej.name ? rej.name : "unknown";
++                const msg = rej && rej.message ? rej.message : "(no message)";
++                document.getElementById("playerStatus").textContent = `Play rejected: ${name}: ${msg}`;
++            });
+         }
+ 
+         function copyUrl(url) {
