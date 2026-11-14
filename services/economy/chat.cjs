@@ -1,14 +1,13 @@
 'use strict';
 const {createHash}=require('node:crypto');
-const {EconomyError}=require('./domain.cjs');
+const {EconomyError,txRun}=require('./domain.cjs');
 const {missions,level}=require('./social.cjs');
 const fail=c=>{throw new EconomyError(c);};
 // Firestore can transiently abort a concurrent transaction with "Transaction
 // is invalid or closed" (INVALID_ARGUMENT — not ABORTED — so the Admin SDK
-// does not retry it internally). Every chat transaction below re-reads each
-// document and the operation-id receipt makes sends idempotent, so retrying
-// the whole transaction is semantics-preserving.
-async function txRun(db,fn){for(let attempt=0;;attempt++){try{return await db.runTransaction(fn);}catch(e){if(attempt>=5||!/transaction is invalid or closed/i.test(String(e&&e.message||'')))throw e;}}}
+// does not retry it internally). txRun (shared from domain.cjs) retries the
+// whole transaction; every chat transaction re-reads each document and the
+// operation-id receipt makes sends idempotent, so retry is semantics-preserving.
 const emojis=['❤️','😂','👍','🔥','😞'];
 const fields={chatInbox:[],chatSearch:['query','cursor'],chatPresence:['online','sessionId','sequence'],chatThread:['peerId','before'],chatGlobal:['before'],chatSend:['peerId','text'],chatGlobalSend:['text'],chatDelete:['peerId','messageId'],chatGlobalDelete:['messageId'],chatGlobalReact:['messageId','emoji'],chatRecentRemove:['peerId'],chatMissionClaim:[],chatPostSend:['peerId','postId'],chatGlobalPostSend:['postId'],chatImageSend:['peerId','text','mediaId'],chatGlobalImageSend:['text','mediaId'],chatImage:['peerId','messageId'],chatPostPreview:['postId']};
 const types=Object.keys(fields),idOK=s=>typeof s==='string'&&/^[a-zA-Z0-9_-]{1,160}$/.test(s);

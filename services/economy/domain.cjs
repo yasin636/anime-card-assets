@@ -114,4 +114,18 @@ function plan(profile, command, entropy) {
   if(Buffer.byteLength(JSON.stringify({...profile,...patch}),'utf8')>850000) fail('profile-too-large');
   return {patch,result};
 }
-module.exports={plan,validateCommand,EconomyError,cards,themes,slots,stats};
+// Transient Firestore emulator conflict: two concurrent runTransaction calls
+// targeting the same document can abort one with "Transaction is invalid or
+// closed." Retrying the whole transaction is safe because every caller uses
+// receipt-based idempotency — a retried transaction re-reads the receipt and
+// returns the saved result. Only this exact error is retried; EconomyError
+// (business/security failure) does not match and propagates immediately.
+async function txRun(db, fn) {
+  for (let attempt = 0; ; attempt++) {
+    try { return await db.runTransaction(fn); }
+    catch (e) {
+      if (attempt >= 5 || !/transaction is invalid or closed/i.test(String(e && e.message || ''))) throw e;
+    }
+  }
+}
+module.exports={plan,validateCommand,EconomyError,cards,themes,slots,stats,txRun};

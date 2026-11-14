@@ -1,6 +1,6 @@
 'use strict';
 const {createHash}=require('node:crypto');
-const {EconomyError}=require('./domain.cjs');
+const {EconomyError,txRun}=require('./domain.cjs');
 const fail=c=>{throw new EconomyError(c);};
 const emojis=['👍','❤️','😂','😮','😢','🔥'];
 const types=['feedView','feedPostView','feedCreate','feedEdit','feedDelete','feedLike','feedReact','feedComment','feedCommentEdit','feedCommentDelete','feedCommentReply','feedCommentReact','feedShare','socialMissionClaim'];
@@ -37,7 +37,7 @@ async function executeSocial({db,verifiedUid:uid,verifiedAdmin=false,operationId
   return {type:c.type,socialCapability:'social-v1',posts:docs.filter(d=>visible(d.data(),now)).map(d=>view(d.data(),d.id,uid)),missionData:missions(me.data(),date),dailyPosts:activity.data()?.day_key===date?Number(activity.data().count)||0:0,admin:verifiedAdmin,serverNow:now};
  }
  const fingerprint=createHash('sha256').update(JSON.stringify(Object.fromEntries(Object.entries(c).sort()))).digest('hex'),receipt=actor.collection('economy_receipts').doc(operationId),id=`s_${createHash('sha256').update(uid+':'+operationId).digest('hex').slice(0,40)}`;
- return db.runTransaction(async tx=>{
+ return txRun(db,async tx=>{
   const saved=await tx.get(receipt);if(saved.exists){if(saved.data().fingerprint!==fingerprint)fail('operation-id-conflict');return saved.data().result;}
   const me=await tx.get(actor);if(!me.exists)fail('profile-not-found');const p=me.data(),m=missions(p,date),patch={},result={type:c.type,socialCapability:'social-v1',xpDelta:0,creatorXpDelta:0};let post,postRef,creator,creatorRef,actorDelta=0,creatorDelta=0,deleted=false,activityRef,activityPatch,mediaRef,media;
   if(c.type==='socialMissionClaim'){

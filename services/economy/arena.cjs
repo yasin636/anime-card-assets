@@ -1,6 +1,6 @@
 'use strict';
 const {randomInt,randomUUID,createHash}=require('node:crypto');
-const {EconomyError,cards,stats}=require('./domain.cjs');
+const {EconomyError,cards,stats,txRun}=require('./domain.cjs');
 const fail=code=>{throw new EconomyError(code);};
 const amount=(p,key)=>{const n=p[key]??0;if(!Number.isSafeInteger(n)||n<0)fail('invalid-profile-number');return n;};
 const wheel=[['LOSE',0,0],['2x XP',40,0],['10 XP',10,0],['JACKPOT',100,0],['BANKRUPT',-20,0],['50 XP',50,0],['3x XP',60,0],['FREE',0,1]];
@@ -87,7 +87,7 @@ async function executeArena({db,verifiedUid:uid,operationId,command:c,ai}){
   const snap=await sessions.doc(c.quizId).get();if(!snap.exists||snap.data().status!=='active')fail('quiz-ended');
   const q=snap.data();if(q.index!==c.questionIndex)fail('quiz-question-changed');judgedIndex=q.index;verdict=await judgeQuiz(q.questions[q.index],c.answer,ai);
  }
- return db.runTransaction(async tx=>{
+ return txRun(db,async tx=>{
   const existing=await tx.get(receipt);if(existing.exists){if(existing.data().fingerprint!==fingerprint)fail('operation-id-conflict');return existing.data().result;}
   const snap=await tx.get(ref);if(!snap.exists)fail('profile-not-found');const p=snap.data();let patch={},result={type:c.type},sessionRef=null,session=null;
   if(c.type==='wheelSpin')({patch,result}=spin(p,index));

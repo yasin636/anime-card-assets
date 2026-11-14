@@ -1,7 +1,7 @@
 'use strict';
 // Image-only Cloudinary adapter. No credentials or provider responses are logged.
 const {createHash}=require('node:crypto');
-const {EconomyError}=require('./domain.cjs');
+const {EconomyError,txRun}=require('./domain.cjs');
 const {providerError,safeBody}=require('./media-errors.cjs');
 const fail=code=>{throw new EconomyError(code);};
 const types=['mediaPrepare','mediaFinalize','mediaDiscard'];
@@ -21,7 +21,7 @@ async function executeMedia({db,verifiedUid:uid,operationId,command:c,now=Date.n
  const saved=await receipt.get();if(saved.exists){if(saved.data().fingerprint!==fingerprint)fail('operation-id-conflict');return saved.data().result;}
  const id=c.uploadId||`img_${createHash('sha256').update(uid+':'+operationId).digest('hex').slice(0,40)}`,upload=actor.collection('media_uploads').doc(id);let asset;
  if(c.type==='mediaFinalize'){const snap=await upload.get();if(!snap.exists)fail('media-upload-not-found');const s=snap.data();if(s.status!=='prepared'||s.expiresAt<now)fail('media-upload-not-ready');asset=verifiedAsset(await service.inspect(s.publicId,s.purpose==='chat'?'authenticated':'upload'),s,service.cfg);}
- return db.runTransaction(async tx=>{
+ return txRun(db,async tx=>{
   const replay=await tx.get(receipt);if(replay.exists){if(replay.data().fingerprint!==fingerprint)fail('operation-id-conflict');return replay.data().result;}
   const me=await tx.get(actor);if(!me.exists)fail('profile-not-found');const p=me.data(),result={type:c.type,mediaCapability:'images-v1'},date=new Date(now).toISOString().slice(0,10);
   if(c.type==='mediaPrepare'){

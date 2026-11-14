@@ -1,6 +1,6 @@
 'use strict';
 const {createHash}=require('node:crypto');
-const {EconomyError}=require('./domain.cjs');
+const {EconomyError,txRun}=require('./domain.cjs');
 const {missions,level}=require('./social.cjs');
 const {loadCatalog}=require('./news.cjs');
 const fail=code=>{throw new EconomyError(code);};
@@ -42,7 +42,7 @@ async function executeCommunity({db,verifiedUid:uid,operationId,command:c,now=Da
   article=(await catalog()).articles.find(a=>a.id===c.articleId);if(!article)fail('news-article-unavailable');
  }
  const newId=`read_${createHash('sha256').update(uid+':'+operationId).digest('hex').slice(0,40)}`;
- return db.runTransaction(async tx=>{
+ return txRun(db,async tx=>{
   const saved=await tx.get(receipt);if(saved.exists){if(saved.data().fingerprint!==fingerprint)fail('operation-id-conflict');return saved.data().result;}
   const me=await tx.get(ref);if(!me.exists)fail('profile-not-found');const p=me.data(),m=missions(p,date),patch={},result={...base,xpDelta:0};
   if(c.type.startsWith('tracker')){patch.tracker=trackerPlan(p,c,now);result.tracker=patch.tracker;if(c.type==='trackerAdd')m.progress.animeAdded=Math.min(3,Math.max(0,Number(m.progress.animeAdded)||0)+1);}

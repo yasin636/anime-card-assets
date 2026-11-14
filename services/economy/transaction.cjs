@@ -1,6 +1,6 @@
 'use strict';
 const {randomInt,randomUUID,createHash}=require('node:crypto');
-const {plan,validateCommand,EconomyError}=require('./domain.cjs');
+const {plan,validateCommand,EconomyError,txRun}=require('./domain.cjs');
 /** Internal server adapter; verifiedUid MUST come from verified Firebase ID token,
  * never from request JSON. Firestore is an Admin SDK instance, not mobile SDK.
  * Receipts and economy fields must be server-only under deployed Firestore Rules.
@@ -26,7 +26,7 @@ async function execute({db,verifiedUid,operationId,command,ai,verifiedAdmin=fals
   const receiptRef=userRef.collection('economy_receipts').doc(operationId);
   // Draw on server once, outside retryable transaction callback. Never Math.random or client input.
   const entropy={owner:verifiedUid,rarity:randomInt(0,2**32)/2**32,card:randomInt(0,2**32)/2**32,instanceId:randomUUID()};
-  return db.runTransaction(async tx=>{
+  return txRun(db,async tx=>{
     const receipt=await tx.get(receiptRef);
     if(receipt.exists){
       const saved=receipt.data();

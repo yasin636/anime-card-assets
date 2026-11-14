@@ -1,6 +1,6 @@
 'use strict';
 const {randomInt,randomUUID,createHash}=require('node:crypto');
-const {EconomyError,stats,cards}=require('./domain.cjs');
+const {EconomyError,stats,cards,txRun}=require('./domain.cjs');
 const {STORY_CHAPTERS:chapters,BOSS_DIALOGUES:dialogues}=require('../../docs/react-native-blueprint/reference/catalog.json');
 const fail=code=>{throw new EconomyError(code);};
 const types=['storyView','storyStart','storyAdvance','storyAction','storyArise','storyClaim','storyForfeit'];
@@ -85,7 +85,7 @@ async function executeStory({db,verifiedUid:uid,operationId,command:c}){
   return {type:c.type,storyCapability:'story-v1',chronicleCapability:'chronicle-v1',story:session?.exists?session.data():null,shadows:sh.docs.map(d=>d.data()),cleared:cl.docs.map(d=>d.id),storyPower:power(p),storyEligible:eligible(p)};
  }
  const receipt=user.collection('economy_receipts').doc(operationId),fingerprint=createHash('sha256').update(JSON.stringify(Object.fromEntries(Object.entries(c).sort()))).digest('hex'),id=randomUUID(),roll=randomInt(0,2**32)/2**32;
- return db.runTransaction(async tx=>{
+ return txRun(db,async tx=>{
   const old=await tx.get(receipt);if(old.exists){if(old.data().fingerprint!==fingerprint)fail('operation-id-conflict');return old.data().result;}
   const profile=await tx.get(user);if(!profile.exists)fail('profile-not-found');const p=profile.data();let s,patch={},reward=null,firstClear=false;
   const sessionRef=sessions.doc(c.type==='storyStart'?id:c.sessionId);

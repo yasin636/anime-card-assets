@@ -1,12 +1,13 @@
 'use strict';
 const {provider}=require('./media.cjs');
+const {txRun}=require('./domain.cjs');
 // Admin-only queue; no browser endpoint. Never delete an asset while its session can attach.
 async function cleanupMedia({db,cloudinary,now=Date.now(),limit=10}){
  const service=cloudinary||provider(),jobs=await db.collection('media_cleanup_jobs').orderBy('notBefore').limit(limit).get();let removed=0,failed=0;
  for(const job of jobs.docs){
   if(job.data().notBefore>now)break;
   try{
-   const target=await db.runTransaction(async tx=>{
+   const target=await txRun(db,async tx=>{
     const js=await tx.get(job.ref);if(!js.exists)return null;const j=js.data();if(j.notBefore>now||j.leaseUntil>now)return null;
     if(typeof j.uid!=='string'||!j.uid||j.uid.includes('/')||!/^img_[a-f0-9]{40}$/.test(j.uploadId)||!/^animemetahub\/[a-f0-9]{32}\/img_[a-f0-9]{40}$/.test(j.publicId)){tx.delete(job.ref);return null;}
     const actor=db.collection('user_meta').doc(j.uid),ref=actor.collection('media_uploads').doc(j.uploadId),ss=await tx.get(ref);if(!ss.exists||ss.data().publicId!==j.publicId){tx.delete(job.ref);return null;}const s=ss.data();
@@ -22,7 +23,7 @@ async function cleanupMedia({db,cloudinary,now=Date.now(),limit=10}){
    });
    if(!target)continue;
    await service.destroy(target.publicId,target.deliveryType);
-   await db.runTransaction(async tx=>{const session=await tx.get(target.ref);if(session.exists&&session.data().status==='deleting')tx.update(target.ref,{status:'deleted',deletedAt:now});tx.delete(job.ref);});removed++;
+   await txRun(db,async tx=>{const session=await tx.get(target.ref);if(session.exists&&session.data().status==='deleting')tx.update(target.ref,{status:'deleted',deletedAt:now});tx.delete(job.ref);});removed++;
   }catch{failed++;try{await job.ref.update({leaseUntil:0,notBefore:now+600000});}catch{} }
  }
  return {removed,failed};
