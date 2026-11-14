@@ -3,6 +3,12 @@ const {createHash}=require('node:crypto');
 const {EconomyError}=require('./domain.cjs');
 const {missions,level}=require('./social.cjs');
 const fail=c=>{throw new EconomyError(c);};
+// Firestore can transiently abort a concurrent transaction with "Transaction
+// is invalid or closed" (INVALID_ARGUMENT — not ABORTED — so the Admin SDK
+// does not retry it internally). Every chat transaction below re-reads each
+// document and the operation-id receipt makes sends idempotent, so retrying
+// the whole transaction is semantics-preserving.
+async function txRun(db,fn){for(let attempt=0;;attempt++){try{return await db.runTransaction(fn);}catch(e){if(attempt>=5||!/transaction is invalid or closed/i.test(String(e&&e.message||'')))throw e;}}}
 const emojis=['❤️','😂','👍','🔥','😞'];
 const fields={chatInbox:[],chatSearch:['query','cursor'],chatPresence:['online','sessionId','sequence'],chatThread:['peerId','before'],chatGlobal:['before'],chatSend:['peerId','text'],chatGlobalSend:['text'],chatDelete:['peerId','messageId'],chatGlobalDelete:['messageId'],chatGlobalReact:['messageId','emoji'],chatRecentRemove:['peerId'],chatMissionClaim:[],chatPostSend:['peerId','postId'],chatGlobalPostSend:['postId'],chatImageSend:['peerId','text','mediaId'],chatGlobalImageSend:['text','mediaId'],chatImage:['peerId','messageId'],chatPostPreview:['postId']};
 const types=Object.keys(fields),idOK=s=>typeof s==='string'&&/^[a-zA-Z0-9_-]{1,160}$/.test(s);
@@ -61,17 +67,17 @@ async function executeChat({db,verifiedUid:uid,verifiedAdmin=false,operationId,c
   return {...base,imageUrl:`https://api.cloudinary.com/v1_1/${cfg.cloud}/image/download?${new URLSearchParams({...params,api_key:cfg.key,signature:sign(params,cfg.secret)})}`,expiresAt};
  }
  if(c.type==='chatPresence'){
-  return db.runTransaction(async tx=>{const mine=await tx.get(meRef);if(!mine.exists)fail('profile-not-found');const p=mine.data();if((!c.online&&p.presenceSession!==c.sessionId)||(p.presenceSession===c.sessionId&&num(p.presenceSequence)>=c.sequence))return {...base,ignored:true};tx.update(meRef,{online:c.online,lastSeenMs:now,presenceSession:c.sessionId,presenceSequence:c.sequence});return base;});
+  return txRun(db,async tx=>{const mine=await tx.get(meRef);if(!mine.exists)fail('profile-not-found');const p=mine.data();if((!c.online&&p.presenceSession!==c.sessionId)||(p.presenceSession===c.sessionId&&num(p.presenceSequence)>=c.sequence))return {...base,ignored:true};tx.update(meRef,{online:c.online,lastSeenMs:now,presenceSession:c.sessionId,presenceSequence:c.sequence});return base;});
  }
  if(c.type==='chatThread'){
-  const ref=db.collection('direct_chats').doc(chatId(uid,c.peerId));return db.runTransaction(async tx=>{
+  const ref=db.collection('direct_chats').doc(chatId(uid,c.peerId));return txRun(db,async tx=>{
    const [mine,peer,saved]=await Promise.all([tx.get(meRef),tx.get(users.doc(c.peerId)),tx.get(ref)]);if(!mine.exists)fail('profile-not-found');if(!peer.exists)fail('chat-user-unavailable');const p=saved.exists?saved.data():{chatId:ref.id,participants:[uid,c.peerId].sort(),updatedAtMs:now,lastText:'',lastSenderId:'',sequence:0};checkParent(p,uid,c.peerId);
    const snap=await tx.get(pageQuery(ref.collection('messages'),c.before));if(!saved.exists&&snap.docs.length)fail('chat-not-participant');if(!c.before){tx.set(ref,{...p,[`unread_${uid}`]:0,[`readThrough_${uid}`]:num(p.sequence),[`readAt_${uid}`]:now});tx.update(meRef,{recentChats:[c.peerId,...(mine.data().recentChats||[]).filter(id=>id!==c.peerId)].slice(0,30)});}
    return {...base,...page(snap,uid),peer:user(peer.data(),c.peerId,now)};
   });
  }
  const receipt=meRef.collection('economy_receipts').doc(operationId),fingerprint=createHash('sha256').update(JSON.stringify(Object.fromEntries(Object.entries(c).sort()))).digest('hex'),id=`m_${createHash('sha256').update(uid+':'+operationId).digest('hex').slice(0,40)}`;
- return db.runTransaction(async tx=>{
+ return txRun(db,async tx=>{
   const old=await tx.get(receipt);if(old.exists){if(old.data().fingerprint!==fingerprint)fail('operation-id-conflict');return old.data().result;}
   const mine=await tx.get(meRef);if(!mine.exists)fail('profile-not-found');const p=mine.data(),result={...base};
   if(c.type==='chatRecentRemove'){tx.update(meRef,{recentChats:(p.recentChats||[]).filter(id=>id!==c.peerId)});result.peerId=c.peerId;}
