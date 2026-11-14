@@ -212,29 +212,32 @@ class CloudStreamHostModule(private val reactContext: ReactApplicationContext) :
         response.year?.let { m.putInt("year", it) }
         response.plot?.let { m.putString("plot", it) }
         response.duration?.let { m.putInt("duration", it) }
-        // Episodes for series/anime.
+        // Episodes for series/anime. Episode carries `data` (the loadLinks
+        // identifier), not a url.
         when (response) {
             is com.lagradost.cloudstream3.TvSeriesLoadResponse -> {
                 val eps = Arguments.createArray()
                 response.episodes.forEach { ep ->
                     val em = Arguments.createMap()
                     em.putString("name", safe(ep.name))
-                    em.putString("url", safe(ep.url))
-                    em.putInt("episode", ep.episode)
-                    em.putInt("season", ep.season)
-                    ep.rate?.let { em.putDouble("rate", it.toDouble()) }
+                    em.putString("url", safe(ep.data))
+                    em.putInt("episode", ep.episode ?: 0)
+                    em.putInt("season", ep.season ?: 0)
                     eps.pushMap(em)
                 }
                 m.putArray("episodes", eps)
             }
             is com.lagradost.cloudstream3.AnimeLoadResponse -> {
+                // episodes is MutableMap<DubStatus, List<Episode>>; flatten values.
                 val eps = Arguments.createArray()
-                response.episodes.forEach { ep ->
-                    val em = Arguments.createMap()
-                    em.putString("name", safe(ep.name))
-                    em.putString("url", safe(ep.url))
-                    em.putInt("episode", ep.episode)
-                    eps.pushMap(em)
+                response.episodes.values.forEach { list ->
+                    list.forEach { ep ->
+                        val em = Arguments.createMap()
+                        em.putString("name", safe(ep.name))
+                        em.putString("url", safe(ep.data))
+                        em.putInt("episode", ep.episode ?: 0)
+                        eps.pushMap(em)
+                    }
                 }
                 m.putArray("episodes", eps)
             }
