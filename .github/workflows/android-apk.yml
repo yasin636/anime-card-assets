@@ -75,7 +75,7 @@ jobs:
       - name: Generate Android project
         run: npx expo prebuild --platform android --no-install 2>&1 | tee prebuild.log
       - name: Configure verified private test signing (no public-key fallback)
-        run: node scripts/configure-private-signing.cjs
+        run: node scripts/configure-private-signing.cjs 2>&1 | tee signing.log
       - name: Allow slow first-time Gradle downloads
         run: |
           sed -i 's/networkTimeout=10000/networkTimeout=120000/' android/gradle/wrapper/gradle-wrapper.properties
@@ -109,6 +109,7 @@ jobs:
             apps/mobile/typecheck.log
             apps/mobile/validate.log
             apps/mobile/prebuild.log
+            apps/mobile/signing.log
             apps/mobile/gradle-build.log
           if-no-files-found: ignore
           retention-days: 14
