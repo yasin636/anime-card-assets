@@ -1,4 +1,5 @@
 const { expo } = require('./app.json');
+const { withCloudStreamHost } = require('./plugins/cloudstream-host/withCloudStreamHost');
 module.exports = {
  ...expo,
  android: {...expo.android, googleServicesFile:'./google-services.json'},
@@ -11,5 +12,6 @@ module.exports = {
   '@react-native-google-signin/google-signin',
   ['expo-build-properties',{ios:{useFrameworks:'static'}}],
   ['expo-image-picker',{photosPermission:'Choose profile and Feed photos for AniGooD.',cameraPermission:false,microphonePermission:false}],
+  ['./plugins/cloudstream-host/withCloudStreamHost',{}],
  ],
 };
