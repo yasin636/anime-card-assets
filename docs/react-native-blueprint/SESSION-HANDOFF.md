@@ -2,6 +2,18 @@
 
 Branch: `arena/6f7e15ba-anime-card-assets` · Baseline: `17a5141bba1e4b2b24e5ec9300d8ce971b856a8c` · App: AniGooD v0.23.0 / Android code39 (unchanged)
 
+## CloudStream-compatible provider host milestone — current checkpoint
+
+- **Checkpoint verified (user-requested, rebuild paused):** `git status` clean; HEAD `902f023`; remote `origin/arena/6f7e15ba-anime-card-assets` == `902f023`. Session branch active. Last 3 commits: `902f023` (ci(security): upload emulator test log on failure), `fc12333` (ci(android): capture typecheck/validate/prebuild logs on failure), `10c43ee` (ci(android): capture prebuild + gradle logs on failure).
+- **Implementation (commits `494362c` + `4ac1aa6`):** Expo config plugin `apps/mobile/plugins/cloudstream-host/withCloudStreamHost.ts` (withDangerousMod-based; JitPack repo content-filtered to `com.github.recloudstream.cloudstream`; `library-android:4.8.0` dep; native Kotlin source; MainApplication package registration; idempotent). Native host `native/CloudStreamHostModule.kt` + `CloudStreamHostPackage.kt` (loads explicit `.cs3` via PathClassLoader → `Plugin.load` → `APIHolder`; bounded list/search/load/loadLinks; header allowlist). JS bridge `apps/mobile/src/watch/cloudstreamHost.ts` (→ `IntegratedStream`; distinct error codes; torrent/DRM skip; playback-origin filter; redaction). Opt-in Test Lab UI `CloudStreamTestLab.tsx`. `NOTICE-CLOUDSTREAM.md` (GPLv3 notices). `tools/test-watch-cloudstream-host.cjs` (network-free, 10/10).
+- **Tests:** new CloudStream bridge suite 10/10 PASS; full network-free suite 58/58 PASS; all new TS/TSX transpile OK.
+- **CI diagnosis (this turn, exact failing step + blocker):**
+  - Last **Android APK** workflow run: **`43586776097` (workflow_dispatch) → FAILURE**.
+  - **First failing step:** `Test Rules and transactions (surface failure diagnostics)` inside the **`security / rules`** job (reusable `firestore-security.yml` Firestore-emulator test). The **`build`** job was **`skipped`** (`needs: security`), so the CloudStream native compile / JitPack resolution / APK assembly **never ran** in this run — the failure is gated before the build.
+  - **Exact error text: UNRETRIEVABLE — this is the specific blocker.** All log/annotation routes are blocked from this sandbox: job-log download redirects to `*.blob.core.windows.net` (outside the outbound allowlist → EOF); `results-receiver.actions.githubusercontent.com` → EOF; `actions/jobs/{id}/annotations` → HTTP 404; `check-suites/.../annotations` → 404; `gh run view --json annotations` → field not available. The workflow's diagnostic step does print `::error::Security test failed: ...` annotations, but they cannot be fetched via any reachable API. The `security-failure-log` artifact-upload step was added in `902f023` but is `if: failure()`-gated and no artifact was produced for `43586776097` (run predates the upload step in the committed workflow; the artifact only appears on a future failure).
+  - **Why the CloudStream build is unverified:** every recent `android-apk.yml` run (`43584685434`, `43585338570`, `43585792334`, `43586151507`, `43586776097`) failed at the same flaky `security/rules` gate and skipped the build. The Firestore-emulator test is unrelated to the CloudStream changes (no `security/firestore/**` files were touched). A separate `firestore-security.yml` run (`43587104432`, push-triggered) **passed** in 2m25s, confirming the gate is flaky/environmental, not a CloudStream regression.
+- **Decision (per user):** no rebuild/rewrite until the exact error is known or the blocker is lifted. The blocker is CI log-access, not a code defect.
+
 ## Completed
 
 - Baseline verified: assigned branch unchanged, HEAD `17a5141`, working tree clean, app version/versionCode intact. No legitimate changes lost.
