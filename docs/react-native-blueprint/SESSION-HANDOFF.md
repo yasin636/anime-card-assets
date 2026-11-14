@@ -10,6 +10,7 @@ Branch: `arena/6f7e15ba-anime-card-assets` · Baseline: `17a5141bba1e4b2b24e5ec9
 - Network-free contract/regression tests re-run: `NODE_ENV=test node --test tools/test-watch-moviebox-compat.cjs tools/test-watch-sources.cjs tools/test-watch-downloads.cjs` → **27/27 PASS, 0 fail** (5 compat + 12 source + 10 downloads). Test deps (typescript, react, react-test-renderer) live only in snapshot-excluded `apps/mobile/node_modules`.
 - Evidence report updated: verification re-run note + upstream swallowing finding.
 - Workspace hygiene checked: ~30 MB total, largest file 1.5 MB, `.git` 9.4 MB, no file >2 MB. No cleanup required; no generated APK/ZIP/log/media left behind.
+- Signed test APK built via the existing GitHub Actions `Android test APK` workflow (run `43554471720`, workflow_dispatch on this branch): security/rules ✓ 2m32s, build ✓ 8m47s. versionCode bumped 39 → 40 with package (`com.yasin636.animemetahub`) and signing identity unchanged, so in-place update without uninstall. Pinned foundation expectation updated (`tools/validate-mobile-foundation.cjs`). Artifact: **`AniGooD-v0.23.0-Watch4B`** (37 MB ZIP, signature verified against the pinned private certificate in-workflow). Run URL: https://github.com/yasin636/anime-card-assets/actions/runs/43554471720. Note: the first trigger (run `43554017572`) failed only because the pinned versionCode expectation was still 39; after the pin update the re-run (`43554471720`) succeeded. No local build attempted (sandbox lacks Java/Gradle/Android SDK and Gradle hosts are outside the network allowlist).
 
 ## Outstanding (blocked on owner gates)
 
@@ -26,4 +27,4 @@ Branch: `arena/6f7e15ba-anime-card-assets` · Baseline: `17a5141bba1e4b2b24e5ec9
 
 ## Recovery
 
-Last verified local commit: `17a5141bba1e4b2b24e5ec9300d8ce971b856a8c`. If the snapshot limit error recurs, stop retrying tools; restore via the recovery steps above from `origin/arena/cd835a4c-anime-card-assets`.
+Last verified pushed commit: `273d5b05013171dbc8d5af94ce6143047a278575` (branch `arena/6f7e15ba-anime-card-assets`). If the snapshot limit error recurs, stop retrying tools; restore via the recovery steps above from `origin/arena/cd835a4c-anime-card-assets` and re-apply the committed work.
