@@ -66,7 +66,21 @@ Evidence: (1) the plugin requires host-supplied `com.lagradost.cloudstream3.*` c
 The provider's API surface is now fully mapped at method level (call flow, endpoints, dependencies, signing role). An own adapter reuses the existing `sourceIntegration.ts` data-only boundary, uses explicit string subject IDs, no title-first-result guessing, no embedded key, no signing replication, no stats call. It keeps TMDB/Kitsu/BYOS/player/downloads/accounts/data untouched and is opt-in Test Lab only.
 
 **Option C — specific unresolved blocker (must be named, not hidden):**
-**No effective, authorized backend access path to the MovieBox backend.** The backend requires the anonymous-token + x-client-token + x-tr-signature mechanism (not an authorized partner API), and live access is unproven (BBB count0, Sintel count5 with failed full Web MP4 playback, HTTP429 on a direct URL, Mobile Native 0.8MB/23sec entry being a service-update notice — none attributed to this cs3 provider, which is untested). Until an owner-approved access path yields real full video+audio/seek evidence, **a network-free mock/contract test is a prototype, NOT MovieBox integration** and must not be labelled as integration.
+**No effective, authorized backend access path to the MovieBox backend — every step of the requested search → details → play flow requires the same restriction-evasion mechanism, so a real integration cannot be built here without violating the no-bypass constraint.**
+
+Precise evidence (method-level dex disassembly, call-site mapping of `fetchAnonymousToken` / `generateXTrSignature`):
+
+| Flow step | Method | Token/signing required? | Evidence |
+|---|---|---|---|
+| Search | `search(String, int, Continuation)` | **Yes** | Calls `generateXTrSignature$default` + `fetchAnonymousToken$default`, sets MovieBox app user-agent `com.community.mbox.in/…` |
+| Details | `load(String, Continuation)` | **Yes** | 2 `fetchAnonymousToken` call sites inside the method body |
+| Play / stream links | `loadLinks(String, boolean, Function1, Function1, Continuation)` | **Yes** | 2 `fetchAnonymousToken` call sites inside the method body |
+
+So the entire data flow depends on the anonymous-token + `x-client-token` + `x-tr-signature` mechanism plus MovieBox-app user-agent spoofing — a restriction-evasion / Cloudflare-bypass mechanism, **not an authorized partner API**. There is no endpoint in search → details → play that can be used without it. Replicating it is forbidden (no rate-limit/access-control bypass, no cookie/header spoofing, no credential storage). No official/partner API exists in any evidence gathered.
+
+**Environmental blocker (verified):** live MovieBox hosts (`apig.inmoviebox.com`, `api.inmoviebox.com`) are **unreachable** from this sandbox (plain reachability probe → `SSL_ERROR_SYSCALL` on 443), while allowlisted hosts (e.g. `github.com`) are reachable. So even a signed-URL/playback test cannot be run from here.
+
+Consequence: **a network-free mock/contract test (the own-adapter prototype) is a prototype, NOT MovieBox integration** and must not be labelled as integration. No signed APK containing only the inert prototype will be built to masquerade as MovieBox integration — per the owner's instruction, the blocker is reported instead. Until an owner-approved, authorized access path exists (or the evasion constraint is explicitly revised), real MovieBox search → details → play integration is not achievable in this environment.
 
 ## 6. Prototype plan (own adapter, opt-in Test Lab)
 
@@ -78,5 +92,6 @@ The provider's API surface is now fully mapped at method level (call flow, endpo
 ## 7. Status
 
 - Method-level static analysis complete (androguard dex disassembly); package **not run**.
-- Selection: **own adapter (Option B)**; isolated plugin prototype rejected (Option A, evidence above); **unresolved blocker = backend access path (Option C)**.
+- Selection: **own adapter (Option B)**; isolated plugin prototype rejected (Option A, evidence above); **unresolved blocker = no authorized MovieBox backend access path (Option C)**, now refined with per-step evidence: search, details, and play ALL require the forbidden token/signing + user-agent spoofing, and the hosts are unreachable from the sandbox.
+- **Decision: no mock APK will be built to masquerade as MovieBox integration.** The own-adapter prototype + opt-in Test Lab wiring (commits `0f43304`, `c681f8c`) remain as bounded contract/prototype only. Real search → details → play integration is blocked until an authorized access path is established or the evasion constraint is explicitly revised.
 - TMDB key value redacted in this report. Main app/accounts/data unchanged; no paid service or access bypass.
