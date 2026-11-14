@@ -88,17 +88,28 @@ jobs:
           ./gradlew :app:assembleRelease --no-daemon --stacktrace -PreactNativeArchitectures=arm64-v8a,armeabi-v7a -Dorg.gradle.jvmargs="-Xmx4g -XX:MaxMetaspaceSize=1g" 2>&1 | tee ../gradle-build.log
       - name: Report compilation failure
         if: failure()
-        working-directory: apps/mobile/android
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          p = Path('../gradle-build.log')
-          if p.exists():
+          # Run from apps/mobile (job default) so this reporter works even when
+          # prebuild failed and apps/mobile/android was never generated.
+          keywords = ['What went wrong', 'Exception', 'Caused by:', 'Could not',
+                      'error:', 'FAILURE:', 'Execution failed', 'Error:',
+                      'error occurred', 'Cannot find', 'not found']
+          reported = False
+          for name in ['prebuild.log', 'signing.log', 'gradle-build.log']:
+              p = Path(name)
+              if not p.exists():
+                  continue
               text = p.read_text(errors='replace')
               lines = text.splitlines()
-              selected = [x for x in lines if any(k in x for k in ['What went wrong', 'Exception', 'Caused by:', 'Could not', 'error:', 'FAILURE:', 'Execution failed'])]
+              selected = [x for x in lines if any(k in x for k in keywords)]
               message = '\n'.join(selected[-30:] or lines[-40:])[:8000]
-              print('::error title=Gradle compilation details::' + message.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
+              if message:
+                  print(f'::error title={name} details::' + message.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
+                  reported = True
+          if not reported:
+              print('::warning title=Failure reporter::No prebuild/signing/gradle log contained error details; see uploaded build-failure-log artifact.')
           PY
       - name: Upload build log on failure
         if: failure()
