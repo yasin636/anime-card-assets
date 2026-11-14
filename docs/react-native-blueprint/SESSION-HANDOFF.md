@@ -15,9 +15,16 @@ Branch: `arena/6f7e15ba-anime-card-assets` · Baseline: `17a5141bba1e4b2b24e5ec9
 ## Outstanding (blocked on owner gates)
 
 - **Live access gate (owner approval required):** one correctly identified movie, anime episode and drama episode with HTTP status, actual media bytes (Range/ETag/size), codec, caption bytes/language, dub identity, signed-URL expiry, and native phone playback. Unsupported content must fail honestly. No signed URL/token/cookie stored in repo/report/log.
-- **MovieBox adapter:** only after live gate success; separate catalog with exact string subject IDs; explicit `se`/`ep` + separate captions; distinct error surfacing for upstream empty/non-200/local rejection; allowlisted headers only; no DASH/torrent/DRM/cookie pass-through. No title-first-result guessing.
+- **MovieBox adapter:** bounded-contract prototype committed (`movieboxAdapter.ts`); live wiring only after live gate success. Separate catalog with exact string subject IDs; explicit `se`/`ep` + separate captions; distinct error surfacing for upstream empty/non-200/local rejection; allowlisted headers only; no DASH/torrent/DRM/cookie pass-through. No title-first-result guessing.
 - **Runtime integration / new signed APK:** only after feasibility, authorization and identity-mapping findings are shown and approved. versionCode bump keeps package + signing identity; no fabricated signing config.
 - **DASH/HLS download:** not claimed by the accepted downloader.
+
+## MovieBox integration — selection + own-adapter prototype (commit `0f43304`, pushed)
+
+- **Method-level static analysis** of the candidate cs3 provider (androguard dex disassembly; package never run): full CloudStream3 call flow, dependency requirements, token/signing role, stats call sites. Recorded in `MOVIEBOX-CS3-PROVIDER-REVIEW.md` §4b; TMDB api_key value redacted.
+- **Selection (evidence-based):** (A) isolated plugin prototype REJECTED — host-process executable code, no ClassLoader sandbox, embedded shared TMDB key, signing replication, third-party stats GET → isolation from AniGooD accounts/secrets not achievable. (B) **own adapter SELECTED**. (C) unresolved blocker = no effective authorized MovieBox backend access path (anonymous-token + x-client-token + x-tr-signature; not an authorized partner API; live access unproven).
+- **New deliverable:** `apps/mobile/src/watch/movieboxAdapter.ts` — bounded data-contract prototype (URL builders + parsers, string subject IDs, empty/absent = failure, no signing/credentials/network/telemetry). `tools/test-watch-moviebox-adapter.cjs` — 9 network-free contract tests. **Contract/prototype, NOT integration**.
+- Tests: adapter 9/9 PASS; full network-free suite **36/36 PASS**. Approved APK (run `43554471720`, artifact `AniGooD-v0.23.0-Watch4B`) unchanged; TMDB/Kitsu/BYOS/player/downloads/accounts/data untouched.
 
 ## Blockers / notes
 
@@ -27,4 +34,4 @@ Branch: `arena/6f7e15ba-anime-card-assets` · Baseline: `17a5141bba1e4b2b24e5ec9
 
 ## Recovery
 
-Last verified pushed commit: `273d5b05013171dbc8d5af94ce6143047a278575` (branch `arena/6f7e15ba-anime-card-assets`). If the snapshot limit error recurs, stop retrying tools; restore via the recovery steps above from `origin/arena/cd835a4c-anime-card-assets` and re-apply the committed work.
+Last verified pushed commit: `0f43304` (branch `arena/6f7e15ba-anime-card-assets`, full SHA recorded in git history; tip also at `ac9c7d8` parent chain). If the snapshot limit error recurs, stop retrying tools; restore via the recovery steps above from `origin/arena/6f7e15ba-anime-card-assets` and re-apply the committed work.
