@@ -19,12 +19,14 @@ Branch: `arena/6f7e15ba-anime-card-assets` · Baseline: `17a5141bba1e4b2b24e5ec9
 - **Runtime integration / new signed APK:** only after feasibility, authorization and identity-mapping findings are shown and approved. versionCode bump keeps package + signing identity; no fabricated signing config.
 - **DASH/HLS download:** not claimed by the accepted downloader.
 
-## MovieBox integration — selection + own-adapter prototype (commit `0f43304`, pushed)
+## MovieBox integration — selection + own-adapter prototype + Test Lab wiring
 
 - **Method-level static analysis** of the candidate cs3 provider (androguard dex disassembly; package never run): full CloudStream3 call flow, dependency requirements, token/signing role, stats call sites. Recorded in `MOVIEBOX-CS3-PROVIDER-REVIEW.md` §4b; TMDB api_key value redacted.
 - **Selection (evidence-based):** (A) isolated plugin prototype REJECTED — host-process executable code, no ClassLoader sandbox, embedded shared TMDB key, signing replication, third-party stats GET → isolation from AniGooD accounts/secrets not achievable. (B) **own adapter SELECTED**. (C) unresolved blocker = no effective authorized MovieBox backend access path (anonymous-token + x-client-token + x-tr-signature; not an authorized partner API; live access unproven).
-- **New deliverable:** `apps/mobile/src/watch/movieboxAdapter.ts` — bounded data-contract prototype (URL builders + parsers, string subject IDs, empty/absent = failure, no signing/credentials/network/telemetry). `tools/test-watch-moviebox-adapter.cjs` — 9 network-free contract tests. **Contract/prototype, NOT integration**.
-- Tests: adapter 9/9 PASS; full network-free suite **36/36 PASS**. Approved APK (run `43554471720`, artifact `AniGooD-v0.23.0-Watch4B`) unchanged; TMDB/Kitsu/BYOS/player/downloads/accounts/data untouched.
+- **Own-adapter prototype** (commit `0f43304`): `apps/mobile/src/watch/movieboxAdapter.ts` — bounded data-contract (URL builders + parsers, string subject IDs, empty/absent = failure, no signing/credentials/network/telemetry). `tools/test-watch-moviebox-adapter.cjs` — 9 network-free contract tests.
+- **Opt-in Test Lab wiring** (commit `c681f8c`): `apps/mobile/src/watch/movieboxSource.ts` — fail-closed config (no backend ⇒ `not-configured`), distinct error codes (not-configured/config/mapping/network/timeout/http/response/empty/unsupported), string subject IDs, same header/cookie/DASH strictness as the existing boundary (raw headers, cookie-dependent DASH, out-of-origin streams rejected ⇒ `empty`, never success). No network, no signing, no credentials, no telemetry. `tools/test-watch-moviebox-source.cjs` — 12 network-free wiring tests.
+- **All prototype, NOT MovieBox integration** — live wiring only after the live-access gate passes.
+- Tests: adapter 9/9, wiring 12/12; full network-free suite **48/48 PASS**. Approved APK (run `43554471720`, artifact `AniGooD-v0.23.0-Watch4B`) unchanged; TMDB/Kitsu/BYOS/player/downloads/accounts/data untouched.
 
 ## Blockers / notes
 
@@ -34,4 +36,4 @@ Branch: `arena/6f7e15ba-anime-card-assets` · Baseline: `17a5141bba1e4b2b24e5ec9
 
 ## Recovery
 
-Last verified pushed commit: `0f43304` (branch `arena/6f7e15ba-anime-card-assets`, full SHA recorded in git history; tip also at `ac9c7d8` parent chain). If the snapshot limit error recurs, stop retrying tools; restore via the recovery steps above from `origin/arena/6f7e15ba-anime-card-assets` and re-apply the committed work.
+Last verified pushed commit: `c681f8c` (branch `arena/6f7e15ba-anime-card-assets`; parent chain `143206b` → `0f43304` → `ac9c7d8`). If the snapshot limit error recurs, stop retrying tools; restore via the recovery steps above from `origin/arena/6f7e15ba-anime-card-assets` and re-apply the committed work.
